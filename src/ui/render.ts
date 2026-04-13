@@ -101,7 +101,7 @@ function renderWords(state: GameState): string {
       return `<span class="word${isPunc ? " punc" : ""}">${escapeHTML(word)}</span>`;
     })
     .join("");
-  const cursor = state.phase === "revealing" ? '<span class="cursor">|</span>' : "";
+  const cursor = state.phase === "revealing" ? '<span class="cursor"></span>' : "";
   return words + cursor;
 }
 
