@@ -38,15 +38,12 @@ Notes on the stack choice:
 - **No framework.** For a single-screen game with a typing effect and a few buttons, vanilla DOM + a tiny render function is simpler than React/Vue. If templating starts to hurt, consider `lit-html` (~5KB, no framework, just tagged-template rendering) before reaching for anything bigger.
 - **No CSS framework.** A single `styles.css` file with CSS variables for theming. The game benefits from a distinctive, deliberate look — Tailwind won't help here.
 
-### Alternative to consider
-
-If you think the game may grow quickly (multiple screens, settings, leaderboards, animations), **Svelte** is worth a look. It compiles away to near-vanilla JS, has no runtime framework cost, and makes the "reveal one word at a time with transitions" pattern trivial. It would be my second choice.
-
 ## Project Structure (V1)
 
 ```
 /
 ├── index.html
+├── .gitignore
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
