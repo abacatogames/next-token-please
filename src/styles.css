@@ -1,6 +1,7 @@
 :root {
   --bg: #0a0a0f;
   --bg-surface: #14141f;
+  --bg-card: #1a1a2e;
   --text: #e0e0e8;
   --text-dim: #8888a0;
   --accent: #6c8aff;
@@ -31,4 +32,223 @@ body {
   max-width: 720px;
   width: 100%;
   padding: 2rem;
+}
+
+/* --- Screens --- */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* --- Idle Screen --- */
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.subtitle {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* --- Buttons --- */
+
+.btn {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  padding: 0.75rem 2rem;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.btn-start {
+  margin-top: 1rem;
+  font-size: 1.1rem;
+  padding: 0.85rem 2.5rem;
+}
+
+/* --- Game Screen --- */
+
+.game-screen {
+  align-items: stretch;
+}
+
+.prompt {
+  background: var(--bg-surface);
+  border: 1px solid #2a2a40;
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  font-size: 0.95rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.answer {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  min-height: 120px;
+  max-height: 300px;
+  overflow-y: auto;
+  line-height: 2;
+  font-size: 1rem;
+}
+
+.word {
+  display: inline;
+  margin-right: 0.35em;
+  animation: fadeIn 0.15s ease-in;
+}
+
+.word.punc {
+  margin-left: -0.35em;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Choice UI --- */
+
+.choice-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0;
+}
+
+.choice-prompt {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.choice-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-choice {
+  padding: 0.6rem 1.4rem;
+  font-size: 0.95rem;
+  border-color: #3a3a55;
+}
+
+.btn-choice:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* --- Finished Screen --- */
+
+.result-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.result-title.win {
+  color: var(--correct);
+}
+
+.result-title.lose {
+  color: var(--wrong);
+}
+
+.score {
+  font-size: 1.1rem;
+  color: var(--text-dim);
+}
+
+.comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  width: 100%;
+}
+
+.comparison-col {
+  background: var(--bg-surface);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.comparison-col h3 {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+.comparison-text {
+  line-height: 1.8;
+  font-size: 0.9rem;
+}
+
+.diff-correct {
+  color: var(--correct);
+  font-weight: 600;
+}
+
+.diff-wrong {
+  color: var(--wrong);
+  font-weight: 600;
+  text-decoration: line-through;
+}
+
+/* Only show line-through on player's wrong words */
+.comparison-col:first-child .diff-wrong {
+  text-decoration: none;
+}
+
+/* Show the correct words that were missed in original column */
+.comparison-col:last-child .diff-wrong {
+  text-decoration: none;
+  color: var(--correct);
+}
+
+/* --- Responsive --- */
+
+@media (max-width: 600px) {
+  #app {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .choice-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .btn-choice {
+    width: 100%;
+  }
 }
