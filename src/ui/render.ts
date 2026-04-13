@@ -1,5 +1,5 @@
 import type { GameState, Token } from "../types.ts";
-import { getScore, isWin, getPlayerAnswer, getOriginalAnswer } from "../game.ts";
+import { getScore, isWin } from "../game.ts";
 
 const app = document.getElementById("app")!;
 
@@ -72,8 +72,6 @@ export function renderRevealing(state: GameState) {
 export function renderFinished(state: GameState) {
   const { correct, total } = getScore(state);
   const won = isWin(state);
-  const playerAnswer = getPlayerAnswer(state);
-  const originalAnswer = getOriginalAnswer(state);
   const percent = total > 0 ? Math.round((correct / total) * 100) : 0;
 
   app.innerHTML = `
@@ -97,12 +95,14 @@ export function renderFinished(state: GameState) {
 }
 
 function renderWords(state: GameState): string {
-  return state.revealedWords
-    .map((word, i) => {
+  const words = state.revealedWords
+    .map((word) => {
       const isPunc = /^[.,;:!?—']$/.test(word);
       return `<span class="word${isPunc ? " punc" : ""}">${escapeHTML(word)}</span>`;
     })
     .join("");
+  const cursor = state.phase === "revealing" ? '<span class="cursor">|</span>' : "";
+  return words + cursor;
 }
 
 function shuffleOptions(token: Extract<Token, { kind: "choice" }>): string[] {
