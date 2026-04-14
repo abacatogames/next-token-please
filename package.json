@@ -5,10 +5,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "bun test",
+    "typecheck": "tsc",
+    "lint": "eslint src/"
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "eslint": "^10.2.0",
+    "typescript-eslint": "^8.58.2",
     "vite": "^8.0.8"
   },
   "peerDependencies": {
