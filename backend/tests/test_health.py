@@ -33,11 +33,6 @@ def test_prompts_endpoint_returns_list() -> None:
     assert {"id", "prompt"} <= set(body[0].keys())
 
 
-def test_round_endpoint_stubbed() -> None:
-    r = client.get("/round")
-    assert r.status_code == 501
-
-
 @pytest.mark.parametrize("origin", ["http://localhost:5173"])
 def test_cors_preflight(origin: str) -> None:
     r = client.options(
