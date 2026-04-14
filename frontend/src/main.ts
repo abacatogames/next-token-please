@@ -1,8 +1,14 @@
 import { fetchRound } from "./api.ts";
 import { advanceToken, createGame, makeChoice, startRound } from "./game.ts";
 import type { GameState } from "./types.ts";
-import { randomRevealDelay } from "./ui/effects.ts";
-import { initUI, renderFinished, renderGame, renderIdle } from "./ui/render.ts";
+import { initUI, renderFinished, renderGame, renderIdle } from "./ui/screens.ts";
+
+const REVEAL_DELAY_MIN = 80;
+const REVEAL_DELAY_MAX = 120;
+
+function randomRevealDelay(): number {
+	return REVEAL_DELAY_MIN + Math.random() * (REVEAL_DELAY_MAX - REVEAL_DELAY_MIN);
+}
 
 let state: GameState = createGame();
 let revealTimer: ReturnType<typeof setTimeout> | null = null;
