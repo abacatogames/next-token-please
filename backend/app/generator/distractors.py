@@ -5,6 +5,9 @@ import wordfreq
 from nltk.corpus import wordnet as wn
 from nltk.stem import WordNetLemmatizer
 
+from app.config import settings
+from app.generator import embeddings
+
 _LEMMATIZER = WordNetLemmatizer()
 _PENN_TO_WN = {"N": "n", "V": "v", "J": "a", "R": "r"}
 _RANDOM_POOL_SIZE = 5000
@@ -63,9 +66,32 @@ def _synonym_pool(correct: str, wn_pos: str | None, acceptable) -> list[str]:
     return pool
 
 
-def _pick_one(syn_pool: list[str], rand_pool: tuple[str, ...], *,
-              difficulty: float, used: set[str], acceptable,
-              rng: random.Random) -> tuple[str, str]:
+def _embedding_pool(correct: str, acceptable) -> list[str]:
+    if not settings.embeddings_enabled:
+        return []
+    candidates = embeddings.nearest(correct, k=settings.embeddings_top_k)
+    pool: list[str] = []
+    seen: set[str] = set()
+    for cand in candidates:
+        low = cand.lower()
+        if low in seen:
+            continue
+        seen.add(low)
+        if acceptable(cand):
+            pool.append(cand)
+    return pool
+
+
+def _pick_one(
+    syn_pool: list[str],
+    syn_source: str,
+    rand_pool: tuple[str, ...],
+    *,
+    difficulty: float,
+    used: set[str],
+    acceptable,
+    rng: random.Random,
+) -> tuple[str, str]:
     available_syns = [s for s in syn_pool if s.lower() not in used]
 
     def draw_from(pool: list[str] | tuple[str, ...], check: bool) -> str | None:
@@ -81,9 +107,9 @@ def _pick_one(syn_pool: list[str], rand_pool: tuple[str, ...], *,
 
     prefer_syn = rng.random() < difficulty
     primary = available_syns if prefer_syn else list(rand_pool)
-    primary_source = "synonym" if prefer_syn else "random"
+    primary_source = syn_source if prefer_syn else "random"
     secondary = list(rand_pool) if prefer_syn else available_syns
-    secondary_source = "random" if prefer_syn else "synonym"
+    secondary_source = "random" if prefer_syn else syn_source
 
     pick = draw_from(primary, check=not prefer_syn)
     if pick is not None:
@@ -101,14 +127,22 @@ def _pick_one(syn_pool: list[str], rand_pool: tuple[str, ...], *,
 def pick_full(correct: str, pos: str, context: frozenset[str], difficulty: float,
               rng: random.Random) -> tuple[str, str, tuple[str, str]]:
     acceptable, wn_pos = _build_acceptor(correct, pos, context)
-    syn_pool = _synonym_pool(correct, wn_pos, acceptable)
+    wordnet_pool = _synonym_pool(correct, wn_pos, acceptable)
+    if wordnet_pool:
+        syn_pool, syn_source = wordnet_pool, "synonym"
+    else:
+        embedding_pool = _embedding_pool(correct, acceptable)
+        if embedding_pool:
+            syn_pool, syn_source = embedding_pool, "embedding"
+        else:
+            syn_pool, syn_source = [], "synonym"
     rand_pool = _random_pool()
 
     used: set[str] = set()
-    a, source_a = _pick_one(syn_pool, rand_pool, difficulty=difficulty, used=used,
+    a, source_a = _pick_one(syn_pool, syn_source, rand_pool, difficulty=difficulty, used=used,
                             acceptable=acceptable, rng=rng)
     used.add(a.lower())
-    b, source_b = _pick_one(syn_pool, rand_pool, difficulty=difficulty, used=used,
+    b, source_b = _pick_one(syn_pool, syn_source, rand_pool, difficulty=difficulty, used=used,
                             acceptable=acceptable, rng=rng)
     return a, b, (source_a, source_b)
 

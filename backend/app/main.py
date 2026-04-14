@@ -1,3 +1,4 @@
+import logging
 import time
 from contextlib import asynccontextmanager
 
@@ -5,12 +6,14 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.generator import ollama_client
+from app.generator import embeddings, ollama_client
 from app.pool import RoundPool
 from app.prompts import PROMPTS
 from app.round import build_round
 from app.schemas import Health, PromptSummary, Round
 from app.telemetry import ErrorEvent, RoundEvent, configure_logging, log_error, log_round
+
+LOGGER = logging.getLogger("ntp.main")
 
 
 async def _pool_builder():
@@ -20,6 +23,17 @@ async def _pool_builder():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     configure_logging(settings.log_level)
+    if settings.embeddings_enabled:
+        try:
+            embeddings.load(
+                pool_size=settings.embeddings_pool_size,
+                model_name=settings.embeddings_model,
+            )
+        except Exception as exc:
+            LOGGER.warning(
+                "embeddings_load_failed",
+                extra={"event": {"error": type(exc).__name__, "message": str(exc)}},
+            )
     pool = RoundPool(
         size=settings.round_pool_size,
         builder=_pool_builder,

@@ -52,7 +52,7 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Download NLTK data
-        run: python scripts/bootstrap_nltk.py
+        run: python scripts/bootstrap.py --skip-embeddings
 
       - name: Lint
         run: ruff check

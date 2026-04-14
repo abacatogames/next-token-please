@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     round_pool_size: int = 3
     round_pool_idle_sleep: float = 0.5
     round_pool_error_sleep: float = 5.0
+    embeddings_enabled: bool = True
+    embeddings_model: str = "glove-wiki-gigaword-100"
+    embeddings_pool_size: int = 5000
+    embeddings_top_k: int = 20
 
     @property
     def cors_origin_list(self) -> list[str]:

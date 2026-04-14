@@ -1,6 +1,10 @@
 import random
 
-from app.generator.distractors import _random_pool, pick
+import numpy as np
+import pytest
+
+from app.generator import embeddings
+from app.generator.distractors import _random_pool, pick, pick_full
 
 
 def _context(words: list[str]) -> frozenset[str]:
@@ -103,3 +107,84 @@ def test_no_pos_still_produces_distractors() -> None:
     a, b = pick("hello", "UH", _context([]), difficulty=0.5, rng=rng)
     assert a and b
     assert a.lower() != b.lower()
+
+
+@pytest.fixture
+def _install_technical_embeddings():
+    vocab = [
+        "backpropagation",
+        "gradient",
+        "descent",
+        "optimization",
+        "training",
+        "epoch",
+        "neuron",
+        "carrot",
+    ]
+    rng = np.random.default_rng(1)
+    base = rng.normal(size=(len(vocab), 32)).astype(np.float32)
+    matrix = base / np.linalg.norm(base, axis=1, keepdims=True)
+    anchor = matrix[0].copy()
+    for i in (1, 2, 3, 4, 5, 6):
+        matrix[i] = anchor + 0.15 * rng.normal(size=32).astype(np.float32)
+        matrix[i] /= np.linalg.norm(matrix[i])
+    embeddings.install_for_tests(vocab, matrix)
+    yield vocab
+    embeddings.reset_for_tests()
+
+
+def test_embedding_pool_used_when_wordnet_empty(_install_technical_embeddings) -> None:
+    from nltk.corpus import wordnet as wn
+
+    assert wn.synsets("backpropagation", pos="n") == []
+
+    rng = random.Random(0)
+    used_embedding = 0
+    trials = 40
+    for _ in range(trials):
+        _, _, sources = pick_full("backpropagation", "NN", _context([]), difficulty=1.0, rng=rng)
+        used_embedding += sum(1 for s in sources if s == "embedding")
+    assert used_embedding >= trials * 2 * 0.5
+
+
+def test_embedding_pool_skipped_when_disabled(monkeypatch, _install_technical_embeddings) -> None:
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "embeddings_enabled", False)
+
+    rng = random.Random(0)
+    _, _, sources = pick_full("backpropagation", "NN", _context([]), difficulty=1.0, rng=rng)
+    assert "embedding" not in sources
+
+
+def test_embedding_pool_ignored_when_wordnet_available() -> None:
+    vocab = ["jog", "sprint", "race"]
+    rng_np = np.random.default_rng(2)
+    base = rng_np.normal(size=(len(vocab), 8)).astype(np.float32)
+    matrix = base / np.linalg.norm(base, axis=1, keepdims=True)
+    embeddings.install_for_tests(vocab, matrix)
+    try:
+        rng = random.Random(0)
+        used_embedding = 0
+        trials = 30
+        for _ in range(trials):
+            _, _, sources = pick_full("run", "VB", _context([]), difficulty=1.0, rng=rng)
+            used_embedding += sum(1 for s in sources if s == "embedding")
+        assert used_embedding == 0
+    finally:
+        embeddings.reset_for_tests()
+
+
+def test_embedding_fallback_oov_degrades_to_random() -> None:
+    vocab = ["alpha", "beta", "gamma"]
+    rng_np = np.random.default_rng(3)
+    base = rng_np.normal(size=(len(vocab), 8)).astype(np.float32)
+    matrix = base / np.linalg.norm(base, axis=1, keepdims=True)
+    embeddings.install_for_tests(vocab, matrix)
+    try:
+        rng = random.Random(0)
+        a, b, sources = pick_full("backpropagation", "NN", _context([]), difficulty=1.0, rng=rng)
+        assert a and b
+        assert all(src == "random" for src in sources)
+    finally:
+        embeddings.reset_for_tests()
