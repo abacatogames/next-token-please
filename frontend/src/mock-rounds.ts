@@ -1,4 +1,4 @@
-import type { Round } from "../types.ts";
+import type { Round } from "./types.ts";
 
 function r(word: string) {
 	return { kind: "reveal" as const, word };

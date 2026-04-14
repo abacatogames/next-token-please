@@ -1,5 +1,3 @@
-import { getScore, isWin } from "../game.ts";
-import type { GameState } from "../types.ts";
 import {
 	escapeAttr,
 	escapeHTML,
@@ -7,6 +5,8 @@ import {
 	renderWords,
 	shuffleOptions,
 } from "./dom.ts";
+import { getScore, isWin } from "./game.ts";
+import type { GameState } from "./types.ts";
 
 const app = document.getElementById("app")!;
 

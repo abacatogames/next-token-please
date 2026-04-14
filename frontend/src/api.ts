@@ -1,4 +1,4 @@
-import { mockRounds } from "./data/mock-prompts.ts";
+import { mockRounds } from "./mock-rounds.ts";
 import type { Round } from "./types.ts";
 
 const BASE = import.meta.env.VITE_API_URL;

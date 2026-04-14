@@ -1,4 +1,4 @@
-import type { GameState, PlayerChoice, Token } from "../types.ts";
+import type { GameState, PlayerChoice, Token } from "./types.ts";
 
 const PUNC_RE = /^[.,;:!?—']$/;
 

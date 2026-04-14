@@ -1,7 +1,7 @@
 import { fetchRound } from "./api.ts";
 import { advanceToken, createGame, makeChoice, startRound } from "./game.ts";
 import type { GameState } from "./types.ts";
-import { initUI, renderFinished, renderGame, renderIdle } from "./ui/screens.ts";
+import { initUI, renderFinished, renderGame, renderIdle } from "./screens.ts";
 
 const REVEAL_DELAY_MIN = 80;
 const REVEAL_DELAY_MAX = 120;
