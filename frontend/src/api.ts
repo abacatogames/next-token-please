@@ -11,7 +11,7 @@ function nextMock(): Round {
 	return r;
 }
 
-export async function fetchRound(difficulty = 0.5): Promise<Round> {
+export async function fetchRound(difficulty = 0.7): Promise<Round> {
 	if (!BASE) return nextMock();
 	try {
 		const response = await fetch(`${BASE}/round?difficulty=${difficulty}`);

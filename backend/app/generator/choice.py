@@ -7,7 +7,7 @@ def _is_forced_reveal(tw: TaggedWord, *, opening: int) -> bool:
     return (
         tw.index < opening
         or tw.is_punct
-        or len(tw.word) < 3
+        or len(tw.word) <= 3
         or tw.is_digit
     )
 
