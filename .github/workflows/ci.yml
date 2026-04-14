@@ -51,6 +51,9 @@ jobs:
       - name: Install dependencies
         run: pip install -e ".[dev]"
 
+      - name: Download NLTK data
+        run: python scripts/bootstrap_nltk.py
+
       - name: Lint
         run: ruff check
 
