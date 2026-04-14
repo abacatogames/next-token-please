@@ -45,21 +45,24 @@ Notes on the stack choice:
 
 ```
 /
-├── index.html
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-├── src/
-│   ├── main.ts              # entry point, wires UI to game loop
-│   ├── game.ts              # game state machine + scoring
-│   ├── types.ts             # Round, Token, GameState
-│   ├── api.ts               # /round fetch + mock fallback
-│   ├── data/
-│   │   └── mock-prompts.ts  # hardcoded rounds (offline fallback)
-│   ├── ui/
-│   │   ├── render.ts        # DOM updates
-│   │   └── effects.ts       # flash animations, sound hooks
-│   └── styles.css
+├── frontend/
+│   ├── index.html
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── vite.config.ts
+│   ├── eslint.config.js
+│   ├── .env.example         # VITE_API_URL=http://localhost:8000
+│   └── src/
+│       ├── main.ts          # entry point, wires UI to game loop
+│       ├── game.ts          # game state machine + scoring
+│       ├── types.ts         # Round, Token, GameState
+│       ├── api.ts           # /round fetch + mock fallback
+│       ├── data/
+│       │   └── mock-prompts.ts  # hardcoded rounds (offline fallback)
+│       ├── ui/
+│       │   ├── render.ts    # DOM updates
+│       │   └── effects.ts   # flash animations, sound hooks
+│       └── styles.css
 └── backend/
     ├── pyproject.toml
     ├── docker-compose.yml

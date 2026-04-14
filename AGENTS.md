@@ -5,7 +5,7 @@
 Next Token Please is a browser game where the player role-plays as a language model, completing an AI's answer one word at a time.
 
 Two workspaces:
-- **Frontend** (`/`): TypeScript + Vite, vanilla DOM, no frameworks.
+- **Frontend** (`/frontend`): TypeScript + Vite, vanilla DOM, no frameworks.
 - **Backend** (`/backend`): Python 3.11 + FastAPI + Ollama. Generates rounds via a local LLM.
 
 ### Working pattern
@@ -32,7 +32,7 @@ Two workspaces:
 
 ### Commands
 
-#### Frontend (run from `/`)
+#### Frontend (run from `/frontend`)
 
 ```bash
 # Development server
