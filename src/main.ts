@@ -1,4 +1,4 @@
-import { mockRounds } from "./data/mock-prompts.ts";
+import { fetchRound } from "./api.ts";
 import { advanceToken, createGame, makeChoice, startRound } from "./game.ts";
 import type { GameState } from "./types.ts";
 import { randomRevealDelay } from "./ui/effects.ts";
@@ -6,7 +6,6 @@ import { initUI, renderFinished, renderGame, renderIdle } from "./ui/render.ts";
 
 let state: GameState = createGame();
 let revealTimer: ReturnType<typeof setTimeout> | null = null;
-let roundIndex = 0;
 
 function render() {
 	switch (state.phase) {
@@ -33,8 +32,8 @@ function scheduleNextReveal() {
 	}, randomRevealDelay());
 }
 
-function handleStart() {
-	const round = mockRounds[roundIndex % mockRounds.length]!;
+async function handleStart() {
+	const round = await fetchRound();
 	state = startRound(round);
 	render();
 	scheduleNextReveal();
@@ -47,16 +46,19 @@ function handleChoice(word: string) {
 	scheduleNextReveal();
 }
 
-function handlePlayAgain() {
-	roundIndex++;
+async function handlePlayAgain() {
 	state = createGame();
-	handleStart();
+	await handleStart();
 }
 
 initUI({
-	onStart: handleStart,
+	onStart: () => {
+		void handleStart();
+	},
 	onChoice: handleChoice,
-	onPlayAgain: handlePlayAgain,
+	onPlayAgain: () => {
+		void handlePlayAgain();
+	},
 });
 
 render();
