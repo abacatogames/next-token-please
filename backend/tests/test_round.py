@@ -1,8 +1,10 @@
+import logging
 from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
+from app.generator.answer import AnswerResult
 from app.main import app
 from app.round import build_round
 
@@ -13,19 +15,24 @@ CANNED_ANSWER = (
     "is why the sky looks blue to observers on the ground below."
 )
 
+
+def _canned_result() -> AnswerResult:
+    return AnswerResult(text=CANNED_ANSWER, retries=0, word_count=len(CANNED_ANSWER.split()))
+
+
 client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
 def _mock_llm():
-    with patch("app.round.generate_answer", new=AsyncMock(return_value=CANNED_ANSWER)):
+    with patch("app.round.generate_answer_full", new=AsyncMock(return_value=_canned_result())):
         yield
 
 
 def test_build_round_returns_valid_shape() -> None:
     import asyncio
 
-    r = asyncio.run(build_round(prompt_id="sky-blue", difficulty=0.5, seed=1))
+    r, metrics = asyncio.run(build_round(prompt_id="sky-blue", difficulty=0.5, seed=1))
     assert r.id.startswith("round-")
     assert r.prompt == "Explain why the sky is blue."
     assert len(r.tokens) > 0
@@ -40,10 +47,15 @@ def test_build_round_returns_valid_shape() -> None:
         assert c.correct.lower() not in {d.lower() for d in c.distractors}
         assert c.distractors[0].lower() != c.distractors[1].lower()
 
+    assert metrics.prompt_id == "sky-blue"
+    assert metrics.difficulty == 0.5
+    assert metrics.choice_count == len(choices)
+    assert sum(metrics.distractor_sources.values()) == len(choices) * 2
+
 
 def test_opening_tokens_are_reveal() -> None:
     import asyncio
-    r = asyncio.run(build_round(prompt_id="sky-blue", seed=1))
+    r, _ = asyncio.run(build_round(prompt_id="sky-blue", seed=1))
     assert r.tokens[0].kind == "reveal"
     assert r.tokens[1].kind == "reveal"
     assert r.tokens[2].kind == "reveal"
@@ -99,3 +111,61 @@ def test_build_context_lowercases_and_filters_non_alpha() -> None:
     assert "." not in ctx
     assert "foo-bar" not in ctx
     assert isinstance(ctx, frozenset)
+
+
+def test_round_endpoint_emits_telemetry_event(caplog: pytest.LogCaptureFixture) -> None:
+    from app.telemetry import LOGGER_NAME
+
+    with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
+        r = client.get("/round?prompt_id=sky-blue&difficulty=0.5&seed=7")
+    assert r.status_code == 200
+
+    records = [rec for rec in caplog.records if rec.name == LOGGER_NAME and rec.message == "round"]
+    assert len(records) == 1
+    event = records[0].event
+    assert event["prompt_id"] == "sky-blue"
+    assert event["difficulty"] == 0.5
+    assert event["seed"] == 7
+    assert event["pool_hit"] is False
+    assert event["answer_retries"] == 0
+    assert event["answer_word_count"] > 0
+    assert event["choice_count"] > 0
+    assert event["answer_latency_ms"] >= 0
+    assert event["total_latency_ms"] >= event["answer_latency_ms"]
+    assert set(event["distractor_sources"]) == {"synonym", "embedding", "random"}
+    assert event["distractor_sources"]["embedding"] == 0
+
+
+def test_error_event_emitted_on_unexpected_failure(caplog: pytest.LogCaptureFixture) -> None:
+    from app.telemetry import LOGGER_NAME
+
+    async def boom(_: str):
+        raise RuntimeError("ollama down")
+
+    strict_client = TestClient(app, raise_server_exceptions=False)
+    with (
+        patch("app.round.generate_answer_full", new=boom),
+        caplog.at_level(logging.ERROR, logger=LOGGER_NAME),
+    ):
+        r = strict_client.get("/round?prompt_id=sky-blue&seed=1")
+    assert r.status_code == 500
+
+    error_records = [
+        rec for rec in caplog.records if rec.name == LOGGER_NAME and rec.levelname == "ERROR"
+    ]
+    assert len(error_records) == 1
+    event = error_records[0].event
+    assert event["error_type"] == "RuntimeError"
+    assert event["stage"] == "build_round"
+    assert "ollama down" in event["message"]
+
+
+def test_metrics_report_distractor_sources() -> None:
+    import asyncio
+
+    _, metrics = asyncio.run(build_round(prompt_id="sky-blue", difficulty=1.0, seed=3))
+    assert metrics.distractor_sources["embedding"] == 0
+    assert (
+        metrics.distractor_sources["synonym"] + metrics.distractor_sources["random"]
+        == metrics.choice_count * 2
+    )

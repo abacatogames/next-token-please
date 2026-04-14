@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     choice_target: int = 15
     opening_reveal: int = 3
+    log_level: str = "INFO"
 
     @property
     def cors_origin_list(self) -> list[str]:

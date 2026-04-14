@@ -65,9 +65,8 @@ def _synonym_pool(correct: str, wn_pos: str | None, acceptable) -> list[str]:
 
 def _pick_one(syn_pool: list[str], rand_pool: tuple[str, ...], *,
               difficulty: float, used: set[str], acceptable,
-              rng: random.Random) -> str:
+              rng: random.Random) -> tuple[str, str]:
     available_syns = [s for s in syn_pool if s.lower() not in used]
-    available_rand_source = rand_pool
 
     def draw_from(pool: list[str] | tuple[str, ...], check: bool) -> str | None:
         if not pool:
@@ -81,29 +80,40 @@ def _pick_one(syn_pool: list[str], rand_pool: tuple[str, ...], *,
         return None
 
     prefer_syn = rng.random() < difficulty
-    primary = available_syns if prefer_syn else list(available_rand_source)
-    secondary = list(available_rand_source) if prefer_syn else available_syns
+    primary = available_syns if prefer_syn else list(rand_pool)
+    primary_source = "synonym" if prefer_syn else "random"
+    secondary = list(rand_pool) if prefer_syn else available_syns
+    secondary_source = "random" if prefer_syn else "synonym"
 
     pick = draw_from(primary, check=not prefer_syn)
-    if pick is None:
-        pick = draw_from(secondary, check=(primary is available_syns))
-    if pick is None:
-        pick = draw_from(list(available_rand_source), check=False)
-    if pick is None:
-        pick = _FALLBACK[0] if _FALLBACK[0] not in used else _FALLBACK[1]
-    return pick
+    if pick is not None:
+        return pick, primary_source
+    pick = draw_from(secondary, check=(secondary_source == "random"))
+    if pick is not None:
+        return pick, secondary_source
+    pick = draw_from(list(rand_pool), check=False)
+    if pick is not None:
+        return pick, "random"
+    fallback = _FALLBACK[0] if _FALLBACK[0] not in used else _FALLBACK[1]
+    return fallback, "random"
 
 
-def pick(correct: str, pos: str, context: frozenset[str], difficulty: float,
-         rng: random.Random) -> tuple[str, str]:
+def pick_full(correct: str, pos: str, context: frozenset[str], difficulty: float,
+              rng: random.Random) -> tuple[str, str, tuple[str, str]]:
     acceptable, wn_pos = _build_acceptor(correct, pos, context)
     syn_pool = _synonym_pool(correct, wn_pos, acceptable)
     rand_pool = _random_pool()
 
     used: set[str] = set()
-    a = _pick_one(syn_pool, rand_pool, difficulty=difficulty, used=used,
-                  acceptable=acceptable, rng=rng)
+    a, source_a = _pick_one(syn_pool, rand_pool, difficulty=difficulty, used=used,
+                            acceptable=acceptable, rng=rng)
     used.add(a.lower())
-    b = _pick_one(syn_pool, rand_pool, difficulty=difficulty, used=used,
-                  acceptable=acceptable, rng=rng)
-    return (a, b)
+    b, source_b = _pick_one(syn_pool, rand_pool, difficulty=difficulty, used=used,
+                            acceptable=acceptable, rng=rng)
+    return a, b, (source_a, source_b)
+
+
+def pick(correct: str, pos: str, context: frozenset[str], difficulty: float,
+         rng: random.Random) -> tuple[str, str]:
+    a, b, _ = pick_full(correct, pos, context, difficulty, rng)
+    return a, b

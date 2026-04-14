@@ -1,8 +1,16 @@
 import re
+from dataclasses import dataclass
 
 import nltk
 
 from app.generator import ollama_client
+
+
+@dataclass
+class AnswerResult:
+    text: str
+    retries: int
+    word_count: int
 
 SYSTEM = (
     "You write short factual answers. Strict format:\n"
@@ -71,12 +79,20 @@ def _passes(text: str) -> bool:
     return text.endswith((".", "!", "?"))
 
 
-async def generate_answer(prompt: str) -> str:
+async def generate_answer_full(prompt: str) -> AnswerResult:
     last: str = ""
+    attempts = 0
     for _ in range(RETRIES):
+        attempts += 1
         raw = await ollama_client.generate(prompt=prompt, system=SYSTEM)
         text = _post_process(raw)
         last = text
         if _passes(text):
-            return text
-    return last or "No answer available."
+            return AnswerResult(text=text, retries=attempts - 1, word_count=_word_count(text))
+    final = last or "No answer available."
+    return AnswerResult(text=final, retries=attempts - 1, word_count=_word_count(final))
+
+
+async def generate_answer(prompt: str) -> str:
+    result = await generate_answer_full(prompt)
+    return result.text
