@@ -1,8 +1,6 @@
 import { mockRounds } from "./mock-rounds.ts";
 import type { Round } from "./types.ts";
 
-const BASE = import.meta.env.VITE_API_URL;
-
 let mockIndex = 0;
 
 function nextMock(): Round {
@@ -11,10 +9,13 @@ function nextMock(): Round {
 	return r;
 }
 
-export async function fetchRound(difficulty = 0.7): Promise<Round> {
-	if (!BASE) return nextMock();
+export async function fetchRound(
+	difficulty = 0.7,
+	baseUrl: string | undefined = import.meta.env.VITE_API_URL,
+): Promise<Round> {
+	if (!baseUrl) return nextMock();
 	try {
-		const response = await fetch(`${BASE}/round?difficulty=${difficulty}`);
+		const response = await fetch(`${baseUrl}/round?difficulty=${difficulty}`);
 		if (!response.ok) throw new Error(`round fetch failed: ${response.status}`);
 		return (await response.json()) as Round;
 	} catch (err) {

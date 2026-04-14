@@ -1,0 +1,159 @@
+import { describe, expect, test } from "bun:test";
+import {
+	escapeAttr,
+	escapeHTML,
+	highlightDiffs,
+	renderWords,
+	shuffleOptions,
+	wordSpan,
+} from "./dom.ts";
+import type { GameState, Round } from "./types.ts";
+
+const round: Round = {
+	id: "test",
+	prompt: "Test prompt",
+	tokens: [
+		{ kind: "reveal", word: "Hello" },
+		{ kind: "choice", correct: "world", distractors: ["earth", "planet"] },
+		{ kind: "reveal", word: "." },
+		{ kind: "choice", correct: "Cheers", distractors: ["bye", "ciao"] },
+	],
+};
+
+function state(overrides: Partial<GameState> = {}): GameState {
+	return {
+		phase: "revealing",
+		round,
+		tokenIndex: 0,
+		playerChoices: [],
+		revealedWords: [],
+		...overrides,
+	};
+}
+
+describe("escapeHTML", () => {
+	test("escapes ampersands, angle brackets", () => {
+		expect(escapeHTML("<div>&</div>")).toBe("&lt;div&gt;&amp;&lt;/div&gt;");
+	});
+
+	test("passes plain text through", () => {
+		expect(escapeHTML("hello world")).toBe("hello world");
+	});
+
+	test("escapes ampersand before other entities", () => {
+		expect(escapeHTML("&lt;")).toBe("&amp;lt;");
+	});
+});
+
+describe("escapeAttr", () => {
+	test("escapes quotes in addition to HTML", () => {
+		expect(escapeAttr('say "hi" & <bye>')).toBe(
+			"say &quot;hi&quot; &amp; &lt;bye&gt;",
+		);
+	});
+});
+
+describe("wordSpan", () => {
+	test("wraps plain word with base class", () => {
+		expect(wordSpan("hello")).toBe('<span class="word">hello</span>');
+	});
+
+	test("marks punctuation with punc class", () => {
+		expect(wordSpan(".")).toBe('<span class="word punc">.</span>');
+		expect(wordSpan(",")).toBe('<span class="word punc">,</span>');
+		expect(wordSpan("—")).toBe('<span class="word punc">—</span>');
+	});
+
+	test("appends extra class when provided", () => {
+		expect(wordSpan("hello", "diff-correct")).toBe(
+			'<span class="word diff-correct">hello</span>',
+		);
+	});
+
+	test("combines extra and punc classes", () => {
+		expect(wordSpan(".", "diff-wrong")).toBe(
+			'<span class="word diff-wrong punc">.</span>',
+		);
+	});
+
+	test("escapes HTML in word content", () => {
+		expect(wordSpan("<script>")).toBe(
+			'<span class="word">&lt;script&gt;</span>',
+		);
+	});
+});
+
+describe("renderWords", () => {
+	test("renders revealed words with trailing cursor while revealing", () => {
+		const html = renderWords(state({ revealedWords: ["Hi", "there"] }));
+		expect(html).toContain(">Hi<");
+		expect(html).toContain(">there<");
+		expect(html).toContain('<span class="cursor">');
+	});
+
+	test("omits cursor when not revealing", () => {
+		const html = renderWords(
+			state({ phase: "awaiting_choice", revealedWords: ["Hi"] }),
+		);
+		expect(html).not.toContain("cursor");
+	});
+
+	test("empty words still shows cursor during reveal", () => {
+		expect(renderWords(state())).toBe('<span class="cursor"></span>');
+	});
+});
+
+describe("shuffleOptions", () => {
+	test("returns correct and both distractors", () => {
+		const token = {
+			kind: "choice" as const,
+			correct: "world",
+			distractors: ["earth", "planet"] as [string, string],
+		};
+		const options = shuffleOptions(token);
+		expect(options).toHaveLength(3);
+		expect(options.sort()).toEqual(["earth", "planet", "world"]);
+	});
+});
+
+describe("highlightDiffs", () => {
+	test("returns empty string when no round", () => {
+		expect(highlightDiffs(state({ round: null }), (c) => c.picked)).toBe("");
+	});
+
+	test("marks correct picks with diff-correct", () => {
+		const s = state({
+			playerChoices: [
+				{ tokenIndex: 1, picked: "world", correct: "world" },
+				{ tokenIndex: 3, picked: "bye", correct: "Cheers" },
+			],
+		});
+		const html = highlightDiffs(s, (c) => c.picked);
+		expect(html).toContain('<span class="word diff-correct">world</span>');
+		expect(html).toContain('<span class="word diff-wrong">bye</span>');
+	});
+
+	test("uses supplied accessor to pick display word", () => {
+		const s = state({
+			playerChoices: [{ tokenIndex: 1, picked: "earth", correct: "world" }],
+		});
+		const playerView = highlightDiffs(s, (c) => c.picked);
+		const originalView = highlightDiffs(s, (c) => c.correct);
+		expect(playerView).toContain(">earth<");
+		expect(originalView).toContain(">world<");
+	});
+
+	test("skips choices without a recorded pick", () => {
+		const s = state({ playerChoices: [] });
+		const html = highlightDiffs(s, (c) => c.picked);
+		expect(html).toContain(">Hello<");
+		expect(html).toContain(">.<");
+		expect(html).not.toContain("diff-");
+	});
+
+	test("includes reveal tokens verbatim", () => {
+		const html = highlightDiffs(state(), (c) => c.picked);
+		expect(html).toContain('<span class="word">Hello</span>');
+		expect(html).toContain('<span class="word punc">.</span>');
+	});
+});
