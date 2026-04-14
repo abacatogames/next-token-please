@@ -74,7 +74,7 @@ def test_digit_tokens_are_always_reveal() -> None:
 def test_no_consecutive_choices() -> None:
     tagged = analyze(SAMPLE)
     kinds = assign_kinds(tagged, opening=3, choice_target=15, rng=random.Random(0))
-    for a, b in zip(kinds, kinds[1:]):
+    for a, b in zip(kinds, kinds[1:], strict=False):
         assert not (a == "choice" and b == "choice"), "consecutive choices found"
 
 
