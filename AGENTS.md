@@ -2,7 +2,11 @@
 
 ## Summary
 
-Next Token Please is a browser game where the player role-plays as a language model, completing an AI's answer one word at a time. Stack: TypeScript + Vite, no frameworks.
+Next Token Please is a browser game where the player role-plays as a language model, completing an AI's answer one word at a time.
+
+Two workspaces:
+- **Frontend** (`/`): TypeScript + Vite, vanilla DOM, no frameworks.
+- **Backend** (`/backend`): Python 3.11 + FastAPI + Ollama. Generates rounds via a local LLM.
 
 ### Working pattern
 
@@ -15,7 +19,8 @@ Next Token Please is a browser game where the player role-plays as a language mo
 
 * Add or update tests for non-trivial behaviour changes.
 * Use a test-first approach whenever possible.
-* Tests live alongside source (`*.test.ts`) and use `bun:test`.
+* Frontend tests live alongside source (`*.test.ts`) and use `bun:test`.
+* Backend tests live in `backend/tests/` and use `pytest`.
 
 ### Comments
 
@@ -26,6 +31,8 @@ Next Token Please is a browser game where the player role-plays as a language mo
 * Use clear, consistent, descriptive names; avoid unnecessary abbreviations unless they are widely understood.
 
 ### Commands
+
+#### Frontend (run from `/`)
 
 ```bash
 # Development server
@@ -42,4 +49,20 @@ bun run typecheck
 
 # Lint
 bun run lint
+```
+
+#### Backend (run from `/backend`)
+
+```bash
+# Development server
+uvicorn app.main:app --reload --port 8000
+
+# Run tests
+pytest
+
+# Lint
+ruff check
+
+# Full Docker stack (backend + Ollama)
+docker compose --profile full up --build
 ```

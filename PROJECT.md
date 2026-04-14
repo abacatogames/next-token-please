@@ -18,7 +18,7 @@ The player is shown a prompt (e.g. *"Explain why the sky is blue"*) along with t
 
 ### Which words are auto-filled vs. chosen by the player
 
-Decided by the backend (mocked for V1):
+Decided by the backend:
 
 - The opening words of the answer are always auto-filled (to set context).
 - Any word shorter than 3 letters is auto-filled (articles, prepositions, etc.).
@@ -29,7 +29,8 @@ Average answer length: ~50 words. Expect roughly 10–20 choice words per round.
 
 ## Tech Stack
 
-**Proposed:** Bun + TypeScript + Vite, no UI framework (vanilla DOM).
+**Frontend:** Bun + TypeScript + Vite, no UI framework (vanilla DOM).
+**Backend:** Python 3.11 + FastAPI + Ollama (local LLM via `llama3.2:1b`).
 
 Notes on the stack choice:
 - **Bun** as the package manager / runtime for local dev scripts. Fast installs, works fine alongside Vite.
@@ -37,27 +38,44 @@ Notes on the stack choice:
 - **TypeScript** strictly. The game state is small but a discriminated union for game phases (`idle | revealing | awaiting_choice | finished`) will save a lot of bugs.
 - **No framework.** For a single-screen game with a typing effect and a few buttons, vanilla DOM + a tiny render function is simpler than React/Vue. If templating starts to hurt, consider `lit-html` (~5KB, no framework, just tagged-template rendering) before reaching for anything bigger.
 - **No CSS framework.** A single `styles.css` file with CSS variables for theming. The game benefits from a distinctive, deliberate look — Tailwind won't help here.
+- **FastAPI** for the backend API. Thin HTTP layer over the round generator. Runs locally; Ollama runs in Docker.
+- **Ollama** runs the LLM locally. `llama3.2:1b` is the default model — fast enough for local dev, swappable via `OLLAMA_MODEL` env var.
 
-## Project Structure (V1)
+## Project Structure
 
 ```
 /
 ├── index.html
-├── .gitignore
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
-├── public/
-└── src/
-    ├── main.ts              # entry point, wires UI to game loop
-    ├── game.ts              # game state machine + scoring
-    ├── types.ts             # Prompt, Answer, ChoiceWord, GameState
-    ├── data/
-    │   └── mock-prompts.ts  # hardcoded prompts for V1 (stand-in for backend)
-    ├── ui/
-    │   ├── render.ts        # DOM updates
-    │   └── effects.ts       # flash animations, sound hooks
-    └── styles.css
+├── src/
+│   ├── main.ts              # entry point, wires UI to game loop
+│   ├── game.ts              # game state machine + scoring
+│   ├── types.ts             # Round, Token, GameState
+│   ├── api.ts               # /round fetch + mock fallback
+│   ├── data/
+│   │   └── mock-prompts.ts  # hardcoded rounds (offline fallback)
+│   ├── ui/
+│   │   ├── render.ts        # DOM updates
+│   │   └── effects.ts       # flash animations, sound hooks
+│   └── styles.css
+└── backend/
+    ├── pyproject.toml
+    ├── docker-compose.yml
+    ├── Dockerfile
+    ├── app/
+    │   ├── main.py          # FastAPI app, /health /prompts /round endpoints
+    │   ├── schemas.py       # Round / Token Pydantic models
+    │   ├── config.py        # settings (OLLAMA_URL, model, difficulty, etc.)
+    │   ├── prompts.py       # static prompt pool
+    │   ├── round.py         # round orchestrator
+    │   └── generator/
+    │       ├── answer.py    # LLM answer generation
+    │       ├── tokenize.py  # word tokenization + reveal/choice assignment
+    │       ├── choice.py    # choice-word selection logic
+    │       └── distractors.py  # distractor generation (WordNet + wordfreq)
+    └── tests/
 ```
 
 ## Data Shape (the eventual backend contract)
@@ -96,7 +114,7 @@ The frontend never decides which words are choices — it just renders what the 
 
 A few things worth considering — pick the ones that match the vibe you want:
 
-- **Python backend** generating prompts + answers + choice words on demand (the long-term plan).
+- **Prompt variety** — the static prompt pool is intentionally small. Expand or move to a database as the game grows.
 - **Distractor quality matters a lot.** A bad distractor is either obviously wrong (boring) or a legit synonym (unfair). The backend will need to put real effort here — probably by asking the LLM for "3 plausible but incorrect next tokens" given the partial answer.
 - **Streak bonus** — consecutive correct picks worth more, resets on a miss. Adds tension.
 - **Timer per choice** — 5 seconds to pick or it counts as wrong. Optional "chill mode" without it.
