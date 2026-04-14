@@ -16,6 +16,45 @@ def test_health_reports_model_and_ok() -> None:
     assert body["ok"] is True
     assert body["model"]
     assert body["ollama_reachable"] is True
+    assert body["pool_size"] == 0
+    assert body["pool_ready"] is False
+
+
+def test_health_reports_pool_state_when_present() -> None:
+    from app.pool import RoundPool
+    from app.round import RoundMetrics
+    from app.schemas import RevealToken, Round
+
+    async def builder():
+        raise AssertionError("health should not drive builder")
+
+    pool = RoundPool(size=2, builder=builder)
+    pool.put_nowait(
+        (
+            Round(id="round-x", prompt="x", tokens=[RevealToken(word="x")]),
+            RoundMetrics(
+                prompt_id="x",
+                difficulty=0.5,
+                seed=None,
+                answer_latency_ms=1,
+                answer_retries=0,
+                answer_word_count=1,
+                choice_count=0,
+                distractor_sources={"synonym": 0, "embedding": 0, "random": 0},
+            ),
+        )
+    )
+    from app.main import app as fastapi_app
+
+    fastapi_app.state.round_pool = pool
+    try:
+        with patch("app.main.ollama_client.is_reachable", new=AsyncMock(return_value=True)):
+            body = client.get("/health").json()
+        assert body["pool_size"] == 1
+        assert body["pool_ready"] is False
+    finally:
+        if hasattr(fastapi_app.state, "round_pool"):
+            delattr(fastapi_app.state, "round_pool")
 
 
 def test_health_when_ollama_down() -> None:

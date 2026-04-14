@@ -169,3 +169,114 @@ def test_metrics_report_distractor_sources() -> None:
         metrics.distractor_sources["synonym"] + metrics.distractor_sources["random"]
         == metrics.choice_count * 2
     )
+
+
+def test_round_endpoint_uses_pool_when_available(caplog: pytest.LogCaptureFixture) -> None:
+    from app.pool import RoundPool
+    from app.round import RoundMetrics
+    from app.schemas import RevealToken, Round
+    from app.telemetry import LOGGER_NAME
+
+    cached_round = Round(id="round-cached", prompt="cached", tokens=[RevealToken(word="hello")])
+    cached_metrics = RoundMetrics(
+        prompt_id="cached-prompt",
+        difficulty=0.5,
+        seed=None,
+        answer_latency_ms=42,
+        answer_retries=1,
+        answer_word_count=55,
+        choice_count=12,
+        distractor_sources={"synonym": 5, "embedding": 0, "random": 19},
+    )
+
+    async def never_build():
+        raise AssertionError("pool hit should skip build_round")
+
+    pool = RoundPool(size=1, builder=never_build)
+    pool.put_nowait((cached_round, cached_metrics))
+    app.state.round_pool = pool
+
+    try:
+        with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
+            r = client.get("/round")
+        assert r.status_code == 200
+        assert r.json()["id"] == "round-cached"
+        records = [
+            rec for rec in caplog.records if rec.name == LOGGER_NAME and rec.message == "round"
+        ]
+        assert len(records) == 1
+        assert records[0].event["pool_hit"] is True
+        assert records[0].event["prompt_id"] == "cached-prompt"
+        assert records[0].event["answer_retries"] == 1
+    finally:
+        if hasattr(app.state, "round_pool"):
+            delattr(app.state, "round_pool")
+
+
+def test_round_endpoint_bypasses_pool_when_overrides_present(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    from app.pool import RoundPool
+    from app.round import RoundMetrics
+    from app.schemas import RevealToken, Round
+    from app.telemetry import LOGGER_NAME
+
+    cached_round = Round(id="round-cached", prompt="cached", tokens=[RevealToken(word="hello")])
+    cached_metrics = RoundMetrics(
+        prompt_id="cached-prompt",
+        difficulty=0.5,
+        seed=None,
+        answer_latency_ms=1,
+        answer_retries=0,
+        answer_word_count=5,
+        choice_count=0,
+        distractor_sources={"synonym": 0, "embedding": 0, "random": 0},
+    )
+
+    async def builder():
+        return (cached_round, cached_metrics)
+
+    pool = RoundPool(size=1, builder=builder)
+    pool.put_nowait((cached_round, cached_metrics))
+    app.state.round_pool = pool
+
+    try:
+        with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
+            r = client.get("/round?prompt_id=sky-blue&seed=1")
+        assert r.status_code == 200
+        body = r.json()
+        assert body["id"] != "round-cached"
+        assert body["prompt"] == "Explain why the sky is blue."
+        assert pool.size == 1
+        records = [
+            rec for rec in caplog.records if rec.name == LOGGER_NAME and rec.message == "round"
+        ]
+        assert records[0].event["pool_hit"] is False
+    finally:
+        if hasattr(app.state, "round_pool"):
+            delattr(app.state, "round_pool")
+
+
+def test_round_endpoint_falls_back_to_build_when_pool_empty(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    from app.pool import RoundPool
+    from app.telemetry import LOGGER_NAME
+
+    async def builder():
+        raise AssertionError("builder should not be driven in this test")
+
+    pool = RoundPool(size=1, builder=builder)
+    app.state.round_pool = pool
+
+    try:
+        with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
+            r = client.get("/round")
+        assert r.status_code == 200
+        records = [
+            rec for rec in caplog.records if rec.name == LOGGER_NAME and rec.message == "round"
+        ]
+        assert records[0].event["pool_hit"] is False
+    finally:
+        if hasattr(app.state, "round_pool"):
+            delattr(app.state, "round_pool")

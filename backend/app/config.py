@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     choice_target: int = 15
     opening_reveal: int = 3
     log_level: str = "INFO"
+    round_pool_enabled: bool = True
+    round_pool_size: int = 3
+    round_pool_idle_sleep: float = 0.5
+    round_pool_error_sleep: float = 5.0
 
     @property
     def cors_origin_list(self) -> list[str]:

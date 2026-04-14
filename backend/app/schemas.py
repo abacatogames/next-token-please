@@ -32,3 +32,5 @@ class Health(BaseModel):
     ok: bool
     model: str
     ollama_reachable: bool
+    pool_size: int = 0
+    pool_ready: bool = False
