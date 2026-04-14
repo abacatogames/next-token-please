@@ -71,6 +71,13 @@ def test_digit_tokens_are_always_reveal() -> None:
     assert _is_forced_reveal(TaggedWord(5, "42", "CD"), opening=3)
 
 
+def test_no_consecutive_choices() -> None:
+    tagged = analyze(SAMPLE)
+    kinds = assign_kinds(tagged, opening=3, choice_target=15, rng=random.Random(0))
+    for a, b in zip(kinds, kinds[1:]):
+        assert not (a == "choice" and b == "choice"), "consecutive choices found"
+
+
 def test_three_char_word_is_forced_reveal() -> None:
     from app.generator.choice import _is_forced_reveal
     from app.generator.tokenize import TaggedWord
