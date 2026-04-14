@@ -21,6 +21,10 @@ Next Token Please is a browser game where the player role-plays as a language mo
 
 * Real programmers (and agents) don't use comments. The code should be obvious.
 
+### Naming
+
+* Use clear, consistent, descriptive names; avoid unnecessary abbreviations unless they are widely understood.
+
 ### Commands
 
 ```bash
