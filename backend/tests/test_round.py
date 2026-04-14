@@ -86,3 +86,16 @@ def test_random_prompt_selection_when_omitted() -> None:
     r = client.get("/round?seed=0").json()
     prompts = {p["prompt"] for p in client.get("/prompts").json()}
     assert r["prompt"] in prompts
+
+
+def test_build_context_lowercases_and_filters_non_alpha() -> None:
+    from app.round import _build_context
+
+    ctx = _build_context(["Hello", "World", "123", ".", "foo-bar", "sky"])
+    assert "hello" in ctx
+    assert "world" in ctx
+    assert "sky" in ctx
+    assert "123" not in ctx
+    assert "." not in ctx
+    assert "foo-bar" not in ctx
+    assert isinstance(ctx, frozenset)

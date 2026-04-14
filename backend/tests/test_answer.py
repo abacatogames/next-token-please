@@ -100,3 +100,36 @@ def test_truncate_to_sentence_keeps_whole_sentences() -> None:
     out = answer._truncate_to_sentence(text)
     assert out.endswith(".")
     assert len(out.split()) <= answer.MAX_WORDS + 10
+
+
+def test_strip_wrappers_handles_curly_quotes() -> None:
+    assert answer._strip_wrappers("\u201cHello\u201d") == "Hello"
+
+
+def test_strip_wrappers_handles_single_quotes() -> None:
+    assert answer._strip_wrappers("'Hello'") == "Hello"
+
+
+def test_strip_wrappers_leaves_unmatched_alone() -> None:
+    assert answer._strip_wrappers('"Hello') == '"Hello'
+    assert answer._strip_wrappers("Hello") == "Hello"
+
+
+def test_passes_rejects_missing_terminal_punctuation() -> None:
+    no_period = " ".join(["word"] * 35)
+    assert not answer._passes(no_period)
+
+
+def test_passes_accepts_exclamation_and_question() -> None:
+    text = " ".join(["word"] * 35)
+    assert answer._passes(text + "!")
+    assert answer._passes(text + "?")
+
+
+def test_passes_rejects_short_text() -> None:
+    assert not answer._passes("Too short.")
+
+
+def test_passes_rejects_preamble() -> None:
+    text = "Sure, " + " ".join(["word"] * 35) + "."
+    assert not answer._passes(text)

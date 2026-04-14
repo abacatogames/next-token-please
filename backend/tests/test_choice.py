@@ -61,3 +61,19 @@ def test_all_candidates_forced_reveal_means_no_choices() -> None:
     tagged = analyze("is on a at by to in it of or .")
     kinds = assign_kinds(tagged, opening=3, choice_target=5, rng=random.Random(0))
     assert all(k == "reveal" for k in kinds)
+
+
+def test_digit_tokens_are_always_reveal() -> None:
+    from app.generator.choice import _is_forced_reveal
+    from app.generator.tokenize import TaggedWord
+
+    assert _is_forced_reveal(TaggedWord(5, "2026", "CD"), opening=3)
+    assert _is_forced_reveal(TaggedWord(5, "42", "CD"), opening=3)
+
+
+def test_three_char_word_is_forced_reveal() -> None:
+    from app.generator.choice import _is_forced_reveal
+    from app.generator.tokenize import TaggedWord
+
+    assert _is_forced_reveal(TaggedWord(5, "the", "DT"), opening=3)
+    assert not _is_forced_reveal(TaggedWord(5, "blue", "JJ"), opening=3)
