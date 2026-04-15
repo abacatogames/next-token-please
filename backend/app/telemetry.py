@@ -66,14 +66,3 @@ def log_error(event: ErrorEvent, exc: BaseException | None = None) -> None:
     if exc is not None:
         kwargs["exc_info"] = (type(exc), exc, exc.__traceback__)
     logger.error("round_failed", **kwargs)
-
-
-__all__ = [
-    "ErrorEvent",
-    "JsonFormatter",
-    "LOGGER_NAME",
-    "RoundEvent",
-    "configure_logging",
-    "log_error",
-    "log_round",
-]

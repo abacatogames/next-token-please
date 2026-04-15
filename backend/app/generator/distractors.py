@@ -1,5 +1,6 @@
 import random
 from functools import lru_cache
+from typing import Literal
 
 import wordfreq
 from nltk.corpus import wordnet as wn
@@ -7,6 +8,8 @@ from nltk.stem import WordNetLemmatizer
 
 from app.config import settings
 from app.generator import embeddings
+
+Source = Literal["synonym", "embedding", "random"]
 
 _LEMMATIZER = WordNetLemmatizer()
 _PENN_TO_WN = {"N": "n", "V": "v", "J": "a", "R": "r"}
@@ -85,14 +88,14 @@ def _embedding_pool(correct: str, acceptable) -> list[str]:
 
 def _pick_one(
     syn_pool: list[str],
-    syn_source: str,
+    syn_source: Source,
     rand_pool: tuple[str, ...],
     *,
     difficulty: float,
     used: set[str],
     acceptable,
     rng: random.Random,
-) -> tuple[str, str]:
+) -> tuple[str, Source]:
     available_syns = [s for s in syn_pool if s.lower() not in used]
 
     def draw_from(pool: list[str] | tuple[str, ...], check: bool) -> str | None:
@@ -126,9 +129,11 @@ def _pick_one(
 
 
 def pick_full(correct: str, pos: str, context: frozenset[str], difficulty: float,
-              rng: random.Random) -> tuple[str, str, tuple[str, str]]:
+              rng: random.Random) -> tuple[str, str, tuple[Source, Source]]:
     acceptable, wn_pos = _build_acceptor(correct, pos, context)
     wordnet_pool = _synonym_pool(correct, wn_pos, acceptable)
+    syn_pool: list[str]
+    syn_source: Source
     if wordnet_pool:
         syn_pool, syn_source = wordnet_pool, "synonym"
     else:
@@ -146,9 +151,3 @@ def pick_full(correct: str, pos: str, context: frozenset[str], difficulty: float
     b, source_b = _pick_one(syn_pool, syn_source, rand_pool, difficulty=difficulty, used=used,
                             acceptable=acceptable, rng=rng)
     return a, b, (source_a, source_b)
-
-
-def pick(correct: str, pos: str, context: frozenset[str], difficulty: float,
-         rng: random.Random) -> tuple[str, str]:
-    a, b, _ = pick_full(correct, pos, context, difficulty, rng)
-    return a, b

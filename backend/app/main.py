@@ -17,10 +17,6 @@ from app.telemetry import ErrorEvent, configure_logging, log_error, log_round
 LOGGER = logging.getLogger("ntp.main")
 
 
-async def _pool_builder():
-    return await build_round()
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     configure_logging(settings.log_level)
@@ -37,7 +33,7 @@ async def lifespan(app: FastAPI):
             )
     pool = RoundPool(
         size=settings.round_pool_size,
-        builder=_pool_builder,
+        builder=build_round,
         idle_sleep=settings.round_pool_idle_sleep,
         error_sleep=settings.round_pool_error_sleep,
     )
@@ -67,7 +63,7 @@ def _current_pool() -> RoundPool | None:
 def _is_pool_request(difficulty: float | None, prompt_id: str | None, seed: int | None) -> bool:
     if prompt_id is not None or seed is not None:
         return False
-    return not (difficulty is not None and difficulty != settings.default_difficulty)
+    return difficulty is None or difficulty == settings.default_difficulty
 
 
 @app.get("/health", response_model=Health)

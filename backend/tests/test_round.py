@@ -173,29 +173,23 @@ def test_metrics_report_distractor_sources() -> None:
 
 def test_round_endpoint_uses_pool_when_available(caplog: pytest.LogCaptureFixture) -> None:
     from app.pool import RoundPool
-    from app.schemas import RevealToken, Round
-    from app.telemetry import LOGGER_NAME, RoundEvent
+    from app.schemas import RevealToken
+    from app.telemetry import LOGGER_NAME
+    from tests.conftest import make_pool_item
 
-    cached_round = Round(id="round-cached", prompt="cached", tokens=[RevealToken(word="hello")])
-    cached_event = RoundEvent(
-        round_id="round-cached",
-        prompt_id="cached-prompt",
-        difficulty=0.5,
-        seed=None,
-        pool_hit=False,
-        answer_latency_ms=42,
-        answer_retries=1,
-        answer_word_count=55,
+    cached = make_pool_item(
+        round_id="round-cached", prompt="cached", prompt_id="cached-prompt",
+        tokens=[RevealToken(word="hello")],
+        answer_latency_ms=42, answer_retries=1, answer_word_count=55,
         choice_count=12,
         distractor_sources={"synonym": 5, "embedding": 0, "random": 19},
-        total_latency_ms=0,
     )
 
     async def never_build():
         raise AssertionError("pool hit should skip build_round")
 
     pool = RoundPool(size=1, builder=never_build)
-    pool.put_nowait((cached_round, cached_event))
+    pool.put_nowait(cached)
     app.state.round_pool = pool
 
     try:
@@ -219,29 +213,21 @@ def test_round_endpoint_bypasses_pool_when_overrides_present(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     from app.pool import RoundPool
-    from app.schemas import RevealToken, Round
-    from app.telemetry import LOGGER_NAME, RoundEvent
+    from app.schemas import RevealToken
+    from app.telemetry import LOGGER_NAME
+    from tests.conftest import make_pool_item
 
-    cached_round = Round(id="round-cached", prompt="cached", tokens=[RevealToken(word="hello")])
-    cached_event = RoundEvent(
-        round_id="round-cached",
-        prompt_id="cached-prompt",
-        difficulty=0.5,
-        seed=None,
-        pool_hit=False,
-        answer_latency_ms=1,
-        answer_retries=0,
-        answer_word_count=5,
-        choice_count=0,
-        distractor_sources={"synonym": 0, "embedding": 0, "random": 0},
-        total_latency_ms=0,
+    cached = make_pool_item(
+        round_id="round-cached", prompt="cached", prompt_id="cached-prompt",
+        tokens=[RevealToken(word="hello")],
+        answer_latency_ms=1, answer_word_count=5,
     )
 
     async def builder():
-        return (cached_round, cached_event)
+        return cached
 
     pool = RoundPool(size=1, builder=builder)
-    pool.put_nowait((cached_round, cached_event))
+    pool.put_nowait(cached)
     app.state.round_pool = pool
 
     try:

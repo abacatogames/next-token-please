@@ -29,10 +29,6 @@ class RoundPool:
         self._task: asyncio.Task[None] | None = None
 
     @property
-    def max_size(self) -> int:
-        return self._size
-
-    @property
     def size(self) -> int:
         return self._queue.qsize()
 

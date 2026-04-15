@@ -22,29 +22,18 @@ def test_health_reports_model_and_ok() -> None:
 
 def test_health_reports_pool_state_when_present() -> None:
     from app.pool import RoundPool
-    from app.schemas import RevealToken, Round
-    from app.telemetry import RoundEvent
+    from app.schemas import RevealToken
+    from tests.conftest import make_pool_item
 
     async def builder():
         raise AssertionError("health should not drive builder")
 
     pool = RoundPool(size=2, builder=builder)
     pool.put_nowait(
-        (
-            Round(id="round-x", prompt="x", tokens=[RevealToken(word="x")]),
-            RoundEvent(
-                round_id="round-x",
-                prompt_id="x",
-                difficulty=0.5,
-                seed=None,
-                pool_hit=False,
-                answer_latency_ms=1,
-                answer_retries=0,
-                answer_word_count=1,
-                choice_count=0,
-                distractor_sources={"synonym": 0, "embedding": 0, "random": 0},
-                total_latency_ms=0,
-            ),
+        make_pool_item(
+            round_id="round-x", prompt="x", prompt_id="x",
+            tokens=[RevealToken(word="x")],
+            answer_latency_ms=1, answer_word_count=1,
         )
     )
     from app.main import app as fastapi_app
