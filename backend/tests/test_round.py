@@ -163,37 +163,39 @@ def test_error_event_emitted_on_unexpected_failure(caplog: pytest.LogCaptureFixt
 def test_metrics_report_distractor_sources() -> None:
     import asyncio
 
-    _, metrics = asyncio.run(build_round(prompt_id="sky-blue", difficulty=1.0, seed=3))
-    assert metrics.distractor_sources["embedding"] == 0
+    _, event = asyncio.run(build_round(prompt_id="sky-blue", difficulty=1.0, seed=3))
+    assert event.distractor_sources["embedding"] == 0
     assert (
-        metrics.distractor_sources["synonym"] + metrics.distractor_sources["random"]
-        == metrics.choice_count * 2
+        event.distractor_sources["synonym"] + event.distractor_sources["random"]
+        == event.choice_count * 2
     )
 
 
 def test_round_endpoint_uses_pool_when_available(caplog: pytest.LogCaptureFixture) -> None:
     from app.pool import RoundPool
-    from app.round import RoundMetrics
     from app.schemas import RevealToken, Round
-    from app.telemetry import LOGGER_NAME
+    from app.telemetry import LOGGER_NAME, RoundEvent
 
     cached_round = Round(id="round-cached", prompt="cached", tokens=[RevealToken(word="hello")])
-    cached_metrics = RoundMetrics(
+    cached_event = RoundEvent(
+        round_id="round-cached",
         prompt_id="cached-prompt",
         difficulty=0.5,
         seed=None,
+        pool_hit=False,
         answer_latency_ms=42,
         answer_retries=1,
         answer_word_count=55,
         choice_count=12,
         distractor_sources={"synonym": 5, "embedding": 0, "random": 19},
+        total_latency_ms=0,
     )
 
     async def never_build():
         raise AssertionError("pool hit should skip build_round")
 
     pool = RoundPool(size=1, builder=never_build)
-    pool.put_nowait((cached_round, cached_metrics))
+    pool.put_nowait((cached_round, cached_event))
     app.state.round_pool = pool
 
     try:
@@ -217,27 +219,29 @@ def test_round_endpoint_bypasses_pool_when_overrides_present(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     from app.pool import RoundPool
-    from app.round import RoundMetrics
     from app.schemas import RevealToken, Round
-    from app.telemetry import LOGGER_NAME
+    from app.telemetry import LOGGER_NAME, RoundEvent
 
     cached_round = Round(id="round-cached", prompt="cached", tokens=[RevealToken(word="hello")])
-    cached_metrics = RoundMetrics(
+    cached_event = RoundEvent(
+        round_id="round-cached",
         prompt_id="cached-prompt",
         difficulty=0.5,
         seed=None,
+        pool_hit=False,
         answer_latency_ms=1,
         answer_retries=0,
         answer_word_count=5,
         choice_count=0,
         distractor_sources={"synonym": 0, "embedding": 0, "random": 0},
+        total_latency_ms=0,
     )
 
     async def builder():
-        return (cached_round, cached_metrics)
+        return (cached_round, cached_event)
 
     pool = RoundPool(size=1, builder=builder)
-    pool.put_nowait((cached_round, cached_metrics))
+    pool.put_nowait((cached_round, cached_event))
     app.state.round_pool = pool
 
     try:

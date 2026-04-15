@@ -3,22 +3,25 @@ import asyncio
 import pytest
 
 from app.pool import RoundPool
-from app.round import RoundMetrics
 from app.schemas import RevealToken, Round
+from app.telemetry import RoundEvent
 
 
-def _item(i: int) -> tuple[Round, RoundMetrics]:
+def _item(i: int) -> tuple[Round, RoundEvent]:
     return (
         Round(id=f"round-{i}", prompt="ping", tokens=[RevealToken(word="hi")]),
-        RoundMetrics(
+        RoundEvent(
+            round_id=f"round-{i}",
             prompt_id="ping",
             difficulty=0.5,
             seed=None,
+            pool_hit=False,
             answer_latency_ms=10,
             answer_retries=0,
             answer_word_count=5,
             choice_count=0,
             distractor_sources={"synonym": 0, "embedding": 0, "random": 0},
+            total_latency_ms=0,
         ),
     )
 

@@ -1,6 +1,7 @@
 import logging
 import time
 from contextlib import asynccontextmanager
+from dataclasses import replace
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,7 +12,7 @@ from app.pool import RoundPool
 from app.prompts import PROMPTS
 from app.round import build_round
 from app.schemas import Health, PromptSummary, Round
-from app.telemetry import ErrorEvent, RoundEvent, configure_logging, log_error, log_round
+from app.telemetry import ErrorEvent, configure_logging, log_error, log_round
 
 LOGGER = logging.getLogger("ntp.main")
 
@@ -101,10 +102,10 @@ async def get_round(
         if pool is not None and _is_pool_request(difficulty, prompt_id, seed):
             item = pool.try_get()
         if item is not None:
-            round_obj, metrics = item
+            round_obj, event = item
             pool_hit = True
         else:
-            round_obj, metrics = await build_round(
+            round_obj, event = await build_round(
                 prompt_id=prompt_id, difficulty=difficulty, seed=seed
             )
     except KeyError as exc:
@@ -123,19 +124,9 @@ async def get_round(
         )
         raise
 
-    log_round(
-        RoundEvent(
-            round_id=round_obj.id,
-            prompt_id=metrics.prompt_id,
-            difficulty=metrics.difficulty,
-            seed=metrics.seed,
-            pool_hit=pool_hit,
-            answer_latency_ms=metrics.answer_latency_ms,
-            answer_retries=metrics.answer_retries,
-            answer_word_count=metrics.answer_word_count,
-            choice_count=metrics.choice_count,
-            distractor_sources=metrics.distractor_sources,
-            total_latency_ms=int((time.perf_counter() - t0) * 1000),
-        )
-    )
+    log_round(replace(
+        event,
+        pool_hit=pool_hit,
+        total_latency_ms=int((time.perf_counter() - t0) * 1000),
+    ))
     return round_obj

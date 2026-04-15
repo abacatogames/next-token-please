@@ -22,8 +22,8 @@ def test_health_reports_model_and_ok() -> None:
 
 def test_health_reports_pool_state_when_present() -> None:
     from app.pool import RoundPool
-    from app.round import RoundMetrics
     from app.schemas import RevealToken, Round
+    from app.telemetry import RoundEvent
 
     async def builder():
         raise AssertionError("health should not drive builder")
@@ -32,15 +32,18 @@ def test_health_reports_pool_state_when_present() -> None:
     pool.put_nowait(
         (
             Round(id="round-x", prompt="x", tokens=[RevealToken(word="x")]),
-            RoundMetrics(
+            RoundEvent(
+                round_id="round-x",
                 prompt_id="x",
                 difficulty=0.5,
                 seed=None,
+                pool_hit=False,
                 answer_latency_ms=1,
                 answer_retries=0,
                 answer_word_count=1,
                 choice_count=0,
                 distractor_sources={"synonym": 0, "embedding": 0, "random": 0},
+                total_latency_ms=0,
             ),
         )
     )

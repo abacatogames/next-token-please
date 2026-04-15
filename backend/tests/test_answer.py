@@ -34,7 +34,7 @@ def _mock_generate(*responses: str):
 @pytest.mark.asyncio
 async def test_passes_on_first_attempt() -> None:
     with patch("app.generator.answer.ollama_client.generate", _mock_generate(GOOD)) as m:
-        out = await answer.generate_answer("why is the sky blue?")
+        out = (await answer.generate_answer_full("why is the sky blue?")).text
     assert out.endswith(".")
     assert 30 <= len(out.split()) <= 80
     assert m.await_count == 1
@@ -44,7 +44,7 @@ async def test_passes_on_first_attempt() -> None:
 async def test_retries_on_preamble_then_accepts() -> None:
     with patch("app.generator.answer.ollama_client.generate",
                _mock_generate(PREAMBLE, GOOD)) as m:
-        out = await answer.generate_answer("why is the sky blue?")
+        out = (await answer.generate_answer_full("why is the sky blue?")).text
     assert not out.lower().startswith("sure")
     assert m.await_count == 2
 
@@ -53,7 +53,7 @@ async def test_retries_on_preamble_then_accepts() -> None:
 async def test_retries_on_short_answer() -> None:
     with patch("app.generator.answer.ollama_client.generate",
                _mock_generate(SHORT, SHORT, GOOD)) as m:
-        out = await answer.generate_answer("why is the sky blue?")
+        out = (await answer.generate_answer_full("why is the sky blue?")).text
     assert len(out.split()) >= 30
     assert m.await_count == 3
 
@@ -62,7 +62,7 @@ async def test_retries_on_short_answer() -> None:
 async def test_truncates_overlong_to_sentence_boundary() -> None:
     with patch("app.generator.answer.ollama_client.generate",
                _mock_generate(TOO_LONG)) as m:
-        out = await answer.generate_answer("why is the sky blue?")
+        out = (await answer.generate_answer_full("why is the sky blue?")).text
     assert len(out.split()) <= 80
     assert out.endswith((".", "!", "?"))
     assert m.await_count == 1
@@ -72,7 +72,7 @@ async def test_truncates_overlong_to_sentence_boundary() -> None:
 async def test_returns_best_effort_after_max_retries() -> None:
     with patch("app.generator.answer.ollama_client.generate",
                _mock_generate(SHORT, SHORT, SHORT)) as m:
-        out = await answer.generate_answer("why is the sky blue?")
+        out = (await answer.generate_answer_full("why is the sky blue?")).text
     assert out
     assert m.await_count == answer.RETRIES
 
@@ -82,7 +82,7 @@ async def test_strips_surrounding_quotes() -> None:
     wrapped = f'"{GOOD}"'
     with patch("app.generator.answer.ollama_client.generate",
                _mock_generate(wrapped)):
-        out = await answer.generate_answer("why is the sky blue?")
+        out = (await answer.generate_answer_full("why is the sky blue?")).text
     assert not out.startswith('"')
     assert not out.endswith('"')
 

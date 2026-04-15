@@ -26,6 +26,7 @@ def _random_pool() -> tuple[str, ...]:
     return tuple(w for w in words if w.isalpha() and len(w) >= 3)
 
 
+@lru_cache(maxsize=8192)
 def _lemma(word: str, wn_pos: str | None) -> str:
     return _LEMMATIZER.lemmatize(word.lower(), pos=wn_pos or "n")
 
@@ -106,9 +107,9 @@ def _pick_one(
         return None
 
     prefer_syn = rng.random() < difficulty
-    primary = available_syns if prefer_syn else list(rand_pool)
+    primary = available_syns if prefer_syn else rand_pool
     primary_source = syn_source if prefer_syn else "random"
-    secondary = list(rand_pool) if prefer_syn else available_syns
+    secondary = rand_pool if prefer_syn else available_syns
     secondary_source = "random" if prefer_syn else syn_source
 
     pick = draw_from(primary, check=not prefer_syn)
@@ -117,7 +118,7 @@ def _pick_one(
     pick = draw_from(secondary, check=(secondary_source == "random"))
     if pick is not None:
         return pick, secondary_source
-    pick = draw_from(list(rand_pool), check=False)
+    pick = draw_from(rand_pool, check=False)
     if pick is not None:
         return pick, "random"
     fallback = _FALLBACK[0] if _FALLBACK[0] not in used else _FALLBACK[1]

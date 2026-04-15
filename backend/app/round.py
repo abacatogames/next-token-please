@@ -1,7 +1,6 @@
 import random
 import time
 import uuid
-from dataclasses import dataclass, field
 
 from app.config import settings
 from app.generator.answer import generate_answer_full
@@ -10,20 +9,7 @@ from app.generator.distractors import pick_full as pick_distractors_full
 from app.generator.tokenize import analyze
 from app.prompts import PROMPTS, Prompt, get
 from app.schemas import ChoiceToken, RevealToken, Round, Token
-
-
-@dataclass
-class RoundMetrics:
-    prompt_id: str
-    difficulty: float
-    seed: int | None
-    answer_latency_ms: int
-    answer_retries: int
-    answer_word_count: int
-    choice_count: int
-    distractor_sources: dict[str, int] = field(
-        default_factory=lambda: {"synonym": 0, "embedding": 0, "random": 0}
-    )
+from app.telemetry import RoundEvent
 
 
 def _pick_prompt(prompt_id: str | None, rng: random.Random) -> Prompt:
@@ -40,7 +26,7 @@ def _build_context(words: list[str]) -> frozenset[str]:
 
 
 async def build_round(*, prompt_id: str | None = None, difficulty: float | None = None,
-                      seed: int | None = None) -> tuple[Round, RoundMetrics]:
+                      seed: int | None = None) -> tuple[Round, RoundEvent]:
     rng = random.Random(seed)
     selected = _pick_prompt(prompt_id, rng)
     diff = difficulty if difficulty is not None else settings.default_difficulty
@@ -71,14 +57,17 @@ async def build_round(*, prompt_id: str | None = None, difficulty: float | None 
 
     choice_count = sum(1 for t in tokens if t.kind == "choice")
     round_obj = Round(id=f"round-{uuid.uuid4().hex[:12]}", prompt=selected.text, tokens=tokens)
-    metrics = RoundMetrics(
+    event = RoundEvent(
+        round_id=round_obj.id,
         prompt_id=selected.id,
         difficulty=diff,
         seed=seed,
+        pool_hit=False,
         answer_latency_ms=answer_latency_ms,
         answer_retries=answer.retries,
         answer_word_count=answer.word_count,
         choice_count=choice_count,
         distractor_sources=sources,
+        total_latency_ms=0,
     )
-    return round_obj, metrics
+    return round_obj, event

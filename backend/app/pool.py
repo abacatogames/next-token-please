@@ -3,10 +3,10 @@ import contextlib
 import logging
 from collections.abc import Awaitable, Callable
 
-from app.round import RoundMetrics
 from app.schemas import Round
+from app.telemetry import RoundEvent
 
-PoolItem = tuple[Round, RoundMetrics]
+PoolItem = tuple[Round, RoundEvent]
 Builder = Callable[[], Awaitable[PoolItem]]
 
 LOGGER = logging.getLogger("ntp.pool")

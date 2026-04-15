@@ -91,8 +91,3 @@ async def generate_answer_full(prompt: str) -> AnswerResult:
             return AnswerResult(text=text, retries=attempts - 1, word_count=_word_count(text))
     final = last or "No answer available."
     return AnswerResult(text=final, retries=attempts - 1, word_count=_word_count(final))
-
-
-async def generate_answer(prompt: str) -> str:
-    result = await generate_answer_full(prompt)
-    return result.text
