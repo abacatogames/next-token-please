@@ -366,6 +366,24 @@ def test_context_vector_influences_ranking(_install_technical_embeddings) -> Non
     assert (gradient_with - gradient_without) >= (carrot_with - carrot_without)
 
 
+def test_form_penalty_penalizes_ing_mismatch() -> None:
+    from app.generator.distractors import _form_penalty
+
+    assert _form_penalty("jog", "running", "VBG") == 1.0
+    assert _form_penalty("jogging", "running", "VBG") == 0.0
+    assert _form_penalty("jog", "run", "VB") == 0.0
+    assert _form_penalty("jogging", "run", "VB") == 1.0
+
+
+def test_form_penalty_penalizes_plural_mismatch() -> None:
+    from app.generator.distractors import _form_penalty
+
+    assert _form_penalty("cat", "dogs", "NNS") == 1.0
+    assert _form_penalty("cats", "dogs", "NNS") == 0.0
+    assert _form_penalty("cat", "dog", "NN") == 0.0
+    assert _form_penalty("dogs", "cat", "NN") == 1.0
+
+
 def test_determinism_under_unified_scoring(_install_technical_embeddings) -> None:
     r1 = pick_full("backpropagation", "NN", _context([]), difficulty=0.7, rng=random.Random(99))
     r2 = pick_full("backpropagation", "NN", _context([]), difficulty=0.7, rng=random.Random(99))

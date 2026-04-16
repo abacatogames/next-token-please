@@ -178,6 +178,27 @@ def _context_vector(context_tokens: tuple[str, ...]) -> np.ndarray | None:
     return mean / norm
 
 
+def _form_penalty(cand: str, correct: str, penn_pos: str | None) -> float:
+    if not penn_pos:
+        return 0.0
+    wn_pos = _penn_to_wn(penn_pos)
+    if wn_pos is None:
+        return 0.0
+    c_low = correct.lower()
+    d_low = cand.lower()
+    if wn_pos == "v":
+        c_ing = c_low.endswith("ing") and _lemma(c_low, "v") != c_low
+        d_ing = d_low.endswith("ing") and _lemma(d_low, "v") != d_low
+        if c_ing != d_ing:
+            return 1.0
+    elif wn_pos == "n":
+        c_pl = _lemma(c_low, "n") != c_low
+        d_pl = _lemma(d_low, "n") != d_low
+        if c_pl != d_pl:
+            return 1.0
+    return 0.0
+
+
 def _gather_candidates(
     correct: str, wn_pos: str | None, acceptable
 ) -> list[tuple[str, Source]]:
@@ -221,11 +242,13 @@ def _score_candidate(
     context_vec: np.ndarray | None,
     correct_zipf: float,
     wn_pos: str | None,
+    penn_pos: str | None = None,
 ) -> float:
     alpha = settings.distractor_weight_similarity
     beta = settings.distractor_weight_context
     gamma = settings.distractor_weight_frequency
     delta = settings.distractor_penalty_lemma
+    epsilon = settings.distractor_penalty_form
 
     cand_vec = embeddings.unit_vector(cand)
     sim = float(np.dot(cand_vec, correct_vec)) if (cand_vec is not None and correct_vec is not None) else 0.0
@@ -233,8 +256,9 @@ def _score_candidate(
     cand_zipf = wordfreq.zipf_frequency(cand.lower(), "en")
     freq = 1.0 - min(1.0, abs(cand_zipf - correct_zipf) / 3.0)
     lemma_pen = 1.0 if _lemma(cand, wn_pos) == _lemma(correct, wn_pos) else 0.0
+    form_pen = _form_penalty(cand, correct, penn_pos)
 
-    return alpha * sim + beta * ctx + gamma * freq - delta * lemma_pen
+    return alpha * sim + beta * ctx + gamma * freq - delta * lemma_pen - epsilon * form_pen
 
 
 def _pick_ranked(
@@ -301,7 +325,7 @@ def pick_full(
     candidates = _gather_candidates(correct, wn_pos, acceptable)
     scored = sorted(
         [
-            (w, src, _score_candidate(w, correct, correct_vec, context_vec, correct_zipf, wn_pos))
+            (w, src, _score_candidate(w, correct, correct_vec, context_vec, correct_zipf, wn_pos, pos))
             for w, src in candidates
         ],
         key=lambda x: x[2],
