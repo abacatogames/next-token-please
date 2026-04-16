@@ -19,7 +19,6 @@ class Settings(BaseSettings):
     embeddings_model: str = "glove-wiki-gigaword-100"
     embeddings_pool_size: int = 5000
     embeddings_top_k: int = 40
-    distractor_unified_pool: bool = True
     distractor_weight_similarity: float = 0.55
     distractor_weight_context: float = 0.25
     distractor_weight_frequency: float = 0.20
