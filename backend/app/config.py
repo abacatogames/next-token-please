@@ -6,7 +6,7 @@ class Settings(BaseSettings):
 
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.2:1b"
-    default_difficulty: float = 0.5
+    default_difficulty: float = 1.0
     cors_origins: str = "http://localhost:5173"
     choice_target: int = 15
     opening_reveal: int = 3

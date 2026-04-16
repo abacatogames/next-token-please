@@ -10,7 +10,7 @@ function nextMock(): Round {
 }
 
 export async function fetchRound(
-	difficulty = 0.7,
+	difficulty = 1.0,
 	baseUrl: string | undefined = import.meta.env.VITE_API_URL,
 ): Promise<Round> {
 	if (!baseUrl) return nextMock();
