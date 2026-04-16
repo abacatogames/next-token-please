@@ -175,6 +175,47 @@ def test_embedding_pool_ignored_when_wordnet_available() -> None:
         embeddings.reset_for_tests()
 
 
+def test_cohyponym_pool_used_when_synonyms_absent() -> None:
+    """oxygen has no acceptable direct synonyms (only 'o', filtered by len<3).
+    Co-hyponyms (chemical elements) should fill the pool at high difficulty."""
+    from nltk.corpus import wordnet as wn
+
+    expected_cohyps = {
+        name.lower()
+        for syn in wn.synsets("oxygen", pos="n")
+        for hypernym in syn.hypernyms()
+        for sib in hypernym.hyponyms()
+        for name in sib.lemma_names()
+        if name.isalpha() and "_" not in name and len(name) >= 3
+        and name.lower() != "oxygen"
+    }
+    assert "hydrogen" in expected_cohyps
+    assert "helium" in expected_cohyps
+
+    rng = random.Random(0)
+    hit_count = 0
+    trials = 40
+    for _ in range(trials):
+        a, b, _ = pick_full("oxygen", "NN", _context([]), difficulty=1.0, rng=rng)
+        for d in (a, b):
+            if d.lower() in expected_cohyps:
+                hit_count += 1
+    assert hit_count >= trials * 2 * 0.8
+
+
+def test_cohyponym_source_is_synonym() -> None:
+    """Co-hyponyms should carry 'synonym' source label."""
+    rng = random.Random(99)
+    total = 40
+    synonym_source_count = 0
+    for _ in range(total):
+        _, _, (src_a, src_b) = pick_full(
+            "oxygen", "NN", _context([]), difficulty=1.0, rng=rng
+        )
+        synonym_source_count += (src_a == "synonym") + (src_b == "synonym")
+    assert synonym_source_count >= total * 2 * 0.8
+
+
 def test_embedding_fallback_oov_degrades_to_random() -> None:
     vocab = ["alpha", "beta", "gamma"]
     rng_np = np.random.default_rng(3)

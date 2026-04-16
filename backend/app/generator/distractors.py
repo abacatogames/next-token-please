@@ -15,6 +15,7 @@ _LEMMATIZER = WordNetLemmatizer()
 _PENN_TO_WN = {"N": "n", "V": "v", "J": "a", "R": "r"}
 _RANDOM_POOL_SIZE = 5000
 _FALLBACK = ("something", "nothing")
+_COHYPONYM_THRESHOLD = 1
 
 
 def _penn_to_wn(pos: str) -> str | None:
@@ -44,6 +45,8 @@ def _build_acceptor(correct: str, pos: str, context: frozenset[str]):
             return False
         if not candidate.isalpha():
             return False
+        if len(candidate) < 3:
+            return False
         low = candidate.lower()
         if low == correct_lower:
             return False
@@ -52,6 +55,24 @@ def _build_acceptor(correct: str, pos: str, context: frozenset[str]):
         return _lemma(candidate, wn_pos) != correct_lemma
 
     return acceptable, wn_pos
+
+
+@lru_cache(maxsize=4096)
+def _cohyponym_names(word: str, wn_pos: str | None) -> tuple[str, ...]:
+    """Raw lemma names from co-hyponym traversal (unfiltered, safe to cache)."""
+    if wn_pos is None:
+        return ()
+    seen: set[str] = set()
+    result: list[str] = []
+    for syn in wn.synsets(word, pos=wn_pos):
+        for hypernym in syn.hypernyms():
+            for sibling_syn in hypernym.hyponyms():
+                for name in sibling_syn.lemma_names():
+                    low = name.lower()
+                    if low not in seen:
+                        seen.add(low)
+                        result.append(name)
+    return tuple(result)
 
 
 def _synonym_pool(correct: str, wn_pos: str | None, acceptable) -> list[str]:
@@ -67,6 +88,16 @@ def _synonym_pool(correct: str, wn_pos: str | None, acceptable) -> list[str]:
             seen.add(low)
             if acceptable(name):
                 pool.append(name)
+
+    if len(pool) <= _COHYPONYM_THRESHOLD:
+        for name in _cohyponym_names(correct, wn_pos):
+            low = name.lower()
+            if low in seen:
+                continue
+            seen.add(low)
+            if acceptable(name):
+                pool.append(name)
+
     return pool
 
 
