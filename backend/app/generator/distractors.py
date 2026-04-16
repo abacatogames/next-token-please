@@ -159,6 +159,25 @@ def _pick_one(
     return fallback, "random"
 
 
+def _context_vector(context_tokens: tuple[str, ...]) -> np.ndarray | None:
+    if not settings.embeddings_enabled:
+        return None
+    vecs = []
+    for token in context_tokens[-settings.distractor_context_window:]:
+        if not token.isalpha():
+            continue
+        vec = embeddings.unit_vector(token)
+        if vec is not None:
+            vecs.append(vec)
+    if not vecs:
+        return None
+    mean = np.mean(vecs, axis=0)
+    norm = float(np.linalg.norm(mean))
+    if norm == 0.0:
+        return None
+    return mean / norm
+
+
 def _gather_candidates(
     correct: str, wn_pos: str | None, acceptable
 ) -> list[tuple[str, Source]]:
@@ -244,11 +263,16 @@ def _pick_ranked(
 def pick_full(
     correct: str,
     pos: str,
-    context: frozenset[str],
+    context: tuple[str, ...],
     difficulty: float,
     rng: random.Random,
+    *,
+    context_set: frozenset[str] | None = None,
 ) -> tuple[str, str, tuple[Source, Source]]:
-    acceptable, wn_pos = _build_acceptor(correct, pos, context)
+    effective_context = context_set if context_set is not None else frozenset(
+        w.lower() for w in context if w.isalpha()
+    )
+    acceptable, wn_pos = _build_acceptor(correct, pos, effective_context)
 
     if not settings.distractor_unified_pool:
         wordnet_pool = _synonym_pool(correct, wn_pos, acceptable)
@@ -273,10 +297,11 @@ def pick_full(
 
     correct_vec = embeddings.unit_vector(correct)
     correct_zipf = wordfreq.zipf_frequency(correct.lower(), "en")
+    context_vec = _context_vector(context)
     candidates = _gather_candidates(correct, wn_pos, acceptable)
     scored = sorted(
         [
-            (w, src, _score_candidate(w, correct, correct_vec, None, correct_zipf, wn_pos))
+            (w, src, _score_candidate(w, correct, correct_vec, context_vec, correct_zipf, wn_pos))
             for w, src in candidates
         ],
         key=lambda x: x[2],

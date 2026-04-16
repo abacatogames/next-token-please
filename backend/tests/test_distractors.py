@@ -8,8 +8,8 @@ from app.generator import embeddings
 from app.generator.distractors import _random_pool, pick_full
 
 
-def _context(words: list[str]) -> frozenset[str]:
-    return frozenset(w.lower() for w in words)
+def _context(words: list[str]) -> tuple[str, ...]:
+    return tuple(w.lower() for w in words)
 
 
 def test_random_pool_is_alpha_and_len_ge_3() -> None:
@@ -343,6 +343,27 @@ def test_difficulty_monotonicity(_install_technical_embeddings) -> None:
 
     for i in range(len(mean_sims) - 1):
         assert mean_sims[i] <= mean_sims[i + 1] + 0.1
+
+
+def test_context_vector_influences_ranking(_install_technical_embeddings) -> None:
+    from app.generator.distractors import _context_vector, _penn_to_wn, _score_candidate
+
+    correct = "backpropagation"
+    wn_pos = _penn_to_wn("NN")
+    correct_vec = embeddings.unit_vector(correct)
+    correct_zipf = wordfreq.zipf_frequency(correct.lower(), "en")
+
+    ml_context = ("gradient", "training", "optimization", "descent", "epoch")
+    ctx_vec = _context_vector(ml_context)
+    assert ctx_vec is not None
+
+    gradient_with = _score_candidate("gradient", correct, correct_vec, ctx_vec, correct_zipf, wn_pos)
+    gradient_without = _score_candidate("gradient", correct, correct_vec, None, correct_zipf, wn_pos)
+    carrot_with = _score_candidate("carrot", correct, correct_vec, ctx_vec, correct_zipf, wn_pos)
+    carrot_without = _score_candidate("carrot", correct, correct_vec, None, correct_zipf, wn_pos)
+
+    assert gradient_with >= gradient_without
+    assert (gradient_with - gradient_without) >= (carrot_with - carrot_without)
 
 
 def test_determinism_under_unified_scoring(_install_technical_embeddings) -> None:

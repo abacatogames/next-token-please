@@ -46,14 +46,19 @@ async def build_round(*, prompt_id: str | None = None, difficulty: float | None 
 
     sources = {"synonym": 0, "embedding": 0, "random": 0}
     tokens: list[Token] = []
+    prefix: list[str] = []
     for tw, kind in zip(tagged, kinds, strict=True):
         if kind == "reveal":
             tokens.append(RevealToken(word=tw.word))
+            prefix.append(tw.word)
             continue
-        d1, d2, src = pick_distractors_full(tw.word, tw.pos, context, diff, rng)
+        d1, d2, src = pick_distractors_full(
+            tw.word, tw.pos, tuple(prefix), diff, rng, context_set=context,
+        )
         sources[src[0]] += 1
         sources[src[1]] += 1
         tokens.append(ChoiceToken(correct=tw.word, distractors=(d1, d2)))
+        prefix.append(tw.word)
 
     choice_count = sum(1 for t in tokens if t.kind == "choice")
     round_obj = Round(id=f"round-{uuid.uuid4().hex[:12]}", prompt=selected.text, tokens=tokens)
