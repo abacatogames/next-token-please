@@ -26,6 +26,16 @@ class Settings(BaseSettings):
     distractor_penalty_form: float = 0.15
     distractor_context_window: int = 8
     distractor_rank_window_pct: float = 0.10
+    prompt_generation_enabled: bool = True
+    prompt_generation_temperature: float = 0.95
+    prompt_generation_top_p: float = 0.95
+    prompt_generation_batch_size: int = 5
+    prompt_store_size: int = 100
+    prompt_store_idle_sleep: float = 2.0
+    prompt_store_error_sleep: float = 10.0
+    prompt_store_cache_path: str = "data/prompt_cache.json"
+    prompt_min_words: int = 4
+    prompt_max_words: int = 20
 
     @property
     def cors_origin_list(self) -> list[str]:

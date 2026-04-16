@@ -7,7 +7,7 @@ class Prompt:
     text: str
 
 
-PROMPTS: list[Prompt] = [
+SEED_PROMPTS: list[Prompt] = [
     Prompt("sky-blue", "Explain why the sky is blue."),
     Prompt("list-vs-tuple", "What is the difference between a list and a tuple in Python?"),
     Prompt("photosynthesis", "How does photosynthesis work?"),
@@ -72,7 +72,3 @@ PROMPTS: list[Prompt] = [
     Prompt("fish-internet", "What would the internet look like if fish had invented it?"),
     Prompt("email-apology", "Write an apology email from a spam email to humanity."),
 ]
-
-
-def get(prompt_id: str) -> Prompt | None:
-    return next((p for p in PROMPTS if p.id == prompt_id), None)

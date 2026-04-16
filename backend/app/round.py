@@ -7,18 +7,20 @@ from app.generator.answer import generate_answer_full
 from app.generator.choice import assign_kinds
 from app.generator.distractors import pick_full as pick_distractors_full
 from app.generator.tokenize import analyze
-from app.prompts import PROMPTS, Prompt, get
+from app.prompts import Prompt
 from app.schemas import ChoiceToken, RevealToken, Round, Token
+from app.store import get_store
 from app.telemetry import RoundEvent
 
 
 def _pick_prompt(prompt_id: str | None, rng: random.Random) -> Prompt:
+    store = get_store()
     if prompt_id is not None:
-        p = get(prompt_id)
+        p = store.get(prompt_id)
         if p is None:
             raise KeyError(prompt_id)
         return p
-    return rng.choice(PROMPTS)
+    return store.pick(rng)
 
 
 def _build_context(words: list[str]) -> frozenset[str]:

@@ -1,20 +1,59 @@
 import logging
+import random
 import time
 from contextlib import asynccontextmanager
 from dataclasses import replace
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.generator import embeddings, ollama_client
+from app.generator import prompt as prompt_gen
 from app.pool import RoundPool
-from app.prompts import PROMPTS
+from app.prompt_store import PromptStore
+from app.prompts import SEED_PROMPTS
 from app.round import build_round
 from app.schemas import Health, PromptSummary, Round
-from app.telemetry import ErrorEvent, configure_logging, log_error, log_round
+from app.store import get_store, reset_store, set_store
+from app.telemetry import (
+    ErrorEvent,
+    PromptGenEvent,
+    configure_logging,
+    log_error,
+    log_prompt_gen,
+    log_round,
+)
 
 LOGGER = logging.getLogger("ntp.main")
+
+
+def _build_batch_producer():
+    rng = random.Random()
+
+    async def producer(existing_texts: frozenset[str]) -> tuple[list[str], dict]:
+        cell = prompt_gen.sample_cell(rng)
+        t0 = time.perf_counter()
+        result = await prompt_gen.generate_batch(
+            cell,
+            count=settings.prompt_generation_batch_size,
+            existing_texts=existing_texts,
+            temperature=settings.prompt_generation_temperature,
+            top_p=settings.prompt_generation_top_p,
+            min_words=settings.prompt_min_words,
+            max_words=settings.prompt_max_words,
+        )
+        latency_ms = int((time.perf_counter() - t0) * 1000)
+        log_prompt_gen(PromptGenEvent(
+            theme=cell.theme, tone=cell.tone, difficulty=cell.difficulty,
+            requested=result.requested, accepted=result.accepted,
+            rejected=result.rejected, retries=result.retries,
+            latency_ms=latency_ms,
+        ))
+        return result.prompts, {}
+
+    return producer
 
 
 @asynccontextmanager
@@ -31,6 +70,20 @@ async def lifespan(app: FastAPI):
                 "embeddings_load_failed",
                 extra={"event": {"error": type(exc).__name__, "message": str(exc)}},
             )
+
+    producer = _build_batch_producer() if settings.prompt_generation_enabled else None
+    store = PromptStore(
+        seeds=SEED_PROMPTS,
+        cache_path=Path(settings.prompt_store_cache_path),
+        max_size=settings.prompt_store_size,
+        idle_sleep=settings.prompt_store_idle_sleep,
+        error_sleep=settings.prompt_store_error_sleep,
+        batch_producer=producer,
+    )
+    set_store(store)
+    if producer is not None:
+        store.start()
+
     pool = RoundPool(
         size=settings.round_pool_size,
         builder=build_round,
@@ -40,10 +93,13 @@ async def lifespan(app: FastAPI):
     if settings.round_pool_enabled and settings.round_pool_size > 0:
         pool.start()
     app.state.round_pool = pool
+    app.state.prompt_store = store
     try:
         yield
     finally:
         await pool.stop()
+        await store.stop()
+        reset_store()
 
 
 app = FastAPI(title="Next Token Please", version="0.1.0", lifespan=lifespan)
@@ -81,7 +137,7 @@ async def health() -> Health:
 
 @app.get("/prompts", response_model=list[PromptSummary])
 async def list_prompts() -> list[PromptSummary]:
-    return [PromptSummary(id=p.id, prompt=p.text) for p in PROMPTS]
+    return [PromptSummary(id=p.id, prompt=p.text) for p in get_store().all()]
 
 
 @app.get("/round", response_model=Round)

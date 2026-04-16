@@ -22,6 +22,18 @@ class RoundEvent:
 
 
 @dataclass
+class PromptGenEvent:
+    theme: str
+    tone: str
+    difficulty: str
+    requested: int
+    accepted: int
+    rejected: int
+    retries: int
+    latency_ms: int
+
+
+@dataclass
 class ErrorEvent:
     round_id: str
     prompt_id: str | None
@@ -58,6 +70,10 @@ def configure_logging(level: str = "INFO") -> None:
 
 def log_round(event: RoundEvent) -> None:
     logging.getLogger(LOGGER_NAME).info("round", extra={"event": asdict(event)})
+
+
+def log_prompt_gen(event: PromptGenEvent) -> None:
+    logging.getLogger(LOGGER_NAME).info("prompt_gen", extra={"event": asdict(event)})
 
 
 def log_error(event: ErrorEvent, exc: BaseException | None = None) -> None:
