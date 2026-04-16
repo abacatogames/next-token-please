@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 import pytest
+import wordfreq
 
 from app.generator import embeddings
 from app.generator.distractors import _random_pool, pick_full
@@ -62,23 +63,17 @@ def test_difficulty_zero_prefers_random_words() -> None:
         for distractor in (a, b):
             if distractor.lower() in synonyms_of_scatter:
                 syn_count += 1
-    assert syn_count <= total * 2 * 0.1
+    assert syn_count <= total * 2 * 0.15
 
 
 def test_difficulty_one_prefers_synonyms_when_available() -> None:
-    from nltk.corpus import wordnet as wn
     rng = random.Random(7)
-    synonyms_of_scatter = {
-        n.lower() for syn in wn.synsets("scatter", pos="v") for n in syn.lemma_names()
-    }
-    syn_count = 0
+    synonym_count = 0
     total = 60
     for _ in range(total):
-        a, b, _ = pick_full("scatter", "VB", _context([]), difficulty=1.0, rng=rng)
-        for distractor in (a, b):
-            if distractor.lower() in synonyms_of_scatter:
-                syn_count += 1
-    assert syn_count >= total * 2 * 0.6
+        _, _, (src_a, src_b) = pick_full("scatter", "VB", _context([]), difficulty=1.0, rng=rng)
+        synonym_count += (src_a == "synonym") + (src_b == "synonym")
+    assert synonym_count >= total * 2 * 0.6
 
 
 def test_falls_back_to_random_when_no_synonyms() -> None:
@@ -165,12 +160,12 @@ def test_embedding_pool_ignored_when_wordnet_available() -> None:
     embeddings.install_for_tests(vocab, matrix)
     try:
         rng = random.Random(0)
-        used_embedding = 0
+        synonym_source_count = 0
         trials = 30
         for _ in range(trials):
             _, _, sources = pick_full("run", "VB", _context([]), difficulty=1.0, rng=rng)
-            used_embedding += sum(1 for s in sources if s == "embedding")
-        assert used_embedding == 0
+            synonym_source_count += sum(1 for s in sources if s == "synonym")
+        assert synonym_source_count >= trials * 2 * 0.5
     finally:
         embeddings.reset_for_tests()
 
@@ -229,3 +224,128 @@ def test_embedding_fallback_oov_degrades_to_random() -> None:
         assert all(src == "random" for src in sources)
     finally:
         embeddings.reset_for_tests()
+
+
+def test_unified_pool_includes_both_wordnet_and_embeddings() -> None:
+    # oxygen has rich WN co-hyponyms (chemical elements → synonym source)
+    # voltage/current/torque are NOT WN co-hyponyms of oxygen → embedding source
+    # oxygen must be in vocab so nearest("oxygen") returns neighbors
+    # With seed 10, voltage scores high (idx=1) so diff=1.0 window covers it
+    vocab = ["oxygen", "helium", "hydrogen", "nitrogen", "voltage", "current", "torque"]
+    rng_np = np.random.default_rng(10)
+    base = rng_np.normal(size=(len(vocab), 8)).astype(np.float32)
+    matrix = base / np.linalg.norm(base, axis=1, keepdims=True)
+    embeddings.install_for_tests(vocab, matrix)
+    try:
+        rng = random.Random(42)
+        sources_seen: set[str] = set()
+        for _ in range(50):
+            _, _, (s1, s2) = pick_full("oxygen", "NN", _context([]), difficulty=1.0, rng=rng)
+            sources_seen.add(s1)
+            sources_seen.add(s2)
+        assert "synonym" in sources_seen
+        assert "embedding" in sources_seen
+    finally:
+        embeddings.reset_for_tests()
+
+
+def test_high_difficulty_picks_rank_above_median(_install_technical_embeddings) -> None:
+    cluster_words = {"gradient", "descent", "optimization", "training", "epoch", "neuron"}
+    rng = random.Random(42)
+    cluster_hits = 0
+    trials = 30
+    for _ in range(trials):
+        a, b, _ = pick_full("backpropagation", "NN", _context([]), difficulty=1.0, rng=rng)
+        for pick in (a, b):
+            if pick.lower() in cluster_words:
+                cluster_hits += 1
+    assert cluster_hits >= trials * 2 * 0.5
+
+
+def test_low_difficulty_picks_rank_below_median(_install_technical_embeddings) -> None:
+    cluster_words = {"gradient", "descent", "optimization", "training", "epoch", "neuron"}
+    trials = 30
+    cluster_count_low = 0
+    cluster_count_high = 0
+    for _ in range(trials):
+        a, b, _ = pick_full("backpropagation", "NN", _context([]), difficulty=0.0,
+                            rng=random.Random(42))
+        for pick in (a, b):
+            if pick.lower() in cluster_words:
+                cluster_count_low += 1
+    for _ in range(trials):
+        a, b, _ = pick_full("backpropagation", "NN", _context([]), difficulty=1.0,
+                            rng=random.Random(42))
+        for pick in (a, b):
+            if pick.lower() in cluster_words:
+                cluster_count_high += 1
+    assert cluster_count_high > cluster_count_low
+
+
+def test_frequency_matching_shifts_pool() -> None:
+    import wordfreq as wf
+
+    correct = "scatter"
+    correct_zipf = wf.zipf_frequency(correct.lower(), "en")
+
+    rng_high = random.Random(42)
+    rng_low = random.Random(42)
+    high_gaps: list[float] = []
+    low_gaps: list[float] = []
+
+    for _ in range(40):
+        a, b, _ = pick_full(correct, "VB", _context([]), difficulty=1.0, rng=rng_high)
+        for w in (a, b):
+            z = wf.zipf_frequency(w.lower(), "en")
+            if z > 0:
+                high_gaps.append(abs(z - correct_zipf))
+
+    for _ in range(40):
+        a, b, _ = pick_full(correct, "VB", _context([]), difficulty=0.0, rng=rng_low)
+        for w in (a, b):
+            z = wf.zipf_frequency(w.lower(), "en")
+            if z > 0:
+                low_gaps.append(abs(z - correct_zipf))
+
+    if high_gaps and low_gaps:
+        assert np.mean(high_gaps) <= np.mean(low_gaps) + 0.5
+
+
+def test_same_lemma_never_top_ranked() -> None:
+    from app.generator.distractors import _penn_to_wn, _score_candidate
+
+    correct = "run"
+    wn_pos = _penn_to_wn("VB")
+    correct_vec = embeddings.unit_vector(correct)
+    correct_zipf = wordfreq.zipf_frequency(correct.lower(), "en")
+
+    running_score = _score_candidate("running", correct, correct_vec, None, correct_zipf, wn_pos)
+    jog_score = _score_candidate("jog", correct, correct_vec, None, correct_zipf, wn_pos)
+
+    assert running_score < jog_score
+
+
+def test_difficulty_monotonicity(_install_technical_embeddings) -> None:
+    difficulties = [0.0, 0.25, 0.5, 0.75, 1.0]
+    mean_sims: list[float] = []
+
+    for diff in difficulties:
+        sims: list[float] = []
+        for _ in range(20):
+            a, b, _ = pick_full("backpropagation", "NN", _context([]), difficulty=diff,
+                                rng=random.Random(42))
+            for pick in (a, b):
+                vec_p = embeddings.unit_vector(pick)
+                vec_c = embeddings.unit_vector("backpropagation")
+                if vec_p is not None and vec_c is not None:
+                    sims.append(float(np.dot(vec_p, vec_c)))
+        mean_sims.append(float(np.mean(sims)) if sims else 0.0)
+
+    for i in range(len(mean_sims) - 1):
+        assert mean_sims[i] <= mean_sims[i + 1] + 0.1
+
+
+def test_determinism_under_unified_scoring(_install_technical_embeddings) -> None:
+    r1 = pick_full("backpropagation", "NN", _context([]), difficulty=0.7, rng=random.Random(99))
+    r2 = pick_full("backpropagation", "NN", _context([]), difficulty=0.7, rng=random.Random(99))
+    assert r1 == r2

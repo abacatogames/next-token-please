@@ -18,7 +18,15 @@ class Settings(BaseSettings):
     embeddings_enabled: bool = True
     embeddings_model: str = "glove-wiki-gigaword-100"
     embeddings_pool_size: int = 5000
-    embeddings_top_k: int = 20
+    embeddings_top_k: int = 40
+    distractor_unified_pool: bool = True
+    distractor_weight_similarity: float = 0.55
+    distractor_weight_context: float = 0.25
+    distractor_weight_frequency: float = 0.20
+    distractor_penalty_lemma: float = 0.40
+    distractor_penalty_form: float = 0.15
+    distractor_context_window: int = 8
+    distractor_rank_window_pct: float = 0.10
 
     @property
     def cors_origin_list(self) -> list[str]:

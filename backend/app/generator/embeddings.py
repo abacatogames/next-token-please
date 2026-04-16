@@ -131,6 +131,21 @@ def install_for_tests(vocab: list[str], matrix: Any) -> EmbeddingIndex:
     return _index
 
 
+def unit_vector(word: str) -> Any | None:
+    if _index is None:
+        return None
+    import numpy as np
+    low = word.lower()
+    kv = _index.vectors
+    if low not in kv.key_to_index:
+        return None
+    vec = kv.get_vector(low).astype(np.float32)
+    norm = float(np.linalg.norm(vec))
+    if norm == 0.0:
+        return None
+    return vec / norm
+
+
 def reset_for_tests() -> None:
     global _index
     _index = None

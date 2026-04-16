@@ -2,6 +2,7 @@ import random
 from functools import lru_cache
 from typing import Literal
 
+import numpy as np
 import wordfreq
 from nltk.corpus import wordnet as wn
 from nltk.stem import WordNetLemmatizer
@@ -59,7 +60,6 @@ def _build_acceptor(correct: str, pos: str, context: frozenset[str]):
 
 @lru_cache(maxsize=4096)
 def _cohyponym_names(word: str, wn_pos: str | None) -> tuple[str, ...]:
-    """Raw lemma names from co-hyponym traversal (unfiltered, safe to cache)."""
     if wn_pos is None:
         return ()
     seen: set[str] = set()
@@ -159,26 +159,150 @@ def _pick_one(
     return fallback, "random"
 
 
-def pick_full(correct: str, pos: str, context: frozenset[str], difficulty: float,
-              rng: random.Random) -> tuple[str, str, tuple[Source, Source]]:
+def _gather_candidates(
+    correct: str, wn_pos: str | None, acceptable
+) -> list[tuple[str, Source]]:
+    pool: list[tuple[str, Source]] = []
+    seen: set[str] = set()
+
+    if wn_pos is not None:
+        for syn in wn.synsets(correct, pos=wn_pos):
+            for name in syn.lemma_names():
+                low = name.lower()
+                if low in seen:
+                    continue
+                seen.add(low)
+                if acceptable(name):
+                    pool.append((name, "synonym"))
+
+    for name in _cohyponym_names(correct, wn_pos):
+        low = name.lower()
+        if low in seen:
+            continue
+        seen.add(low)
+        if acceptable(name):
+            pool.append((name, "synonym"))
+
+    if settings.embeddings_enabled:
+        for cand in embeddings.nearest(correct, k=settings.embeddings_top_k):
+            low = cand.lower()
+            if low in seen:
+                continue
+            seen.add(low)
+            if acceptable(cand):
+                pool.append((cand, "embedding"))
+
+    return pool
+
+
+def _score_candidate(
+    cand: str,
+    correct: str,
+    correct_vec: np.ndarray | None,
+    context_vec: np.ndarray | None,
+    correct_zipf: float,
+    wn_pos: str | None,
+) -> float:
+    alpha = settings.distractor_weight_similarity
+    beta = settings.distractor_weight_context
+    gamma = settings.distractor_weight_frequency
+    delta = settings.distractor_penalty_lemma
+
+    cand_vec = embeddings.unit_vector(cand)
+    sim = float(np.dot(cand_vec, correct_vec)) if (cand_vec is not None and correct_vec is not None) else 0.0
+    ctx = float(np.dot(cand_vec, context_vec)) if (cand_vec is not None and context_vec is not None) else 0.0
+    cand_zipf = wordfreq.zipf_frequency(cand.lower(), "en")
+    freq = 1.0 - min(1.0, abs(cand_zipf - correct_zipf) / 3.0)
+    lemma_pen = 1.0 if _lemma(cand, wn_pos) == _lemma(correct, wn_pos) else 0.0
+
+    return alpha * sim + beta * ctx + gamma * freq - delta * lemma_pen
+
+
+def _pick_ranked(
+    ranked: list[tuple[str, Source, float]],
+    *,
+    difficulty: float,
+    used: set[str],
+    rng: random.Random,
+) -> tuple[str, Source] | None:
+    n = len(ranked)
+    if n == 0:
+        return None
+    target = int((1.0 - difficulty) * (n - 1))
+    width = max(2, int(settings.distractor_rank_window_pct * n))
+    lo = max(0, target - width)
+    hi = min(n - 1, target + width)
+    window = [(w, src, sc) for w, src, sc in ranked[lo: hi + 1] if w.lower() not in used]
+    if not window:
+        window = [(w, src, sc) for w, src, sc in ranked if w.lower() not in used]
+    if not window:
+        return None
+    word, src, _ = rng.choice(window)
+    return word, src
+
+
+def pick_full(
+    correct: str,
+    pos: str,
+    context: frozenset[str],
+    difficulty: float,
+    rng: random.Random,
+) -> tuple[str, str, tuple[Source, Source]]:
     acceptable, wn_pos = _build_acceptor(correct, pos, context)
-    wordnet_pool = _synonym_pool(correct, wn_pos, acceptable)
-    syn_pool: list[str]
-    syn_source: Source
-    if wordnet_pool:
-        syn_pool, syn_source = wordnet_pool, "synonym"
-    else:
-        embedding_pool = _embedding_pool(correct, acceptable)
-        if embedding_pool:
-            syn_pool, syn_source = embedding_pool, "embedding"
+
+    if not settings.distractor_unified_pool:
+        wordnet_pool = _synonym_pool(correct, wn_pos, acceptable)
+        syn_pool: list[str]
+        syn_source: Source
+        if wordnet_pool:
+            syn_pool, syn_source = wordnet_pool, "synonym"
         else:
-            syn_pool, syn_source = [], "synonym"
-    rand_pool = _random_pool()
+            embedding_pool = _embedding_pool(correct, acceptable)
+            if embedding_pool:
+                syn_pool, syn_source = embedding_pool, "embedding"
+            else:
+                syn_pool, syn_source = [], "synonym"
+        rand_pool = _random_pool()
+        used_legacy: set[str] = set()
+        a, source_a = _pick_one(syn_pool, syn_source, rand_pool, difficulty=difficulty,
+                                used=used_legacy, acceptable=acceptable, rng=rng)
+        used_legacy.add(a.lower())
+        b, source_b = _pick_one(syn_pool, syn_source, rand_pool, difficulty=difficulty,
+                                used=used_legacy, acceptable=acceptable, rng=rng)
+        return a, b, (source_a, source_b)
+
+    correct_vec = embeddings.unit_vector(correct)
+    correct_zipf = wordfreq.zipf_frequency(correct.lower(), "en")
+    candidates = _gather_candidates(correct, wn_pos, acceptable)
+    scored = sorted(
+        [
+            (w, src, _score_candidate(w, correct, correct_vec, None, correct_zipf, wn_pos))
+            for w, src in candidates
+        ],
+        key=lambda x: x[2],
+        reverse=True,
+    )
 
     used: set[str] = set()
-    a, source_a = _pick_one(syn_pool, syn_source, rand_pool, difficulty=difficulty, used=used,
-                            acceptable=acceptable, rng=rng)
+
+    def fallback_pick(used: set[str]) -> tuple[str, Source]:
+        rand_pool = _random_pool()
+        for cand in rng.sample(rand_pool, k=min(len(rand_pool), 50)):
+            if cand.lower() not in used and acceptable(cand):
+                return cand, "random"
+        word = next((f for f in _FALLBACK if f not in used), _FALLBACK[-1])
+        return word, "random"
+
+    if len(scored) < 2:
+        a, source_a = fallback_pick(used)
+        used.add(a.lower())
+        b, source_b = fallback_pick(used)
+        return a, b, (source_a, source_b)
+
+    result_a = _pick_ranked(scored, difficulty=difficulty, used=used, rng=rng)
+    a, source_a = result_a if result_a is not None else fallback_pick(used)
     used.add(a.lower())
-    b, source_b = _pick_one(syn_pool, syn_source, rand_pool, difficulty=difficulty, used=used,
-                            acceptable=acceptable, rng=rng)
+    result_b = _pick_ranked(scored, difficulty=difficulty, used=used, rng=rng)
+    b, source_b = result_b if result_b is not None else fallback_pick(used)
+
     return a, b, (source_a, source_b)
