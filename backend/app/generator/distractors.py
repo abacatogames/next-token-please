@@ -18,12 +18,23 @@ _RANDOM_POOL_SIZE = 5000
 _FALLBACK = ("something", "nothing")
 
 
-def _match_leading_case(word: str, correct: str) -> str:
+_SENTENCE_END = {".", "!", "?"}
+
+
+def _starts_phrase(prefix: tuple[str, ...]) -> bool:
+    for tok in reversed(prefix):
+        if not tok.strip():
+            continue
+        return tok[-1] in _SENTENCE_END
+    return True
+
+
+def _match_leading_case(word: str, correct: str, prefix: tuple[str, ...]) -> str:
     if not word or not correct:
         return word
-    if correct[0].isupper():
-        return word[0].upper() + word[1:]
-    return word[0].lower() + word[1:]
+    if not (correct[0].isupper() and _starts_phrase(prefix)):
+        return word
+    return word[0].upper() + word[1:]
 
 
 def _penn_to_wn(pos: str) -> str | None:
@@ -248,7 +259,7 @@ def pick_full(
         a, source_a = fallback_pick(used)
         used.add(a.lower())
         b, source_b = fallback_pick(used)
-        return _match_leading_case(a, correct), _match_leading_case(b, correct), (source_a, source_b)
+        return _match_leading_case(a, correct, context), _match_leading_case(b, correct, context), (source_a, source_b)
 
     result_a = _pick_ranked(scored, difficulty=difficulty, used=used, rng=rng)
     a, source_a = result_a if result_a is not None else fallback_pick(used)
@@ -256,4 +267,4 @@ def pick_full(
     result_b = _pick_ranked(scored, difficulty=difficulty, used=used, rng=rng)
     b, source_b = result_b if result_b is not None else fallback_pick(used)
 
-    return _match_leading_case(a, correct), _match_leading_case(b, correct), (source_a, source_b)
+    return _match_leading_case(a, correct, context), _match_leading_case(b, correct, context), (source_a, source_b)

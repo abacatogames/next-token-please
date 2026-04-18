@@ -58,13 +58,17 @@ def test_build_round_returns_valid_shape() -> None:
     assert sum(metrics.distractor_sources.values()) == len(choices) * 2
 
 
-def test_distractor_leading_case_matches_correct() -> None:
+def test_distractors_capitalized_only_at_sentence_start() -> None:
     import asyncio
 
     r, _ = asyncio.run(build_round(prompt_id="sky-blue", difficulty=0.5, seed=1))
-    for c in (t for t in r.tokens if t.kind == "choice"):
-        for d in c.distractors:
-            assert d[0].isupper() == c.correct[0].isupper()
+    at_start = True
+    for tok in r.tokens:
+        word = tok.word if tok.kind == "reveal" else tok.correct
+        if tok.kind == "choice" and at_start and word[:1].isupper():
+            for d in tok.distractors:
+                assert d[:1].isupper(), (word, d)
+        at_start = bool(word) and word[-1] in ".!?"
 
 
 def test_opening_tokens_are_reveal() -> None:

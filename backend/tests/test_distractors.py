@@ -5,7 +5,7 @@ import pytest
 import wordfreq
 
 from app.generator import embeddings
-from app.generator.distractors import _random_pool, pick_full
+from app.generator.distractors import _match_leading_case, _random_pool, pick_full
 
 
 def _context(words: list[str]) -> tuple[str, ...]:
@@ -83,18 +83,25 @@ def test_falls_back_to_random_when_no_synonyms() -> None:
     assert a.lower() != b.lower()
 
 
-def test_distractors_match_leading_capital_of_correct() -> None:
+def test_distractors_capitalized_at_sentence_start() -> None:
     rng = random.Random(0)
-    for _ in range(50):
-        a, b, _ = pick_full("Paris", "NN", _context([]), difficulty=0.5, rng=rng)
-        assert a[0].isupper() and b[0].isupper()
+    for prefix in [(), ("Hello", "."), ("Done", "!"), ("Why", "?")]:
+        a, b, _ = pick_full("Paris", "NN", prefix, difficulty=0.5, rng=rng)
+        assert a[0].isupper() and b[0].isupper(), (prefix, a, b)
 
 
-def test_distractors_match_leading_lowercase_of_correct() -> None:
+def test_match_leading_case_forces_upper_only_at_sentence_start() -> None:
+    assert _match_leading_case("london", "Paris", ()) == "London"
+    assert _match_leading_case("london", "Paris", ("Hello", ".")) == "London"
+    assert _match_leading_case("london", "Paris", ("We", "visited")) == "london"
+    assert _match_leading_case("London", "Paris", ("We", "visited")) == "London"
+    assert _match_leading_case("london", "river", ()) == "london"
+
+
+def test_distractors_unchanged_when_correct_lowercase() -> None:
     rng = random.Random(0)
-    for _ in range(50):
-        a, b, _ = pick_full("river", "NN", _context([]), difficulty=0.5, rng=rng)
-        assert a[0].islower() and b[0].islower()
+    a, b, _ = pick_full("river", "NN", (), difficulty=0.5, rng=rng)
+    assert a[0].islower() and b[0].islower()
 
 
 def test_seeded_output_is_deterministic() -> None:
