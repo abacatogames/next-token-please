@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from app.generator import answer
+from app.generator.personality import PERSONALITIES
 
 GOOD = (
     "The sky appears blue because of Rayleigh scattering. Short wavelengths of light "
@@ -133,3 +134,46 @@ def test_passes_rejects_short_text() -> None:
 def test_passes_rejects_preamble() -> None:
     text = "Sure, " + " ".join(["word"] * 35) + "."
     assert not answer._passes(text)
+
+
+@pytest.mark.asyncio
+async def test_personality_system_prompt_is_sent_to_ollama() -> None:
+    persona = PERSONALITIES["witty"]
+    captured: list[str] = []
+
+    async def _fn(*, prompt: str, system: str, **_k) -> str:
+        captured.append(system)
+        return GOOD
+
+    with patch("app.generator.answer.ollama_client.generate", AsyncMock(side_effect=_fn)):
+        result = await answer.generate_answer_full("why is the sky blue?", personality=persona)
+    assert captured
+    assert persona.style in captured[0]
+    assert "Style:" in captured[0]
+    assert result.personality_name == "witty"
+
+
+@pytest.mark.asyncio
+async def test_final_retry_falls_back_to_neutral_system_prompt() -> None:
+    persona = PERSONALITIES["witty"]
+    captured: list[str] = []
+    responses = iter([SHORT, SHORT, GOOD])
+
+    async def _fn(*, prompt: str, system: str, **_k) -> str:
+        captured.append(system)
+        return next(responses)
+
+    with patch("app.generator.answer.ollama_client.generate", AsyncMock(side_effect=_fn)):
+        result = await answer.generate_answer_full("why is the sky blue?", personality=persona)
+    assert len(captured) == 3
+    assert persona.style in captured[0]
+    assert persona.style in captured[1]
+    assert "Style:" not in captured[2]
+    assert result.personality_name is None
+
+
+@pytest.mark.asyncio
+async def test_personality_name_none_when_no_personality_passed() -> None:
+    with patch("app.generator.answer.ollama_client.generate", _mock_generate(GOOD)):
+        result = await answer.generate_answer_full("why is the sky blue?")
+    assert result.personality_name is None
