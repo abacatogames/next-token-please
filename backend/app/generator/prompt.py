@@ -7,6 +7,7 @@ from app.generator.text import collapse_whitespace, has_preamble, strip_wrappers
 
 SYSTEM = (
     "You generate short, creative prompts for a word-guessing game.\n"
+    "Each prompt is shown alone with no surrounding context.\n"
     "Strict format:\n"
     "- one prompt per line\n"
     "- no numbering, no bullets, no quotes\n"
@@ -19,7 +20,19 @@ SYSTEM = (
     "- not entirely uppercase\n"
     "- complete sentence, no fragments or bare statements of fact\n"
     "- no preamble, no meta-commentary, no 'Sure' or 'Here are'\n"
-    "- each prompt standalone and self-contained"
+    "- fully self-contained: any pronoun (it, its, they, their, them,"
+    " one, this, that, these, those) must refer to a noun named earlier"
+    " in the same prompt; otherwise name the subject explicitly\n"
+    "- no dangling references, no '...instead of one?', no bare 'it'\n"
+    "\n"
+    "Bad (unresolved reference):\n"
+    "- When might a peaceful American Civil War have occurred instead of one?\n"
+    "- Can you describe the architecture surrounding it, which defies gravity?\n"
+    "- Could their existence change our perceptions of identity?\n"
+    "Good (self-contained):\n"
+    "- Why does the Eiffel Tower sway slightly on hot afternoons?\n"
+    "- Describe a floating city whose architecture defies gravity.\n"
+    "- Could sentient slime molds change how we define personal identity?"
 )
 
 THEMES: dict[str, str] = {
