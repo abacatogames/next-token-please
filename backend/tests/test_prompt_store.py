@@ -80,6 +80,24 @@ def test_pick_uses_rng_for_deterministic_selection() -> None:
     assert a.id == b.id
 
 
+def test_pick_falls_back_to_seeds_below_threshold() -> None:
+    store = PromptStore(seeds=SEEDS, prefer_generated_at=5)
+    store.add(["Generated only one?"])
+    seed_ids = {s.id for s in SEEDS}
+    rng = random.Random(0)
+    saw_seed = any(store.pick(rng).id in seed_ids for _ in range(50))
+    assert saw_seed
+
+
+def test_pick_prefers_generated_once_threshold_reached() -> None:
+    store = PromptStore(seeds=SEEDS, prefer_generated_at=2)
+    store.add(["Generated A?", "Generated B?", "Generated C?"])
+    seed_ids = {s.id for s in SEEDS}
+    rng = random.Random(0)
+    for _ in range(50):
+        assert store.pick(rng).id not in seed_ids
+
+
 def test_pick_raises_if_empty() -> None:
     store = PromptStore(seeds=[])
     with pytest.raises(RuntimeError):

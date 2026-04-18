@@ -51,6 +51,7 @@ class PromptStore:
         idle_sleep: float = 2.0,
         error_sleep: float = 10.0,
         batch_producer: BatchProducer | None = None,
+        prefer_generated_at: int = 0,
     ) -> None:
         self._seeds: list[Prompt] = list(seeds)
         self._seed_ids: frozenset[str] = frozenset(p.id for p in self._seeds)
@@ -59,6 +60,7 @@ class PromptStore:
         self._refill_below = refill_below
         self._idle_sleep = idle_sleep
         self._error_sleep = error_sleep
+        self._prefer_generated_at = prefer_generated_at
         self._batch_producer = batch_producer
         self._generated: dict[str, Prompt] = {}
         self._generated_order: list[str] = []
@@ -88,6 +90,11 @@ class PromptStore:
         return self._generated.get(prompt_id)
 
     def pick(self, rng: random.Random) -> Prompt:
+        if (
+            self._prefer_generated_at > 0
+            and len(self._generated) >= self._prefer_generated_at
+        ):
+            return rng.choice(list(self._generated.values()))
         pool = self.all()
         if not pool:
             raise RuntimeError("prompt store is empty")

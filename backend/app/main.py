@@ -79,6 +79,7 @@ async def lifespan(app: FastAPI):
         idle_sleep=settings.prompt_store_idle_sleep,
         error_sleep=settings.prompt_store_error_sleep,
         batch_producer=producer,
+        prefer_generated_at=settings.prompt_store_prefer_generated_at,
     )
     set_store(store)
     if producer is not None:

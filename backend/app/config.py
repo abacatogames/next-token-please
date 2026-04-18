@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     prompt_store_idle_sleep: float = 2.0
     prompt_store_error_sleep: float = 10.0
     prompt_store_cache_path: str = "data/prompt_cache.json"
+    prompt_store_prefer_generated_at: int = 20
     prompt_min_words: int = 4
     prompt_max_words: int = 20
 
