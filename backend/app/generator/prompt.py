@@ -11,7 +11,12 @@ SYSTEM = (
     "- one prompt per line\n"
     "- no numbering, no bullets, no quotes\n"
     "- 4 to 20 words each\n"
-    "- end each line with '.' or '?'\n"
+    "- start with a capital letter\n"
+    "- start with a wh-word (Why/How/What/When/Where/Which/Who),"
+    " a question auxiliary (Is/Are/Do/Does/Can/Could/Would/Should...),"
+    " or an imperative verb (Describe/Explain/Imagine/Picture/Compare...)\n"
+    "- end '?' for questions, '.' for imperatives\n"
+    "- complete sentence, no fragments or bare statements of fact\n"
     "- no preamble, no meta-commentary, no 'Sure' or 'Here are'\n"
     "- each prompt standalone and self-contained"
 )
@@ -47,6 +52,25 @@ DEFAULT_TEMPERATURE = 0.95
 DEFAULT_TOP_P = 0.95
 DEFAULT_BATCH_SIZE = 5
 DUPLICATE_JACCARD = 0.8
+
+WH_WORDS = frozenset({"how", "why", "what", "when", "where", "which", "who", "whose"})
+QUESTION_AUX = frozenset({
+    "is", "are", "was", "were", "am",
+    "do", "does", "did",
+    "can", "could", "will", "would", "should", "shall",
+    "may", "might", "must",
+    "has", "have", "had",
+})
+IMPERATIVE_VERBS = frozenset({
+    "describe", "explain", "imagine", "picture", "compare", "contrast",
+    "list", "name", "tell", "predict", "suggest", "consider", "invent",
+    "design", "draw", "guess", "pretend", "create", "define", "outline",
+    "summarize", "rank", "choose", "recall", "recount", "narrate",
+    "sketch", "estimate", "rate", "argue", "convince", "justify",
+})
+ALLOWED_STARTERS = WH_WORDS | QUESTION_AUX | IMPERATIVE_VERBS
+
+_FIRST_WORD = re.compile(r"\s*([A-Za-z][A-Za-z']*)")
 
 
 @dataclass(frozen=True)
@@ -115,6 +139,20 @@ def _is_duplicate(text: str, existing_tokens: list[frozenset[str]]) -> bool:
     return False
 
 
+def _first_word(text: str) -> str:
+    m = _FIRST_WORD.match(text)
+    return m.group(1) if m else ""
+
+
+def _starts_with_capital(text: str) -> bool:
+    stripped = text.lstrip()
+    return bool(stripped) and stripped[0].isupper()
+
+
+def _has_allowed_starter(text: str) -> bool:
+    return _first_word(text).lower() in ALLOWED_STARTERS
+
+
 def validate(
     text: str,
     *,
@@ -127,6 +165,10 @@ def validate(
     if has_preamble(text):
         return False
     if not text.endswith((".", "?", "!")):
+        return False
+    if not _starts_with_capital(text):
+        return False
+    if not _has_allowed_starter(text):
         return False
     wc = word_count(text)
     if wc < min_words or wc > max_words:

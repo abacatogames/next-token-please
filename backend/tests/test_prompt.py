@@ -86,6 +86,31 @@ def test_validate_accepts_good_prompt() -> None:
     assert prompt_gen.validate("Why do stars twinkle at night?", existing_tokens=[])
 
 
+def test_validate_rejects_lowercase_fragment() -> None:
+    assert not prompt_gen.validate("of our perception of time?", existing_tokens=[])
+
+
+def test_validate_rejects_bare_declarative_statement() -> None:
+    assert not prompt_gen.validate(
+        "Mainframe data streams flow through fiber optic cables.",
+        existing_tokens=[],
+    )
+
+
+def test_validate_accepts_imperative_starter() -> None:
+    assert prompt_gen.validate(
+        "Describe how mainframe data streams travel through fiber.",
+        existing_tokens=[],
+    )
+
+
+def test_validate_accepts_question_auxiliary_starter() -> None:
+    assert prompt_gen.validate(
+        "Can a mainframe outlive the engineers who built it?",
+        existing_tokens=[],
+    )
+
+
 def test_validate_rejects_near_duplicates() -> None:
     existing = [prompt_gen._tokens("Why do stars twinkle at night?")]
     assert not prompt_gen.validate(
