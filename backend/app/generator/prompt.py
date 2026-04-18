@@ -3,7 +3,13 @@ import re
 from dataclasses import dataclass
 
 from app.generator import ollama_client
-from app.generator.text import collapse_whitespace, has_preamble, strip_wrappers, word_count
+from app.generator.text import (
+    collapse_whitespace,
+    has_preamble,
+    has_unresolved_pronoun,
+    strip_wrappers,
+    word_count,
+)
 
 SYSTEM = (
     "You generate short, creative prompts for a word-guessing game.\n"
@@ -201,6 +207,8 @@ def validate(
         return False
     wc = word_count(text)
     if wc < min_words or wc > max_words:
+        return False
+    if has_unresolved_pronoun(text):
         return False
     return not _is_duplicate(text, existing_tokens)
 

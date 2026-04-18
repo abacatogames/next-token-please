@@ -139,6 +139,34 @@ def test_validate_rejects_near_duplicates() -> None:
     )
 
 
+def test_validate_rejects_dangling_one() -> None:
+    assert not prompt_gen.validate(
+        "When might a peaceful American Civil War have occurred instead of one?",
+        existing_tokens=[],
+    )
+
+
+def test_validate_rejects_unresolved_their() -> None:
+    assert not prompt_gen.validate(
+        "Could their existence change our perceptions of personal identity and responsibility?",
+        existing_tokens=[],
+    )
+
+
+def test_validate_rejects_bare_it_without_antecedent() -> None:
+    assert not prompt_gen.validate(
+        "Why does it keep happening every morning?",
+        existing_tokens=[],
+    )
+
+
+def test_validate_accepts_pronoun_with_antecedent() -> None:
+    assert prompt_gen.validate(
+        "Can a mainframe outlive the engineers who built it?",
+        existing_tokens=[],
+    )
+
+
 def test_validate_allows_distinct_prompts() -> None:
     existing = [prompt_gen._tokens("Why do stars twinkle at night?")]
     assert prompt_gen.validate(
