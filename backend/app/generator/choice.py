@@ -12,17 +12,14 @@ def _is_forced_reveal(tw: TaggedWord, *, opening: int) -> bool:
     )
 
 
-def _target_choice_count(total: int, configured: int, *, min_frac: float = 0.2,
-                         max_frac: float = 0.4) -> int:
-    lower = max(1, int(total * min_frac))
-    upper = max(lower, int(total * max_frac))
-    return max(lower, min(configured, upper))
+def _target_choice_count(total: int, pct: float) -> int:
+    return max(1, int(total * pct))
 
 
 Kind = str  # "reveal" or "choice"
 
 
-def assign_kinds(tagged: list[TaggedWord], *, opening: int, choice_target: int,
+def assign_kinds(tagged: list[TaggedWord], *, opening: int, choice_target_pct: float,
                  rng: random.Random) -> list[Kind]:
     kinds: list[Kind] = ["reveal"] * len(tagged)
     candidate_ids = [tw.index for tw in tagged if not _is_forced_reveal(tw, opening=opening)]
@@ -30,7 +27,7 @@ def assign_kinds(tagged: list[TaggedWord], *, opening: int, choice_target: int,
     if not candidate_ids:
         return kinds
 
-    target = _target_choice_count(len(tagged), choice_target)
+    target = _target_choice_count(len(tagged), choice_target_pct)
     pick_count = min(target, len(candidate_ids))
     chosen = set(rng.sample(candidate_ids, pick_count))
 

@@ -11,17 +11,17 @@ SAMPLE = (
 )
 
 
-def test_target_count_clamps_within_20_to_40_percent() -> None:
-    assert _target_choice_count(50, configured=15) == 15
-    assert _target_choice_count(50, configured=100) == 20
-    assert _target_choice_count(50, configured=1) == 10
-    assert _target_choice_count(10, configured=15) == 4
-    assert _target_choice_count(0, configured=15) == 1
+def test_target_count_is_percentage_of_total() -> None:
+    assert _target_choice_count(50, 0.30) == 15
+    assert _target_choice_count(50, 0.40) == 20
+    assert _target_choice_count(10, 0.30) == 3
+    assert _target_choice_count(0, 0.30) == 1
+    assert _target_choice_count(100, 0.0) == 1
 
 
 def test_opening_words_are_always_reveal() -> None:
     tagged = analyze(SAMPLE)
-    kinds = assign_kinds(tagged, opening=3, choice_target=15, rng=random.Random(0))
+    kinds = assign_kinds(tagged, opening=3, choice_target_pct=0.30, rng=random.Random(0))
     assert kinds[0] == "reveal"
     assert kinds[1] == "reveal"
     assert kinds[2] == "reveal"
@@ -29,7 +29,7 @@ def test_opening_words_are_always_reveal() -> None:
 
 def test_punctuation_is_always_reveal() -> None:
     tagged = analyze(SAMPLE)
-    kinds = assign_kinds(tagged, opening=3, choice_target=15, rng=random.Random(0))
+    kinds = assign_kinds(tagged, opening=3, choice_target_pct=0.30, rng=random.Random(0))
     for tw, k in zip(tagged, kinds, strict=True):
         if tw.is_punct:
             assert k == "reveal", f"expected reveal for {tw.word!r}"
@@ -37,7 +37,7 @@ def test_punctuation_is_always_reveal() -> None:
 
 def test_short_words_are_always_reveal() -> None:
     tagged = analyze(SAMPLE)
-    kinds = assign_kinds(tagged, opening=3, choice_target=15, rng=random.Random(0))
+    kinds = assign_kinds(tagged, opening=3, choice_target_pct=0.30, rng=random.Random(0))
     for tw, k in zip(tagged, kinds, strict=True):
         if len(tw.word) < 3:
             assert k == "reveal", f"expected reveal for short word {tw.word!r}"
@@ -45,21 +45,21 @@ def test_short_words_are_always_reveal() -> None:
 
 def test_choice_count_lands_in_expected_band() -> None:
     tagged = analyze(SAMPLE)
-    kinds = assign_kinds(tagged, opening=3, choice_target=15, rng=random.Random(0))
+    kinds = assign_kinds(tagged, opening=3, choice_target_pct=0.30, rng=random.Random(0))
     choices = sum(1 for k in kinds if k == "choice")
     assert 10 <= choices <= 20, f"got {choices} choices"
 
 
 def test_deterministic_with_seed() -> None:
     tagged = analyze(SAMPLE)
-    a = assign_kinds(tagged, opening=3, choice_target=15, rng=random.Random(42))
-    b = assign_kinds(tagged, opening=3, choice_target=15, rng=random.Random(42))
+    a = assign_kinds(tagged, opening=3, choice_target_pct=0.30, rng=random.Random(42))
+    b = assign_kinds(tagged, opening=3, choice_target_pct=0.30, rng=random.Random(42))
     assert a == b
 
 
 def test_all_candidates_forced_reveal_means_no_choices() -> None:
     tagged = analyze("is on a at by to in it of or .")
-    kinds = assign_kinds(tagged, opening=3, choice_target=5, rng=random.Random(0))
+    kinds = assign_kinds(tagged, opening=3, choice_target_pct=0.30, rng=random.Random(0))
     assert all(k == "reveal" for k in kinds)
 
 
@@ -73,7 +73,7 @@ def test_digit_tokens_are_always_reveal() -> None:
 
 def test_no_consecutive_choices() -> None:
     tagged = analyze(SAMPLE)
-    kinds = assign_kinds(tagged, opening=3, choice_target=15, rng=random.Random(0))
+    kinds = assign_kinds(tagged, opening=3, choice_target_pct=0.30, rng=random.Random(0))
     for a, b in zip(kinds, kinds[1:], strict=False):
         assert not (a == "choice" and b == "choice"), "consecutive choices found"
 

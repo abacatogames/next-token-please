@@ -43,7 +43,7 @@ async def build_round(*, prompt_id: str | None = None, difficulty: float | None 
     kinds = assign_kinds(
         tagged,
         opening=settings.opening_reveal,
-        choice_target=settings.choice_target,
+        choice_target_pct=settings.choice_target_pct,
         rng=rng,
     )
     context = _build_context([tw.word for tw in tagged])

@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     ollama_model: str = "llama3.2:1b"
     default_difficulty: float = 1.0
     cors_origins: str = "http://localhost:5173"
-    choice_target: int = 15
+    choice_target_pct: float = 0.30
     opening_reveal: int = 3
     log_level: str = "INFO"
     round_pool_enabled: bool = True
