@@ -2,6 +2,8 @@ import re
 
 import nltk
 
+from app.generator.tokenize import analyze
+
 _PREAMBLE_FIRST_WORDS = {"sure", "certainly", "absolutely", "okay", "alright"}
 _PREAMBLE_PHRASES = (
     "here is", "here's", "here are", "i'd", "i will", "i'll",
@@ -32,6 +34,36 @@ def has_preamble(text: str) -> bool:
 
 def collapse_whitespace(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
+
+
+_ANAPHORIC_PRONOUNS = {
+    "it", "its", "itself",
+    "they", "their", "them", "themselves",
+}
+_DANGLING_ONE_PREVS = {"of", "than"}
+
+
+def has_unresolved_pronoun(text: str) -> bool:
+    tagged = analyze(text)
+    saw_noun = False
+    for i, tw in enumerate(tagged):
+        low = tw.word.lower()
+        if tw.pos.startswith("NN"):
+            saw_noun = True
+            continue
+        if (
+            low in _ANAPHORIC_PRONOUNS
+            and tw.pos in ("PRP", "PRP$")
+            and not saw_noun
+        ):
+            return True
+        if low == "one" and tw.pos in ("NN", "CD"):
+            prev = tagged[i - 1] if i > 0 else None
+            nxt = tagged[i + 1] if i + 1 < len(tagged) else None
+            at_end = nxt is None or nxt.is_punct
+            if at_end and prev and prev.word.lower() in _DANGLING_ONE_PREVS:
+                return True
+    return False
 
 
 def truncate_to_sentence(text: str, max_words: int) -> str:
