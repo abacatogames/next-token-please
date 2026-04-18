@@ -21,6 +21,7 @@ class Round(BaseModel):
     id: str
     prompt: str
     tokens: list[Token]
+    personality: str | None = None
 
 
 class PromptSummary(BaseModel):

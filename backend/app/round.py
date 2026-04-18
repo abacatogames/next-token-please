@@ -3,6 +3,7 @@ import time
 import uuid
 
 from app.config import settings
+from app.generator import personality as personality_module
 from app.generator.answer import generate_answer_full
 from app.generator.choice import assign_kinds
 from app.generator.distractors import pick_full as pick_distractors_full
@@ -32,9 +33,10 @@ async def build_round(*, prompt_id: str | None = None, difficulty: float | None 
     rng = random.Random(seed)
     selected = _pick_prompt(prompt_id, rng)
     diff = difficulty if difficulty is not None else settings.default_difficulty
+    personality = personality_module.pick(rng)
 
     t0 = time.perf_counter()
-    answer = await generate_answer_full(selected.text)
+    answer = await generate_answer_full(selected.text, personality=personality)
     answer_latency_ms = int((time.perf_counter() - t0) * 1000)
 
     tagged = analyze(answer.text)
@@ -63,7 +65,12 @@ async def build_round(*, prompt_id: str | None = None, difficulty: float | None 
         prefix.append(tw.word)
 
     choice_count = sum(1 for t in tokens if t.kind == "choice")
-    round_obj = Round(id=f"round-{uuid.uuid4().hex[:12]}", prompt=selected.text, tokens=tokens)
+    round_obj = Round(
+        id=f"round-{uuid.uuid4().hex[:12]}",
+        prompt=selected.text,
+        tokens=tokens,
+        personality=answer.personality_name,
+    )
     event = RoundEvent(
         round_id=round_obj.id,
         prompt_id=selected.id,
@@ -76,5 +83,6 @@ async def build_round(*, prompt_id: str | None = None, difficulty: float | None 
         choice_count=choice_count,
         distractor_sources=sources,
         total_latency_ms=0,
+        personality=answer.personality_name,
     )
     return round_obj, event

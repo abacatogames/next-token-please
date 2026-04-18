@@ -19,6 +19,7 @@ class RoundEvent:
     choice_count: int
     distractor_sources: dict[str, int]
     total_latency_ms: int
+    personality: str | None = None
 
 
 @dataclass

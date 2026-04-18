@@ -16,8 +16,13 @@ CANNED_ANSWER = (
 )
 
 
-def _canned_result() -> AnswerResult:
-    return AnswerResult(text=CANNED_ANSWER, retries=0, word_count=len(CANNED_ANSWER.split()))
+def _canned_result(personality_name: str | None = "witty") -> AnswerResult:
+    return AnswerResult(
+        text=CANNED_ANSWER,
+        retries=0,
+        word_count=len(CANNED_ANSWER.split()),
+        personality_name=personality_name,
+    )
 
 
 client = TestClient(app)
@@ -139,7 +144,7 @@ def test_round_endpoint_emits_telemetry_event(caplog: pytest.LogCaptureFixture) 
 def test_error_event_emitted_on_unexpected_failure(caplog: pytest.LogCaptureFixture) -> None:
     from app.telemetry import LOGGER_NAME
 
-    async def boom(_: str):
+    async def boom(_: str, **_kw):
         raise RuntimeError("ollama down")
 
     strict_client = TestClient(app, raise_server_exceptions=False)
@@ -158,6 +163,29 @@ def test_error_event_emitted_on_unexpected_failure(caplog: pytest.LogCaptureFixt
     assert event["error_type"] == "RuntimeError"
     assert event["stage"] == "build_round"
     assert "ollama down" in event["message"]
+
+
+def test_build_round_surfaces_personality_on_round_and_event() -> None:
+    import asyncio
+
+    r, event = asyncio.run(build_round(prompt_id="sky-blue", seed=1))
+    assert r.personality == "witty"
+    assert event.personality == "witty"
+
+
+def test_round_endpoint_exposes_personality_field() -> None:
+    body = client.get("/round?prompt_id=sky-blue&seed=1").json()
+    assert body.get("personality") == "witty"
+
+
+def test_build_round_personality_is_none_when_fallback() -> None:
+    import asyncio
+
+    fallback = AsyncMock(return_value=_canned_result(personality_name=None))
+    with patch("app.round.generate_answer_full", new=fallback):
+        r, event = asyncio.run(build_round(prompt_id="sky-blue", seed=1))
+    assert r.personality is None
+    assert event.personality is None
 
 
 def test_metrics_report_distractor_sources() -> None:
