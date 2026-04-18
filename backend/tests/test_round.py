@@ -58,6 +58,15 @@ def test_build_round_returns_valid_shape() -> None:
     assert sum(metrics.distractor_sources.values()) == len(choices) * 2
 
 
+def test_distractor_leading_case_matches_correct() -> None:
+    import asyncio
+
+    r, _ = asyncio.run(build_round(prompt_id="sky-blue", difficulty=0.5, seed=1))
+    for c in (t for t in r.tokens if t.kind == "choice"):
+        for d in c.distractors:
+            assert d[0].isupper() == c.correct[0].isupper()
+
+
 def test_opening_tokens_are_reveal() -> None:
     import asyncio
     r, _ = asyncio.run(build_round(prompt_id="sky-blue", seed=1))

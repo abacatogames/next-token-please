@@ -83,6 +83,20 @@ def test_falls_back_to_random_when_no_synonyms() -> None:
     assert a.lower() != b.lower()
 
 
+def test_distractors_match_leading_capital_of_correct() -> None:
+    rng = random.Random(0)
+    for _ in range(50):
+        a, b, _ = pick_full("Paris", "NN", _context([]), difficulty=0.5, rng=rng)
+        assert a[0].isupper() and b[0].isupper()
+
+
+def test_distractors_match_leading_lowercase_of_correct() -> None:
+    rng = random.Random(0)
+    for _ in range(50):
+        a, b, _ = pick_full("river", "NN", _context([]), difficulty=0.5, rng=rng)
+        assert a[0].islower() and b[0].islower()
+
+
 def test_seeded_output_is_deterministic() -> None:
     r1 = pick_full("scatter", "VB", _context([]), difficulty=0.5, rng=random.Random(42))
     r2 = pick_full("scatter", "VB", _context([]), difficulty=0.5, rng=random.Random(42))
