@@ -15,7 +15,8 @@ SYSTEM = (
     "- start with a wh-word (Why/How/What/When/Where/Which/Who),"
     " a question auxiliary (Is/Are/Do/Does/Can/Could/Would/Should...),"
     " or an imperative verb (Describe/Explain/Imagine/Picture/Compare...)\n"
-    "- end '?' for questions, '.' for imperatives\n"
+    "- end with exactly one '?' for questions or '.' for imperatives\n"
+    "- not entirely uppercase\n"
     "- complete sentence, no fragments or bare statements of fact\n"
     "- no preamble, no meta-commentary, no 'Sure' or 'Here are'\n"
     "- each prompt standalone and self-contained"
@@ -71,6 +72,7 @@ IMPERATIVE_VERBS = frozenset({
 ALLOWED_STARTERS = WH_WORDS | QUESTION_AUX | IMPERATIVE_VERBS
 
 _FIRST_WORD = re.compile(r"\s*([A-Za-z][A-Za-z']*)")
+TERMINALS = (".", "?", "!")
 
 
 @dataclass(frozen=True)
@@ -153,6 +155,18 @@ def _has_allowed_starter(text: str) -> bool:
     return _first_word(text).lower() in ALLOWED_STARTERS
 
 
+def _has_single_terminal(text: str) -> bool:
+    stripped = text.rstrip()
+    if not stripped.endswith(TERMINALS):
+        return False
+    return len(stripped) >= 2 and stripped[-2] not in TERMINALS
+
+
+def _is_all_uppercase(text: str) -> bool:
+    letters = [c for c in text if c.isalpha()]
+    return bool(letters) and all(c.isupper() for c in letters)
+
+
 def validate(
     text: str,
     *,
@@ -164,7 +178,9 @@ def validate(
         return False
     if has_preamble(text):
         return False
-    if not text.endswith((".", "?", "!")):
+    if not _has_single_terminal(text):
+        return False
+    if _is_all_uppercase(text):
         return False
     if not _starts_with_capital(text):
         return False

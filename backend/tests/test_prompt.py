@@ -111,6 +111,27 @@ def test_validate_accepts_question_auxiliary_starter() -> None:
     )
 
 
+def test_validate_rejects_all_uppercase() -> None:
+    assert not prompt_gen.validate(
+        "WHY DO STARS TWINKLE AT NIGHT?", existing_tokens=[]
+    )
+
+
+def test_validate_rejects_multiple_terminal_punctuation() -> None:
+    assert not prompt_gen.validate(
+        "Why do stars twinkle at night??", existing_tokens=[]
+    )
+    assert not prompt_gen.validate(
+        "Describe how lightning forms in storm clouds...", existing_tokens=[]
+    )
+    assert not prompt_gen.validate(
+        "Describe how lightning forms in storm clouds..", existing_tokens=[]
+    )
+    assert not prompt_gen.validate(
+        "Why do stars twinkle at night?!", existing_tokens=[]
+    )
+
+
 def test_validate_rejects_near_duplicates() -> None:
     existing = [prompt_gen._tokens("Why do stars twinkle at night?")]
     assert not prompt_gen.validate(
