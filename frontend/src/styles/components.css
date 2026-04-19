@@ -12,6 +12,7 @@
 	font-size: 0.9rem;
 	font-weight: 600;
 	padding: 0.7rem 1.8rem;
+	min-height: 44px;
 	border: 1px solid var(--neon-cyan-dim);
 	background: transparent;
 	color: var(--neon-cyan);
@@ -21,6 +22,16 @@
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
 	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.6rem;
+}
+
+.btn:focus-visible {
+	outline-color: var(--neon-cyan);
+	outline-offset: 3px;
+	box-shadow: var(--glow-md);
 }
 
 .btn:hover {
@@ -106,6 +117,32 @@
 	padding: 1rem 1.25rem;
 }
 
+/* --- Key hints --- */
+
+.keyhints {
+	text-align: center;
+	font-size: 0.62rem;
+	letter-spacing: 0.22em;
+	text-transform: uppercase;
+	color: var(--text-dim);
+	margin-top: 0.25rem;
+	font-family: var(--font-mono);
+}
+
+.keyhints kbd {
+	display: inline-block;
+	padding: 0.1rem 0.4rem;
+	margin: 0 0.1rem;
+	font-size: 0.6rem;
+	font-weight: 600;
+	color: var(--text);
+	background: transparent;
+	border: 1px solid var(--bg-card-border);
+	border-radius: 2px;
+	font-family: var(--font-mono);
+	letter-spacing: 0;
+}
+
 /* --- Words / cursor (shared across game + finished) --- */
 
 .word {
@@ -170,5 +207,9 @@
 @media (prefers-reduced-motion: reduce) {
 	.cursor {
 		animation: cursorBlink var(--dur-slow) step-end infinite;
+	}
+
+	.word {
+		animation: none;
 	}
 }

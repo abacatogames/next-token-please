@@ -142,7 +142,6 @@
 	padding: 0.2rem 0;
 	letter-spacing: 0.05em;
 	color: var(--neon-cyan);
-	outline: none;
 }
 
 .about summary::-webkit-details-marker {

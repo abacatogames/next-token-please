@@ -4,6 +4,16 @@
 	box-sizing: border-box;
 }
 
+:focus {
+	outline: none;
+}
+
+:focus-visible {
+	outline: 2px solid var(--neon-cyan);
+	outline-offset: 2px;
+	border-radius: 2px;
+}
+
 html {
 	font-size: 16px;
 }
@@ -67,6 +77,13 @@ body::after {
 	z-index: var(--z-app);
 }
 
+@media (max-width: 900px) {
+	#app {
+		max-width: 100%;
+		padding: 1.5rem;
+	}
+}
+
 @media (max-width: 640px) {
 	html {
 		font-size: 14px;
@@ -74,5 +91,15 @@ body::after {
 
 	#app {
 		padding: 1.25rem;
+	}
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+	body {
+		align-items: flex-start;
+	}
+
+	#app {
+		padding: 1rem;
 	}
 }

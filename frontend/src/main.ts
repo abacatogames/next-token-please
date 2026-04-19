@@ -44,6 +44,7 @@ manager.register(
 		onPlayAgain: () => {
 			void handlePlayAgain();
 		},
+		onReturnToIdle: handleReturnToIdle,
 	}),
 );
 
@@ -91,6 +92,12 @@ function handleChoice(word: string) {
 async function handlePlayAgain() {
 	state = createGame();
 	await handleStart();
+}
+
+function handleReturnToIdle() {
+	if (revealTimer) clearTimeout(revealTimer);
+	state = createGame();
+	render();
 }
 
 render();

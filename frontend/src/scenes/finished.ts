@@ -11,6 +11,7 @@ import type { GameState } from "../types.ts";
 
 export type FinishedCallbacks = {
 	onPlayAgain: () => void;
+	onReturnToIdle: () => void;
 };
 
 function animateCountUp(
@@ -109,6 +110,10 @@ export function createFinishedScene(cb: FinishedCallbacks): Scene<GameState> {
         <span class="btn-caret">&gt;</span>
         <span class="btn-label">REPLAY_SEQUENCE</span>
       </button>
+
+      <p class="keyhints" aria-hidden="true">
+        <kbd>Enter</kbd> replay  //  <kbd>Esc</kbd> exit
+      </p>
     </section>
   `;
 
@@ -120,6 +125,11 @@ export function createFinishedScene(cb: FinishedCallbacks): Scene<GameState> {
 			const cancelCount = animateCountUp(scoreEl, percent, 720);
 
 			const onKey = (e: KeyboardEvent) => {
+				if (e.key === "Escape") {
+					e.preventDefault();
+					cb.onReturnToIdle();
+					return;
+				}
 				if (e.key !== "Enter") return;
 				const tag = (e.target as HTMLElement | null)?.tagName;
 				if (tag === "BUTTON") return;

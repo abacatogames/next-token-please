@@ -67,11 +67,17 @@ export function renderGameHTML(
 			? `<div class="fallback-log" aria-hidden="true">&gt; FALLBACK: LOCAL_CACHE</div>`
 			: "";
 
+	const keyHint =
+		state.phase === "awaiting_choice"
+			? `<p class="keyhints" aria-hidden="true"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> pick token</p>`
+			: "";
+
 	return `
-    <section class="screen game-screen">
+    <section class="screen game-screen" aria-label="Language model round">
       ${promptHTML}
       ${answerHTML}
       ${choiceHTML}
+      ${keyHint}
       ${fallbackHTML}
     </section>
   `;
