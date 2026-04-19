@@ -43,10 +43,11 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
 		id: "idle",
 		mount(root) {
 			root.innerHTML = `
-    <section class="screen idle-screen" aria-labelledby="site-title">
+    <section class="screen idle-screen" aria-labelledby="idle-title">
       <div class="boot" id="boot" aria-hidden="true"></div>
 
       <header class="idle-header" data-visible="false">
+        <h1 id="idle-title" class="title">Next Token Please</h1>
         <p class="subtitle">You are the language model now.<br>Predict what comes next.</p>
       </header>
 

@@ -69,6 +69,32 @@ body::after {
 	z-index: var(--z-hud);
 }
 
+body:has(.idle-screen) #site-header {
+	display: none;
+}
+
+body:has(.idle-screen) #app {
+	padding-top: 2rem;
+}
+
+@media (max-width: 900px) {
+	body:has(.idle-screen) #app {
+		padding-top: 1.5rem;
+	}
+}
+
+@media (max-width: 640px) {
+	body:has(.idle-screen) #app {
+		padding-top: 1.25rem;
+	}
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+	body:has(.idle-screen) #app {
+		padding-top: 1rem;
+	}
+}
+
 #site-header {
 	position: fixed;
 	top: 0;
