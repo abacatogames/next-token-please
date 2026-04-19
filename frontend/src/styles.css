@@ -80,6 +80,20 @@ body::after {
 	position: relative;
 }
 
+/* Layer scaffolding (Phase 1): positioned layers stay out of #app's flow. */
+#atmosphere,
+#character-stage,
+#hud {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 1;
+}
+
+#app {
+	z-index: 10;
+}
+
 /* --- Screens --- */
 
 .screen {

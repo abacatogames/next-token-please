@@ -1,7 +1,10 @@
 import { fetchRound } from "./api.ts";
 import { advanceToken, createGame, makeChoice, startRound } from "./game.ts";
+import { SceneManager } from "./scene/sceneManager.ts";
+import { createFinishedScene } from "./scenes/finished.ts";
+import { createGameScene } from "./scenes/game.ts";
+import { createIdleScene } from "./scenes/idle.ts";
 import type { GameState } from "./types.ts";
-import { initUI, renderFinished, renderGame, renderIdle } from "./screens.ts";
 
 const REVEAL_DELAY_MIN = 80;
 const REVEAL_DELAY_MAX = 120;
@@ -13,17 +16,36 @@ function randomRevealDelay(): number {
 let state: GameState = createGame();
 let revealTimer: ReturnType<typeof setTimeout> | null = null;
 
+const appRoot = document.getElementById("app")!;
+const manager = new SceneManager<GameState>(appRoot);
+
+manager.register(
+	createIdleScene({
+		onStart: () => {
+			void handleStart();
+		},
+	}),
+);
+manager.register(createGameScene({ onChoice: handleChoice }));
+manager.register(
+	createFinishedScene({
+		onPlayAgain: () => {
+			void handlePlayAgain();
+		},
+	}),
+);
+
 function render() {
 	switch (state.phase) {
 		case "idle":
-			renderIdle();
+			manager.goto("idle", state);
 			break;
 		case "revealing":
 		case "awaiting_choice":
-			renderGame(state);
+			manager.goto("game", state);
 			break;
 		case "finished":
-			renderFinished(state);
+			manager.goto("finished", state);
 			break;
 	}
 }
@@ -56,15 +78,5 @@ async function handlePlayAgain() {
 	state = createGame();
 	await handleStart();
 }
-
-initUI({
-	onStart: () => {
-		void handleStart();
-	},
-	onChoice: handleChoice,
-	onPlayAgain: () => {
-		void handlePlayAgain();
-	},
-});
 
 render();
