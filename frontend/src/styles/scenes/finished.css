@@ -1,5 +1,16 @@
 .finished-screen {
-	gap: 1.5rem;
+	gap: 1.25rem;
+	align-items: stretch;
+	width: 100%;
+}
+
+/* --- Evaluation card --- */
+
+.evaluation-body {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+	padding: 1.25rem 1.25rem 1.5rem;
 }
 
 .result-title {
@@ -7,7 +18,9 @@
 	font-size: var(--type-h2);
 	font-weight: 700;
 	text-transform: uppercase;
-	letter-spacing: 0.05em;
+	letter-spacing: 0.06em;
+	text-align: left;
+	margin: 0;
 }
 
 .result-title.win {
@@ -20,16 +33,120 @@
 .result-title.lose {
 	color: var(--wrong);
 	text-shadow:
+		calc(var(--ca-offset) * -1) 0 0 var(--neon-cyan-dim),
+		var(--ca-offset) 0 0 var(--neon-magenta-dim),
 		0 0 20px var(--neon-red-dim),
 		0 0 40px #ff335515;
+	animation: loseGlitch 0.7s steps(8) both;
 }
 
-.score {
-	font-size: 1rem;
-	font-weight: 300;
-	color: var(--text-dim);
-	letter-spacing: 0.05em;
+@keyframes loseGlitch {
+	0% {
+		transform: translateX(0);
+		clip-path: inset(0 0 0 0);
+	}
+	12% {
+		transform: translateX(-3px);
+		clip-path: inset(8% 0 62% 0);
+	}
+	24% {
+		transform: translateX(2px);
+		clip-path: inset(42% 0 22% 0);
+	}
+	36% {
+		transform: translateX(-2px);
+		clip-path: inset(60% 0 8% 0);
+	}
+	52% {
+		transform: translateX(1px);
+		clip-path: inset(0 0 48% 0);
+	}
+	68% {
+		transform: translateX(-1px);
+		clip-path: inset(24% 0 40% 0);
+	}
+	100% {
+		transform: translateX(0);
+		clip-path: inset(0 0 0 0);
+	}
 }
+
+.eval-stats {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-end;
+	gap: 1rem;
+	flex-wrap: wrap;
+	padding-top: 0.5rem;
+	border-top: 1px dashed var(--bg-card-border);
+}
+
+.eval-score {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.eval-score-value {
+	font-family: var(--font-display);
+	font-size: 2.4rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	color: var(--text-bright);
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+}
+
+.result-title.win ~ .eval-stats .eval-score-value {
+	color: var(--correct);
+	text-shadow: 0 0 14px var(--neon-green-dim);
+}
+
+.result-title.lose ~ .eval-stats .eval-score-value {
+	color: var(--wrong);
+	text-shadow: 0 0 14px var(--neon-red-dim);
+}
+
+.eval-score-sub {
+	color: var(--text-dim);
+	font-size: var(--type-micro);
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+
+.eval-meta {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	align-items: flex-end;
+	text-align: right;
+}
+
+.eval-record {
+	color: var(--neon-yellow);
+	font-size: var(--type-micro);
+	font-weight: 700;
+	letter-spacing: 0.22em;
+	text-transform: uppercase;
+	padding: 0.2rem 0.55rem;
+	border: 1px solid var(--neon-yellow);
+	border-radius: 2px;
+	background: rgba(255, 225, 86, 0.08);
+	animation: promptPulse 1.6s ease-in-out infinite;
+}
+
+.eval-prev {
+	color: var(--text-dim);
+	font-size: var(--type-micro);
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+}
+
+.eval-prev-sub {
+	opacity: 0.7;
+}
+
+/* --- Comparison --- */
 
 .comparison {
 	display: grid;
@@ -39,28 +156,15 @@
 }
 
 .comparison-col {
-	background: var(--bg-surface);
-	border: 1px solid var(--bg-card-border);
-	border-radius: var(--radius-lg);
-	padding: 1.25rem;
 	overflow-wrap: break-word;
 	word-wrap: break-word;
-}
-
-.comparison-col h3 {
-	font-size: var(--type-micro);
-	color: var(--text-dim);
-	text-transform: uppercase;
-	letter-spacing: 0.1em;
-	margin-bottom: 1rem;
-	padding-bottom: 0.5rem;
-	border-bottom: 1px solid var(--bg-card-border);
 }
 
 .comparison-text {
 	line-height: 2;
 	font-size: var(--type-caption);
 	font-weight: 400;
+	padding: 1rem 1.25rem;
 }
 
 .comparison-text .word {
@@ -77,20 +181,43 @@
 	font-weight: 600;
 }
 
-/* Player column: wrong picks shown in red, no strikethrough */
-.comparison-col:first-child .diff-wrong {
+/* Player column: wrong picks shown in red. */
+.comparison .comparison-col:first-child .diff-wrong {
 	text-decoration: none;
 }
 
-/* Original column: highlight what the correct word was (yellow contrast) */
-.comparison-col:last-child .diff-wrong {
+/* Ground-truth column: the correct word is always right, highlight yellow. */
+.comparison .comparison-col:last-child .diff-wrong {
 	text-decoration: none;
 	color: var(--neon-yellow);
 	font-weight: 600;
 }
 
+/* --- Responsive --- */
+
 @media (max-width: 640px) {
 	.comparison {
 		grid-template-columns: 1fr;
+	}
+
+	.eval-stats {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.eval-meta {
+		align-items: flex-start;
+		text-align: left;
+	}
+
+	.eval-score-value {
+		font-size: 2rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.result-title.lose,
+	.eval-record {
+		animation: none;
 	}
 }
