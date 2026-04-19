@@ -5,12 +5,25 @@ import type { GameState } from "../types.ts";
 
 export type GameCallbacks = {
 	onChoice: (word: string) => void;
+	onPromptTyped: () => void;
 	getRoundSource: () => RoundSource | null;
 };
+
+const TYPE_DELAY_MIN = 22;
+const TYPE_DELAY_MAX = 55;
+const TYPE_PUNC_PAUSE = 140;
 
 function sessionTag(id: string): string {
 	const slug = id.replace(/[^a-zA-Z0-9]/g, "").slice(-4).toUpperCase();
 	return slug.length < 4 ? slug.padStart(4, "0") : slug;
+}
+
+function prefersReducedMotion(): boolean {
+	return (
+		typeof window !== "undefined" &&
+		typeof window.matchMedia === "function" &&
+		window.matchMedia("(prefers-reduced-motion: reduce)").matches
+	);
 }
 
 export function renderGameHTML(
@@ -21,6 +34,11 @@ export function renderGameHTML(
 	if (!state.round) return "";
 
 	const tag = sessionTag(state.round.id);
+	const isTyping = state.phase === "typing_prompt";
+
+	const promptBody = isTyping
+		? `<span class="prompt-text"></span><span class="prompt-caret" aria-hidden="true"></span>`
+		: escapeHTML(state.round.prompt);
 
 	const promptHTML = `
     <div class="crt-window prompt-window">
@@ -28,9 +46,11 @@ export function renderGameHTML(
         <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
         <span class="crt-session">PROMPT_${tag} // INPUT</span>
       </header>
-      <div class="crt-body prompt-body">${escapeHTML(state.round.prompt)}</div>
+      <div class="crt-body prompt-body">${promptBody}</div>
     </div>
   `;
+
+	const answerBody = isTyping ? "" : renderWords(state);
 
 	const answerHTML = `
     <div class="crt-window answer-window">
@@ -38,7 +58,7 @@ export function renderGameHTML(
         <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
         <span class="crt-session">MODEL_OUTPUT_${tag} // STREAM</span>
       </header>
-      <div class="crt-body answer-body" id="answer" aria-live="polite">${renderWords(state)}</div>
+      <div class="crt-body answer-body" id="answer" aria-live="polite">${answerBody}</div>
     </div>
   `;
 
@@ -87,6 +107,53 @@ export function createGameScene(cb: GameCallbacks): Scene<GameState> {
 	let mountRoot: HTMLElement | null = null;
 	let currentOptions: string[] | null = null;
 	let keyHandler: ((e: KeyboardEvent) => void) | null = null;
+	let typingTimer: ReturnType<typeof setTimeout> | null = null;
+	let typingRoundId: string | null = null;
+
+	function stopTyping() {
+		if (typingTimer) clearTimeout(typingTimer);
+		typingTimer = null;
+	}
+
+	function startPromptTyping(prompt: string, roundId: string) {
+		if (typingRoundId === roundId) return;
+		typingRoundId = roundId;
+		stopTyping();
+
+		const target = mountRoot?.querySelector<HTMLElement>(".prompt-text");
+		const caret = mountRoot?.querySelector<HTMLElement>(".prompt-caret");
+		if (!target) return;
+
+		if (prefersReducedMotion()) {
+			target.textContent = prompt;
+			caret?.remove();
+			queueMicrotask(() => cb.onPromptTyped());
+			return;
+		}
+
+		let i = 0;
+
+		const tick = () => {
+			if (i >= prompt.length) {
+				caret?.remove();
+				typingTimer = null;
+				cb.onPromptTyped();
+				return;
+			}
+			const ch = prompt[i]!;
+			target.textContent = (target.textContent ?? "") + ch;
+			i++;
+
+			const isPunc = /[.,;:!?—]/.test(ch);
+			const jitter =
+				TYPE_DELAY_MIN + Math.random() * (TYPE_DELAY_MAX - TYPE_DELAY_MIN);
+			const delay = isPunc ? jitter + TYPE_PUNC_PAUSE : jitter;
+
+			typingTimer = setTimeout(tick, delay);
+		};
+
+		typingTimer = setTimeout(tick, TYPE_DELAY_MIN);
+	}
 
 	function render(state: GameState) {
 		if (!mountRoot || !state.round) return;
@@ -110,6 +177,10 @@ export function createGameScene(cb: GameCallbacks): Scene<GameState> {
 						cb.onChoice(btn.dataset.word!);
 					});
 				});
+		}
+
+		if (state.phase === "typing_prompt") {
+			startPromptTyping(state.round.prompt, state.round.id);
 		}
 
 		const answer = document.getElementById("answer");
@@ -141,6 +212,8 @@ export function createGameScene(cb: GameCallbacks): Scene<GameState> {
 			if (keyHandler) window.removeEventListener("keydown", keyHandler);
 			keyHandler = null;
 			currentOptions = null;
+			stopTyping();
+			typingRoundId = null;
 			mountRoot = null;
 		},
 	};

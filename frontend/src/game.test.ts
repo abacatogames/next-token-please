@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
 	advanceToken,
+	beginRevealing,
 	createGame,
 	getOriginalAnswer,
 	getPlayerAnswer,
@@ -33,13 +34,25 @@ describe("createGame", () => {
 });
 
 describe("startRound", () => {
-	test("sets phase to revealing with fresh state", () => {
+	test("sets phase to typing_prompt with fresh state", () => {
 		const s = startRound(round);
-		expect(s.phase).toBe("revealing");
+		expect(s.phase).toBe("typing_prompt");
 		expect(s.round).toBe(round);
 		expect(s.tokenIndex).toBe(0);
 		expect(s.playerChoices).toEqual([]);
 		expect(s.revealedWords).toEqual([]);
+	});
+});
+
+describe("beginRevealing", () => {
+	test("transitions typing_prompt to revealing", () => {
+		const s = startRound(round);
+		expect(beginRevealing(s).phase).toBe("revealing");
+	});
+
+	test("no-op outside typing_prompt", () => {
+		const s = createGame();
+		expect(beginRevealing(s)).toBe(s);
 	});
 });
 
@@ -49,8 +62,13 @@ describe("advanceToken", () => {
 		expect(advanceToken(s)).toBe(s);
 	});
 
-	test("reveals word and increments index", () => {
+	test("no-op during typing_prompt", () => {
 		const s = startRound(round);
+		expect(advanceToken(s)).toBe(s);
+	});
+
+	test("reveals word and increments index", () => {
+		const s = beginRevealing(startRound(round));
 		const next = advanceToken(s);
 		expect(next.tokenIndex).toBe(1);
 		expect(next.revealedWords).toEqual(["Hello"]);
@@ -58,14 +76,17 @@ describe("advanceToken", () => {
 	});
 
 	test("transitions to awaiting_choice on choice token", () => {
-		const s = { ...startRound(round), tokenIndex: 1 };
+		const s = { ...beginRevealing(startRound(round)), tokenIndex: 1 };
 		const next = advanceToken(s);
 		expect(next.phase).toBe("awaiting_choice");
 		expect(next.tokenIndex).toBe(1);
 	});
 
 	test("transitions to finished when past last token", () => {
-		const s = { ...startRound(round), tokenIndex: round.tokens.length };
+		const s = {
+			...beginRevealing(startRound(round)),
+			tokenIndex: round.tokens.length,
+		};
 		const next = advanceToken(s);
 		expect(next.phase).toBe("finished");
 	});

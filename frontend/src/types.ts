@@ -8,7 +8,12 @@ export type Round = {
 	tokens: Token[];
 };
 
-export type GamePhase = "idle" | "revealing" | "awaiting_choice" | "finished";
+export type GamePhase =
+	| "idle"
+	| "typing_prompt"
+	| "revealing"
+	| "awaiting_choice"
+	| "finished";
 
 export type PlayerChoice = {
 	tokenIndex: number;

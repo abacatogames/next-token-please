@@ -1,5 +1,11 @@
 import { fetchRound, type RoundSource } from "./api.ts";
-import { advanceToken, createGame, makeChoice, startRound } from "./game.ts";
+import {
+	advanceToken,
+	beginRevealing,
+	createGame,
+	makeChoice,
+	startRound,
+} from "./game.ts";
 import { SceneManager } from "./scene/sceneManager.ts";
 import { mountAtmosphere } from "./scenes/atmosphere.ts";
 import { createErrorScene } from "./scenes/error.ts";
@@ -37,6 +43,7 @@ manager.register(createLoadingScene());
 manager.register(
 	createGameScene({
 		onChoice: handleChoice,
+		onPromptTyped: handlePromptTyped,
 		getRoundSource: () => lastSource,
 	}),
 );
@@ -62,6 +69,7 @@ function render() {
 		case "idle":
 			manager.goto("idle", state);
 			break;
+		case "typing_prompt":
 		case "revealing":
 		case "awaiting_choice":
 			manager.goto("game", state);
@@ -89,11 +97,17 @@ async function handleStart() {
 		lastSource = result.source;
 		state = startRound(result.round);
 		render();
-		scheduleNextReveal();
 	} catch (err) {
 		console.error("[main] round fetch failed:", err);
 		manager.goto("error", state);
 	}
+}
+
+function handlePromptTyped() {
+	if (state.phase !== "typing_prompt") return;
+	state = beginRevealing(state);
+	render();
+	scheduleNextReveal();
 }
 
 function handleChoice(word: string) {

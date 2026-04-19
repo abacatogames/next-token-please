@@ -12,12 +12,17 @@ export function createGame(): GameState {
 
 export function startRound(round: Round): GameState {
 	return {
-		phase: "revealing",
+		phase: "typing_prompt",
 		round,
 		tokenIndex: 0,
 		playerChoices: [],
 		revealedWords: [],
 	};
+}
+
+export function beginRevealing(state: GameState): GameState {
+	if (state.phase !== "typing_prompt") return state;
+	return { ...state, phase: "revealing" };
 }
 
 export function advanceToken(state: GameState): GameState {

@@ -22,6 +22,35 @@
 	font-style: normal;
 }
 
+.prompt-caret {
+	display: inline-block;
+	margin-left: 1px;
+	color: var(--neon-cyan);
+	font-style: normal;
+	animation: promptCaretBlink 0.9s steps(2, start) infinite;
+}
+
+.prompt-caret::before {
+	content: "▍";
+}
+
+@keyframes promptCaretBlink {
+	0%,
+	50% {
+		opacity: 1;
+	}
+	51%,
+	100% {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.prompt-caret {
+		animation: none;
+	}
+}
+
 /* --- Answer window --- */
 
 .answer-body {
