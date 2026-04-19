@@ -1,0 +1,143 @@
+.screen {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2rem;
+}
+
+/* --- Buttons --- */
+
+.btn {
+	font-family: var(--font-mono);
+	font-size: 0.9rem;
+	font-weight: 600;
+	padding: 0.7rem 1.8rem;
+	border: 1px solid var(--neon-cyan-dim);
+	background: transparent;
+	color: var(--neon-cyan);
+	border-radius: var(--radius);
+	cursor: pointer;
+	transition: all var(--dur-fast) ease;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	position: relative;
+}
+
+.btn:hover {
+	background: var(--neon-cyan);
+	color: var(--bg);
+	box-shadow: var(--glow-cyan);
+	border-color: var(--neon-cyan);
+}
+
+.btn:active {
+	transform: scale(0.97);
+}
+
+.btn-start {
+	margin-top: 0.5rem;
+	font-size: 1rem;
+	padding: 0.9rem 3rem;
+	border-width: 2px;
+}
+
+/* --- Prompt panel --- */
+
+.prompt {
+	background: var(--bg-surface);
+	border: 1px solid var(--bg-card-border);
+	border-left: 3px solid var(--neon-cyan-dim);
+	border-radius: var(--radius);
+	padding: 1rem 1.25rem;
+	font-size: 0.9rem;
+	font-weight: 300;
+	color: var(--text-dim);
+	font-style: italic;
+	letter-spacing: 0.02em;
+}
+
+.prompt::before {
+	content: "> ";
+	color: var(--neon-cyan-dim);
+	font-style: normal;
+}
+
+/* --- Answer / words / cursor --- */
+
+.answer {
+	background: var(--bg-card);
+	border: 1px solid var(--bg-card-border);
+	border-radius: var(--radius-lg);
+	padding: 1.5rem;
+	min-height: 140px;
+	max-height: 320px;
+	overflow-y: auto;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+	line-height: 2.2;
+	font-size: var(--type-body);
+	font-weight: 400;
+	scrollbar-width: thin;
+	scrollbar-color: var(--bg-card-border) transparent;
+}
+
+.answer::-webkit-scrollbar {
+	width: 4px;
+}
+
+.answer::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.answer::-webkit-scrollbar-thumb {
+	background: var(--bg-card-border);
+	border-radius: 2px;
+}
+
+.word {
+	display: inline-block;
+	margin-right: 0.35em;
+	animation: wordReveal 0.2s var(--ease-out);
+	vertical-align: baseline;
+}
+
+.word.punc {
+	margin-left: -0.35em;
+	margin-right: 0.15em;
+}
+
+.cursor {
+	display: inline-block;
+	width: 2px;
+	height: 1.1em;
+	background: var(--neon-cyan);
+	box-shadow: 0 0 6px var(--neon-cyan-dim);
+	animation: cursorBlink var(--dur-slow) step-end infinite;
+	vertical-align: text-bottom;
+	margin-left: 2px;
+}
+
+@keyframes cursorBlink {
+	50% {
+		opacity: 0;
+	}
+}
+
+@keyframes wordReveal {
+	from {
+		opacity: 0;
+		transform: translateY(3px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (max-width: 640px) {
+	.answer {
+		padding: 1rem;
+		min-height: 100px;
+		max-height: 260px;
+	}
+}

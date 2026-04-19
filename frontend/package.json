@@ -18,5 +18,8 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "^5.2.8"
   }
 }

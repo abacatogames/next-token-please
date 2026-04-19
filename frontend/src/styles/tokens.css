@@ -1,0 +1,80 @@
+:root {
+	/* --- Surfaces --- */
+	--bg: #05060f;
+	--bg-surface: #0c0e1a;
+	--bg-card: #0f1225;
+	--bg-card-border: #1a1e3a;
+
+	/* --- Text --- */
+	--text: #d4d8f0;
+	--text-dim: #6a6f99;
+	--text-bright: #ffffff;
+
+	/* --- Neon palette (preserved) --- */
+	--neon-cyan: #00f0ff;
+	--neon-cyan-dim: #00f0ff88;
+	--neon-cyan-glow: #00f0ff33;
+	--neon-magenta: #ff2d7b;
+	--neon-magenta-dim: #ff2d7b88;
+	--neon-green: #00ff88;
+	--neon-green-dim: #00ff8888;
+	--neon-red: #ff3355;
+	--neon-red-dim: #ff335588;
+	--neon-yellow: #ffe156;
+
+	/* --- Noir ramp (reserved for later phases) --- */
+	--noir-indigo-deep: #0a0b1a;
+	--noir-indigo: #141833;
+	--noir-amber: #ff9b3a;
+	--noir-amber-dim: #ff9b3a88;
+	--noir-bruise: #7a2e4e;
+	--noir-sickly-green: #89b449;
+
+	/* --- Semantic aliases --- */
+	--correct: var(--neon-green);
+	--wrong: var(--neon-red);
+
+	/* --- Typography --- */
+	--font-mono:
+		"JetBrains Mono Variable", "JetBrains Mono", "Fira Code",
+		"Cascadia Code", "Courier New", monospace;
+	--font-display: var(--font-mono);
+
+	--type-display: 2.2rem;
+	--type-h2: 1.8rem;
+	--type-body: 0.95rem;
+	--type-caption: 0.85rem;
+	--type-mono-sm: 0.8rem;
+	--type-micro: 0.7rem;
+
+	/* --- Radius --- */
+	--radius: 4px;
+	--radius-lg: 8px;
+
+	/* --- Glow tiers --- */
+	--glow-sm: 0 0 4px var(--neon-cyan-glow);
+	--glow-md: 0 0 8px var(--neon-cyan-glow), 0 0 20px #00f0ff15;
+	--glow-lg: 0 0 16px var(--neon-cyan-glow), 0 0 40px #00f0ff10;
+
+	--glow-cyan: 0 0 8px var(--neon-cyan-glow), 0 0 20px #00f0ff15;
+	--glow-magenta: 0 0 8px #ff2d7b33, 0 0 20px #ff2d7b15;
+	--glow-green: 0 0 8px #00ff8833, 0 0 20px #00ff8815;
+
+	/* --- Motion --- */
+	--ease-out: cubic-bezier(0.2, 0.9, 0.3, 1);
+	--ease-dystopia: cubic-bezier(0.77, 0, 0.175, 1);
+	--dur-flicker: 90ms;
+	--dur-fast: 200ms;
+	--dur-base: 400ms;
+	--dur-slow: 900ms;
+
+	/* --- Chromatic aberration (used from Phase 5+) --- */
+	--ca-offset: 1px;
+
+	/* --- Z-layer scale --- */
+	--z-atmosphere: 1;
+	--z-character: 5;
+	--z-app: 10;
+	--z-hud: 20;
+	--z-overlay: 9999;
+}

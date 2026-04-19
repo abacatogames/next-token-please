@@ -1,0 +1,78 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+}
+
+html {
+	font-size: 16px;
+}
+
+body {
+	font-family: var(--font-mono);
+	background: var(--bg);
+	color: var(--text);
+	min-height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+	overflow-x: hidden;
+}
+
+/* Subtle scanline overlay */
+body::after {
+	content: "";
+	position: fixed;
+	inset: 0;
+	background: repeating-linear-gradient(
+		0deg,
+		transparent,
+		transparent 2px,
+		#00000008 2px,
+		#00000008 4px
+	);
+	pointer-events: none;
+	z-index: var(--z-overlay);
+}
+
+/* --- Layer scaffolding --- */
+
+#atmosphere {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: var(--z-atmosphere);
+}
+
+#character-stage {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: var(--z-character);
+}
+
+#hud {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: var(--z-hud);
+}
+
+#app {
+	max-width: 740px;
+	width: 100%;
+	padding: 2rem;
+	position: relative;
+	z-index: var(--z-app);
+}
+
+@media (max-width: 640px) {
+	html {
+		font-size: 14px;
+	}
+
+	#app {
+		padding: 1.25rem;
+	}
+}

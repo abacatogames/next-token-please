@@ -1,0 +1,41 @@
+.idle-screen {
+	padding: 3rem 0;
+}
+
+.title {
+	font-family: var(--font-display);
+	font-size: var(--type-display);
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-align: center;
+	color: var(--neon-cyan);
+	text-shadow:
+		0 0 20px var(--neon-cyan-glow),
+		0 0 40px #00f0ff10;
+	text-transform: uppercase;
+}
+
+.subtitle {
+	color: var(--text-dim);
+	font-size: var(--type-caption);
+	font-weight: 300;
+	line-height: 1.8;
+	text-align: center;
+	letter-spacing: 0.03em;
+}
+
+@media (max-width: 640px) {
+	.title {
+		font-size: 1.6rem;
+	}
+}
+
+@media (max-width: 380px) {
+	.title {
+		font-size: 1.3rem;
+	}
+
+	.btn-start {
+		padding: 0.75rem 2rem;
+	}
+}

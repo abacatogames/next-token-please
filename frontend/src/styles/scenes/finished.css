@@ -1,0 +1,96 @@
+.finished-screen {
+	gap: 1.5rem;
+}
+
+.result-title {
+	font-family: var(--font-display);
+	font-size: var(--type-h2);
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.result-title.win {
+	color: var(--correct);
+	text-shadow:
+		0 0 20px var(--neon-green-dim),
+		0 0 40px #00ff8815;
+}
+
+.result-title.lose {
+	color: var(--wrong);
+	text-shadow:
+		0 0 20px var(--neon-red-dim),
+		0 0 40px #ff335515;
+}
+
+.score {
+	font-size: 1rem;
+	font-weight: 300;
+	color: var(--text-dim);
+	letter-spacing: 0.05em;
+}
+
+.comparison {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+	width: 100%;
+}
+
+.comparison-col {
+	background: var(--bg-surface);
+	border: 1px solid var(--bg-card-border);
+	border-radius: var(--radius-lg);
+	padding: 1.25rem;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
+}
+
+.comparison-col h3 {
+	font-size: var(--type-micro);
+	color: var(--text-dim);
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	margin-bottom: 1rem;
+	padding-bottom: 0.5rem;
+	border-bottom: 1px solid var(--bg-card-border);
+}
+
+.comparison-text {
+	line-height: 2;
+	font-size: var(--type-caption);
+	font-weight: 400;
+}
+
+.comparison-text .word {
+	animation: none;
+}
+
+.diff-correct {
+	color: var(--correct);
+	font-weight: 600;
+}
+
+.diff-wrong {
+	color: var(--wrong);
+	font-weight: 600;
+}
+
+/* Player column: wrong picks shown in red, no strikethrough */
+.comparison-col:first-child .diff-wrong {
+	text-decoration: none;
+}
+
+/* Original column: highlight what the correct word was (yellow contrast) */
+.comparison-col:last-child .diff-wrong {
+	text-decoration: none;
+	color: var(--neon-yellow);
+	font-weight: 600;
+}
+
+@media (max-width: 640px) {
+	.comparison {
+		grid-template-columns: 1fr;
+	}
+}
