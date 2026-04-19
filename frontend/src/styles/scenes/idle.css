@@ -1,5 +1,104 @@
 .idle-screen {
-	padding: 3rem 0;
+	padding: 2rem 0 0.5rem;
+	gap: 1.5rem;
+	align-items: stretch;
+	width: 100%;
+}
+
+/* --- Boot terminal --- */
+
+.boot {
+	width: 100%;
+	min-height: 9.25rem;
+	padding: 0.9rem 1rem;
+	background:
+		linear-gradient(
+			180deg,
+			rgba(12, 14, 26, 0.9) 0%,
+			rgba(12, 14, 26, 0.4) 100%
+		);
+	border-left: 2px solid var(--neon-cyan-dim);
+	border-radius: 0 var(--radius) var(--radius) 0;
+	font-size: var(--type-micro);
+	color: var(--text-dim);
+	overflow: hidden;
+}
+
+.boot-line {
+	display: flex;
+	align-items: baseline;
+	gap: 0.6rem;
+	line-height: 1.85;
+	animation: bootLineIn 0.18s var(--ease-out) both;
+}
+
+@keyframes bootLineIn {
+	from {
+		opacity: 0;
+		transform: translateY(-2px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.boot-time {
+	color: var(--neon-cyan-dim);
+	flex: 0 0 auto;
+}
+
+.boot-text {
+	color: var(--text);
+	flex: 0 0 auto;
+	letter-spacing: 0.06em;
+}
+
+.boot-dots {
+	color: var(--bg-card-border);
+	flex: 1 1 auto;
+	overflow: hidden;
+	white-space: nowrap;
+	letter-spacing: 0.2em;
+	text-align: center;
+}
+
+.boot-status {
+	flex: 0 0 auto;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+}
+
+.boot-status--ok {
+	color: var(--neon-green);
+	text-shadow: 0 0 6px var(--neon-green-dim);
+}
+
+.boot-status--link {
+	color: var(--neon-cyan);
+	text-shadow: 0 0 6px var(--neon-cyan-glow);
+}
+
+.boot-status--await {
+	color: var(--neon-yellow);
+	animation: promptPulse 1.6s ease-in-out infinite;
+}
+
+/* --- Title block --- */
+
+.idle-header {
+	text-align: center;
+	padding: 0.5rem 0;
+	opacity: 0;
+	transform: translateY(8px);
+	transition:
+		opacity var(--dur-base) var(--ease-out),
+		transform var(--dur-base) var(--ease-out);
+}
+
+.idle-header[data-visible="true"] {
+	opacity: 1;
+	transform: translateY(0);
 }
 
 .title {
@@ -16,6 +115,7 @@
 }
 
 .subtitle {
+	margin-top: 0.75rem;
 	color: var(--text-dim);
 	font-size: var(--type-caption);
 	font-weight: 300;
@@ -24,9 +124,97 @@
 	letter-spacing: 0.03em;
 }
 
+/* --- Micro-onboarding --- */
+
+.about {
+	width: 100%;
+	font-size: var(--type-mono-sm);
+	color: var(--text-dim);
+	border: 1px solid var(--bg-card-border);
+	border-radius: var(--radius);
+	padding: 0.5rem 1rem;
+	background: rgba(15, 18, 37, 0.4);
+}
+
+.about summary {
+	cursor: pointer;
+	list-style: none;
+	padding: 0.2rem 0;
+	letter-spacing: 0.05em;
+	color: var(--neon-cyan);
+	outline: none;
+}
+
+.about summary::-webkit-details-marker {
+	display: none;
+}
+
+.about summary::before {
+	content: "> ";
+	color: var(--neon-cyan-dim);
+}
+
+.about[open] summary::before {
+	content: "v ";
+}
+
+.about summary:focus-visible {
+	text-shadow: var(--glow-sm);
+}
+
+.about p {
+	margin-top: 0.55rem;
+	padding-top: 0.5rem;
+	border-top: 1px dashed var(--bg-card-border);
+	line-height: 1.8;
+	color: var(--text-dim);
+}
+
+/* --- Start button --- */
+
+.btn-start {
+	align-self: center;
+	display: inline-flex;
+	gap: 0.6rem;
+	align-items: center;
+}
+
+.btn-caret {
+	color: var(--neon-cyan-dim);
+	transition:
+		transform var(--dur-fast) var(--ease-out),
+		color var(--dur-fast) var(--ease-out);
+}
+
+.btn-start:hover .btn-caret,
+.btn-start:focus-visible .btn-caret {
+	transform: translateX(2px);
+	color: var(--bg);
+}
+
+/* --- Build stamp --- */
+
+.idle-stamp {
+	width: 100%;
+	text-align: right;
+	font-size: 0.6rem;
+	color: var(--bg-card-border);
+	letter-spacing: 0.2em;
+	text-transform: uppercase;
+}
+
 @media (max-width: 640px) {
 	.title {
 		font-size: 1.6rem;
+	}
+
+	.boot {
+		font-size: 0.65rem;
+		min-height: 8rem;
+	}
+
+	.boot-dots {
+		display: none;
 	}
 }
 
@@ -37,5 +225,16 @@
 
 	.btn-start {
 		padding: 0.75rem 2rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.idle-header {
+		transition: none;
+	}
+
+	.boot-line,
+	.boot-status--await {
+		animation: none;
 	}
 }
