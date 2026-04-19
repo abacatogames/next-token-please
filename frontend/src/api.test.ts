@@ -7,14 +7,15 @@ afterEach(() => {
 });
 
 describe("fetchRound without baseUrl", () => {
-	test("returns a mock round", async () => {
-		const round = await fetchRound(0.5, undefined);
+	test("returns a mock round tagged local", async () => {
+		const { round, source } = await fetchRound(0.5, undefined);
 		expect(mockRounds).toContain(round);
+		expect(source).toBe("local");
 	});
 
 	test("cycles through mocks on repeated calls", async () => {
-		const first = await fetchRound(0.5, undefined);
-		const second = await fetchRound(0.5, undefined);
+		const first = (await fetchRound(0.5, undefined)).round;
+		const second = (await fetchRound(0.5, undefined)).round;
 		const firstIdx = mockRounds.indexOf(first);
 		const secondIdx = mockRounds.indexOf(second);
 		expect(secondIdx).toBe((firstIdx + 1) % mockRounds.length);
@@ -22,7 +23,7 @@ describe("fetchRound without baseUrl", () => {
 });
 
 describe("fetchRound with baseUrl", () => {
-	test("returns backend round on success", async () => {
+	test("returns backend round tagged backend on success", async () => {
 		const backendRound = {
 			id: "backend-1",
 			prompt: "hello",
@@ -32,8 +33,9 @@ describe("fetchRound with baseUrl", () => {
 			new Response(JSON.stringify(backendRound), { status: 200 }),
 		);
 
-		const round = await fetchRound(0.3, "http://api.test");
+		const { round, source } = await fetchRound(0.3, "http://api.test");
 		expect(round).toEqual(backendRound);
+		expect(source).toBe("backend");
 	});
 
 	test("passes difficulty in query string", async () => {
@@ -49,21 +51,23 @@ describe("fetchRound with baseUrl", () => {
 		);
 	});
 
-	test("falls back to mock on non-ok response", async () => {
+	test("falls back to mock tagged fallback on non-ok response", async () => {
 		spyOn(globalThis, "fetch").mockResolvedValue(
 			new Response("boom", { status: 500 }),
 		);
 		spyOn(console, "warn").mockImplementation(() => {});
 
-		const round = await fetchRound(0.5, "http://api.test");
+		const { round, source } = await fetchRound(0.5, "http://api.test");
 		expect(mockRounds).toContain(round);
+		expect(source).toBe("fallback");
 	});
 
-	test("falls back to mock when fetch rejects", async () => {
+	test("falls back tagged fallback when fetch rejects", async () => {
 		spyOn(globalThis, "fetch").mockRejectedValue(new Error("offline"));
 		spyOn(console, "warn").mockImplementation(() => {});
 
-		const round = await fetchRound(0.5, "http://api.test");
+		const { round, source } = await fetchRound(0.5, "http://api.test");
 		expect(mockRounds).toContain(round);
+		expect(source).toBe("fallback");
 	});
 });

@@ -41,58 +41,72 @@
 	border-width: 2px;
 }
 
-/* --- Prompt panel --- */
+/* --- CRT window chrome --- */
 
-.prompt {
+.crt-window {
+	width: 100%;
 	background: var(--bg-surface);
 	border: 1px solid var(--bg-card-border);
-	border-left: 3px solid var(--neon-cyan-dim);
-	border-radius: var(--radius);
-	padding: 1rem 1.25rem;
-	font-size: 0.9rem;
-	font-weight: 300;
-	color: var(--text-dim);
-	font-style: italic;
-	letter-spacing: 0.02em;
-}
-
-.prompt::before {
-	content: "> ";
-	color: var(--neon-cyan-dim);
-	font-style: normal;
-}
-
-/* --- Answer / words / cursor --- */
-
-.answer {
-	background: var(--bg-card);
-	border: 1px solid var(--bg-card-border);
 	border-radius: var(--radius-lg);
-	padding: 1.5rem;
-	min-height: 140px;
-	max-height: 320px;
-	overflow-y: auto;
-	overflow-wrap: break-word;
-	word-wrap: break-word;
-	line-height: 2.2;
-	font-size: var(--type-body);
-	font-weight: 400;
-	scrollbar-width: thin;
-	scrollbar-color: var(--bg-card-border) transparent;
+	overflow: hidden;
+	box-shadow:
+		inset 0 0 24px rgba(0, 240, 255, 0.04),
+		var(--glow-sm);
 }
 
-.answer::-webkit-scrollbar {
-	width: 4px;
+.crt-title-bar {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.45rem 0.8rem;
+	background: var(--bg-card);
+	border-bottom: 1px solid var(--bg-card-border);
+	font-size: 0.6rem;
+	color: var(--text-dim);
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
 }
 
-.answer::-webkit-scrollbar-track {
-	background: transparent;
+.crt-dots {
+	display: inline-flex;
+	gap: 0.3rem;
+	flex: 0 0 auto;
 }
 
-.answer::-webkit-scrollbar-thumb {
+.crt-dots i {
+	display: block;
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
 	background: var(--bg-card-border);
-	border-radius: 2px;
 }
+
+.crt-dots i:first-child {
+	background: var(--neon-red-dim);
+}
+
+.crt-dots i:nth-child(2) {
+	background: var(--neon-yellow);
+	opacity: 0.55;
+}
+
+.crt-dots i:last-child {
+	background: var(--neon-green-dim);
+}
+
+.crt-session {
+	color: var(--neon-cyan-dim);
+	flex: 1 1 auto;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.crt-body {
+	padding: 1rem 1.25rem;
+}
+
+/* --- Words / cursor (shared across game + finished) --- */
 
 .word {
 	display: inline-block;
@@ -108,11 +122,13 @@
 
 .cursor {
 	display: inline-block;
-	width: 2px;
+	width: 0.55em;
 	height: 1.1em;
 	background: var(--neon-cyan);
-	box-shadow: 0 0 6px var(--neon-cyan-dim);
-	animation: cursorBlink var(--dur-slow) step-end infinite;
+	box-shadow: 0 0 10px var(--neon-cyan-dim);
+	animation:
+		cursorBlink var(--dur-slow) step-end infinite,
+		cursorFlicker 4.3s steps(1) infinite;
 	vertical-align: text-bottom;
 	margin-left: 2px;
 }
@@ -120,6 +136,23 @@
 @keyframes cursorBlink {
 	50% {
 		opacity: 0;
+	}
+}
+
+@keyframes cursorFlicker {
+	0%,
+	97.5%,
+	100% {
+		filter: none;
+	}
+	97.8% {
+		filter: brightness(0.4);
+	}
+	98.1% {
+		filter: brightness(1.3);
+	}
+	98.4% {
+		filter: brightness(0.6);
 	}
 }
 
@@ -134,10 +167,8 @@
 	}
 }
 
-@media (max-width: 640px) {
-	.answer {
-		padding: 1rem;
-		min-height: 100px;
-		max-height: 260px;
+@media (prefers-reduced-motion: reduce) {
+	.cursor {
+		animation: cursorBlink var(--dur-slow) step-end infinite;
 	}
 }

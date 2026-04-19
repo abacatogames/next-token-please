@@ -1,10 +1,11 @@
-import { fetchRound } from "./api.ts";
+import { fetchRound, type RoundSource } from "./api.ts";
 import { advanceToken, createGame, makeChoice, startRound } from "./game.ts";
 import { SceneManager } from "./scene/sceneManager.ts";
 import { mountAtmosphere } from "./scenes/atmosphere.ts";
 import { createFinishedScene } from "./scenes/finished.ts";
 import { createGameScene } from "./scenes/game.ts";
 import { createIdleScene } from "./scenes/idle.ts";
+import { createLoadingScene } from "./scenes/loading.ts";
 import type { GameState } from "./types.ts";
 
 const REVEAL_DELAY_MIN = 80;
@@ -16,6 +17,7 @@ function randomRevealDelay(): number {
 
 let state: GameState = createGame();
 let revealTimer: ReturnType<typeof setTimeout> | null = null;
+let lastSource: RoundSource | null = null;
 
 const atmosphereRoot = document.getElementById("atmosphere")!;
 mountAtmosphere(atmosphereRoot);
@@ -30,7 +32,13 @@ manager.register(
 		},
 	}),
 );
-manager.register(createGameScene({ onChoice: handleChoice }));
+manager.register(createLoadingScene());
+manager.register(
+	createGameScene({
+		onChoice: handleChoice,
+		getRoundSource: () => lastSource,
+	}),
+);
 manager.register(
 	createFinishedScene({
 		onPlayAgain: () => {
@@ -65,8 +73,10 @@ function scheduleNextReveal() {
 }
 
 async function handleStart() {
-	const round = await fetchRound();
-	state = startRound(round);
+	manager.goto("loading", state);
+	const result = await fetchRound();
+	lastSource = result.source;
+	state = startRound(result.round);
 	render();
 	scheduleNextReveal();
 }
