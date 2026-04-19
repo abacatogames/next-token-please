@@ -16,10 +16,19 @@ export type PlayerChoice = {
 	correct: string;
 };
 
+export type RoundProvider = () => Promise<Round>;
+
+export type Chapter = {
+	id: string;
+	title: string;
+	roundProvider: RoundProvider;
+};
+
 export type GameState = {
 	phase: GamePhase;
 	round: Round | null;
 	tokenIndex: number;
 	playerChoices: PlayerChoice[];
 	revealedWords: string[];
+	chapter?: Chapter;
 };
