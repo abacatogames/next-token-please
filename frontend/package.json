@@ -20,6 +20,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "@fontsource-variable/jetbrains-mono": "^5.2.8"
+    "@fontsource-variable/jetbrains-mono": "^5.2.8",
+    "@fontsource/vt323": "^5.2.7"
   }
 }

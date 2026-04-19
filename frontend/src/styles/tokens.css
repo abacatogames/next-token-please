@@ -38,7 +38,9 @@
 	--font-mono:
 		"JetBrains Mono Variable", "JetBrains Mono", "Fira Code",
 		"Cascadia Code", "Courier New", monospace;
-	--font-display: var(--font-mono);
+	--font-display:
+		"VT323", "JetBrains Mono Variable", "JetBrains Mono", "Courier New",
+		monospace;
 
 	--type-display: 2.2rem;
 	--type-h2: 1.8rem;
