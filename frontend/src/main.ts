@@ -1,6 +1,7 @@
 import { fetchRound } from "./api.ts";
 import { advanceToken, createGame, makeChoice, startRound } from "./game.ts";
 import { SceneManager } from "./scene/sceneManager.ts";
+import { mountAtmosphere } from "./scenes/atmosphere.ts";
 import { createFinishedScene } from "./scenes/finished.ts";
 import { createGameScene } from "./scenes/game.ts";
 import { createIdleScene } from "./scenes/idle.ts";
@@ -15,6 +16,9 @@ function randomRevealDelay(): number {
 
 let state: GameState = createGame();
 let revealTimer: ReturnType<typeof setTimeout> | null = null;
+
+const atmosphereRoot = document.getElementById("atmosphere")!;
+mountAtmosphere(atmosphereRoot);
 
 const appRoot = document.getElementById("app")!;
 const manager = new SceneManager<GameState>(appRoot);

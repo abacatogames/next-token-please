@@ -1,0 +1,99 @@
+.atm-vignette,
+.atm-grain,
+.atm-rain,
+.atm-flicker {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+
+.atm-vignette {
+	background:
+		radial-gradient(
+			ellipse at 50% 40%,
+			transparent 35%,
+			rgba(0, 0, 0, 0.55) 100%
+		),
+		linear-gradient(
+			180deg,
+			rgba(10, 11, 26, 0.3) 0%,
+			transparent 30%,
+			transparent 70%,
+			rgba(10, 11, 26, 0.6) 100%
+		);
+}
+
+.atm-grain {
+	opacity: 0.09;
+	mix-blend-mode: overlay;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='7' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.85  0 0 0 0 0.85  0 0 0 0 0.9  0 0 0 1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+	background-size: 180px 180px;
+}
+
+.atm-rain {
+	overflow: hidden;
+	opacity: 0.7;
+}
+
+.atm-streak {
+	position: absolute;
+	top: -20vh;
+	width: 1px;
+	height: var(--length, 90px);
+	background: linear-gradient(
+		to bottom,
+		transparent 0%,
+		rgba(200, 230, 255, var(--opacity, 0.25)) 50%,
+		transparent 100%
+	);
+	animation: atmRain var(--dur, 0.6s) linear infinite;
+	animation-delay: var(--delay, 0s);
+	will-change: transform;
+}
+
+@keyframes atmRain {
+	from {
+		transform: translate3d(0, 0, 0);
+	}
+	to {
+		transform: translate3d(-6vw, 140vh, 0);
+	}
+}
+
+.atm-flicker {
+	background: rgba(0, 240, 255, 0.02);
+	animation: atmFlicker 17s steps(1) infinite;
+}
+
+@keyframes atmFlicker {
+	0%,
+	97%,
+	100% {
+		opacity: 0;
+	}
+	97.3% {
+		opacity: 0.55;
+	}
+	97.6% {
+		opacity: 0.1;
+	}
+	98% {
+		opacity: 0.4;
+	}
+	98.3% {
+		opacity: 0;
+	}
+	99.5% {
+		opacity: 0.3;
+	}
+	99.7% {
+		opacity: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.atm-rain,
+	.atm-flicker {
+		display: none;
+	}
+}
