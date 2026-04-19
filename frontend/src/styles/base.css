@@ -69,10 +69,61 @@ body::after {
 	z-index: var(--z-hud);
 }
 
+#site-header {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: var(--z-hud);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 0.9rem 1rem calc(0.9rem + 6px);
+	pointer-events: none;
+	background: linear-gradient(
+		180deg,
+		rgba(5, 6, 15, 0.88) 0%,
+		rgba(5, 6, 15, 0.55) 70%,
+		rgba(5, 6, 15, 0) 100%
+	);
+	backdrop-filter: blur(6px);
+	-webkit-backdrop-filter: blur(6px);
+}
+
+#site-header::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 1px;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		var(--neon-cyan-dim),
+		transparent
+	);
+	opacity: 0.6;
+}
+
+.site-title {
+	font-family: var(--font-display);
+	font-size: 1.4rem;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--neon-cyan);
+	text-shadow:
+		0 0 14px var(--neon-cyan-glow),
+		0 0 28px #00f0ff10;
+	pointer-events: auto;
+	line-height: 1;
+}
+
 #app {
 	max-width: 740px;
 	width: 100%;
-	padding: 2rem;
+	padding: 4.5rem 2rem 2rem;
 	position: relative;
 	z-index: var(--z-app);
 }
@@ -80,7 +131,7 @@ body::after {
 @media (max-width: 900px) {
 	#app {
 		max-width: 100%;
-		padding: 1.5rem;
+		padding: 4rem 1.5rem 1.5rem;
 	}
 }
 
@@ -89,8 +140,17 @@ body::after {
 		font-size: 14px;
 	}
 
+	#site-header {
+		padding: 0.65rem 0.75rem calc(0.65rem + 6px);
+	}
+
+	.site-title {
+		font-size: 1.05rem;
+		letter-spacing: 0.1em;
+	}
+
 	#app {
-		padding: 1.25rem;
+		padding: 3.5rem 1.25rem 1.25rem;
 	}
 }
 
@@ -99,7 +159,15 @@ body::after {
 		align-items: flex-start;
 	}
 
+	#site-header {
+		padding: 0.45rem 0.75rem calc(0.45rem + 4px);
+	}
+
+	.site-title {
+		font-size: 1rem;
+	}
+
 	#app {
-		padding: 1rem;
+		padding: 3rem 1rem 1rem;
 	}
 }
