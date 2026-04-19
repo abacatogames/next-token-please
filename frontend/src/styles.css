@@ -7,3 +7,4 @@
 @import "./styles/scenes/idle.css";
 @import "./styles/scenes/game.css";
 @import "./styles/scenes/finished.css";
+@import "./styles/scenes/error.css";

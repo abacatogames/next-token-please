@@ -2,6 +2,7 @@ import { fetchRound, type RoundSource } from "./api.ts";
 import { advanceToken, createGame, makeChoice, startRound } from "./game.ts";
 import { SceneManager } from "./scene/sceneManager.ts";
 import { mountAtmosphere } from "./scenes/atmosphere.ts";
+import { createErrorScene } from "./scenes/error.ts";
 import { createFinishedScene } from "./scenes/finished.ts";
 import { createGameScene } from "./scenes/game.ts";
 import { createIdleScene } from "./scenes/idle.ts";
@@ -47,6 +48,14 @@ manager.register(
 		onReturnToIdle: handleReturnToIdle,
 	}),
 );
+manager.register(
+	createErrorScene({
+		onRetry: () => {
+			void handleStart();
+		},
+		onReturnToIdle: handleReturnToIdle,
+	}),
+);
 
 function render() {
 	switch (state.phase) {
@@ -75,11 +84,16 @@ function scheduleNextReveal() {
 
 async function handleStart() {
 	manager.goto("loading", state);
-	const result = await fetchRound();
-	lastSource = result.source;
-	state = startRound(result.round);
-	render();
-	scheduleNextReveal();
+	try {
+		const result = await fetchRound();
+		lastSource = result.source;
+		state = startRound(result.round);
+		render();
+		scheduleNextReveal();
+	} catch (err) {
+		console.error("[main] round fetch failed:", err);
+		manager.goto("error", state);
+	}
 }
 
 function handleChoice(word: string) {
