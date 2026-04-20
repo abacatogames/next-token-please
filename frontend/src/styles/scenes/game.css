@@ -5,6 +5,68 @@
 	position: relative;
 }
 
+/* --- Campaign HUD banner --- */
+
+.campaign-hud {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.45rem;
+	padding: 0.45rem 0.85rem;
+	font-family: var(--font-mono);
+	font-size: 0.65rem;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--text-dim);
+	background: rgba(15, 18, 37, 0.55);
+	border: 1px solid var(--bg-card-border);
+	border-radius: var(--radius);
+	font-variant-numeric: tabular-nums;
+}
+
+.campaign-hud-tag {
+	color: var(--neon-cyan);
+	text-shadow: 0 0 6px var(--neon-cyan-glow);
+	font-weight: 600;
+}
+
+.campaign-hud-sep {
+	color: var(--bg-card-border);
+}
+
+.campaign-hud-chapter,
+.campaign-hud-round,
+.campaign-hud-target {
+	color: var(--text);
+}
+
+.campaign-hud-now {
+	margin-left: auto;
+	font-weight: 600;
+}
+
+.campaign-hud.is-pass .campaign-hud-now {
+	color: var(--correct);
+	text-shadow: 0 0 6px var(--neon-green-dim);
+}
+
+.campaign-hud.is-fail .campaign-hud-now {
+	color: var(--neon-yellow);
+}
+
+@media (max-width: 640px) {
+	.campaign-hud {
+		font-size: 0.58rem;
+		letter-spacing: 0.12em;
+		gap: 0.3rem;
+	}
+
+	.campaign-hud-now {
+		margin-left: 0;
+		flex-basis: 100%;
+	}
+}
+
 /* --- Prompt window --- */
 
 .prompt-body {

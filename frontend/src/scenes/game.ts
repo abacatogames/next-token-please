@@ -1,6 +1,8 @@
 import type { RoundSource } from "../api.ts";
 import { escapeAttr, escapeHTML, renderWords, shuffleOptions } from "../dom.ts";
+import { type ChapterProgress, chapterProgress } from "../game.ts";
 import type { Scene } from "../scene/types.ts";
+import { INFERENCE_RUN } from "../story/inferenceRun.ts";
 import type { GameState } from "../types.ts";
 
 export type GameCallbacks = {
@@ -26,6 +28,27 @@ function prefersReducedMotion(): boolean {
 	);
 }
 
+function renderHUD(progress: ChapterProgress, state: GameState): string {
+	const { chapter, correctSoFar, totalSoFar, pct, passing } = progress;
+	const roundInChapter = (state.campaign?.roundInChapter ?? 0) + 1;
+	const nowLabel = totalSoFar === 0 ? "—" : `${pct}%`;
+	const statusClass = passing ? "is-pass" : "is-fail";
+	const ratio = totalSoFar === 0 ? "" : ` · ${correctSoFar}/${totalSoFar}`;
+	return `
+    <div class="campaign-hud ${statusClass}" role="status" aria-live="polite">
+      <span class="campaign-hud-tag">INFERENCE_RUN</span>
+      <span class="campaign-hud-sep">·</span>
+      <span class="campaign-hud-chapter">CH ${chapter.index + 1}/${INFERENCE_RUN.length}</span>
+      <span class="campaign-hud-sep">·</span>
+      <span class="campaign-hud-round">ROUND ${roundInChapter}/${chapter.rounds}</span>
+      <span class="campaign-hud-sep">·</span>
+      <span class="campaign-hud-target">TARGET ${chapter.requiredPercent}%</span>
+      <span class="campaign-hud-sep">·</span>
+      <span class="campaign-hud-now">NOW ${nowLabel}${ratio}</span>
+    </div>
+  `;
+}
+
 export function renderGameHTML(
 	state: GameState,
 	shuffledOptions: string[] | null,
@@ -35,6 +58,9 @@ export function renderGameHTML(
 
 	const tag = sessionTag(state.round.id);
 	const isTyping = state.phase === "typing_prompt";
+
+	const progress = chapterProgress(state);
+	const hudHTML = progress ? renderHUD(progress, state) : "";
 
 	const promptBody = isTyping
 		? `<span class="prompt-text"></span><span class="prompt-caret" aria-hidden="true"></span>`
@@ -94,6 +120,7 @@ export function renderGameHTML(
 
 	return `
     <section class="screen game-screen" aria-label="Language model round">
+      ${hudHTML}
       ${promptHTML}
       ${answerHTML}
       ${choiceHTML}
