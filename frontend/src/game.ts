@@ -144,24 +144,37 @@ export function commitRoundToChapter(state: GameState): GameState {
 		chapterTotal: state.campaign.chapterTotal + total,
 	};
 
+	return { ...state, phase: "round_recap", campaign: nextCampaign };
+}
+
+export function isChapterComplete(state: GameState): boolean {
+	if (state.mode !== "campaign" || !state.campaign) return false;
+	const chapter = getChapter(state.campaign.chapterIndex);
+	if (!chapter) return false;
+	return state.campaign.roundInChapter >= chapter.rounds;
+}
+
+export function finalizeChapterFromRecap(state: GameState): GameState {
+	if (state.phase !== "round_recap" || !state.campaign) return state;
+	const chapter = getChapter(state.campaign.chapterIndex);
+	if (!chapter) return state;
+	if (state.campaign.roundInChapter < chapter.rounds) return state;
+
+	const passed =
+		state.campaign.chapterCorrect * 100 >=
+		chapter.requiredPercent * state.campaign.chapterTotal;
+
 	let phase: GamePhase;
-	if (nextCampaign.roundInChapter < chapter.rounds) {
-		phase = "round_recap";
+	if (passed) {
+		phase =
+			state.campaign.chapterIndex === FINAL_CHAPTER_INDEX
+				? "campaign_won"
+				: "chapter_passed";
 	} else {
-		const passed =
-			nextCampaign.chapterCorrect * 100 >=
-			chapter.requiredPercent * nextCampaign.chapterTotal;
-		if (passed) {
-			phase =
-				state.campaign.chapterIndex === FINAL_CHAPTER_INDEX
-					? "campaign_won"
-					: "chapter_passed";
-		} else {
-			phase = "chapter_failed";
-		}
+		phase = "chapter_failed";
 	}
 
-	return { ...state, phase, campaign: nextCampaign };
+	return { ...state, phase };
 }
 
 export function advanceToNextChapter(state: GameState): GameState {

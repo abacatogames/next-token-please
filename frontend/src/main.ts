@@ -6,6 +6,8 @@ import {
 	beginRevealing,
 	commitRoundToChapter,
 	createGame,
+	finalizeChapterFromRecap,
+	isChapterComplete,
 	makeChoice,
 	startCampaign,
 	startRound,
@@ -68,6 +70,11 @@ manager.register(
 manager.register(
 	createCampaignScene({
 		onContinueRound: () => {
+			if (state.phase === "round_recap" && isChapterComplete(state)) {
+				state = finalizeChapterFromRecap(state);
+				render();
+				return;
+			}
 			void handleCampaignRoundStart();
 		},
 		onNextChapter: handleNextChapter,
