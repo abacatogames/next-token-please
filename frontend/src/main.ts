@@ -1,19 +1,24 @@
 import { fetchRound, type RoundSource } from "./api.ts";
 import {
+	advanceToNextChapter,
 	advanceToken,
+	beginCampaignRound,
 	beginRevealing,
+	commitRoundToChapter,
 	createGame,
 	makeChoice,
+	startCampaign,
 	startRound,
 } from "./game.ts";
 import { SceneManager } from "./scene/sceneManager.ts";
 import { mountAtmosphere } from "./scenes/atmosphere.ts";
+import { createCampaignScene } from "./scenes/campaign.ts";
 import { createErrorScene } from "./scenes/error.ts";
 import { createFinishedScene } from "./scenes/finished.ts";
 import { createGameScene } from "./scenes/game.ts";
 import { createIdleScene } from "./scenes/idle.ts";
 import { createLoadingScene } from "./scenes/loading.ts";
-import type { GameState } from "./types.ts";
+import type { GameMode, GameState } from "./types.ts";
 
 const REVEAL_DELAY_MIN = 80;
 const REVEAL_DELAY_MAX = 120;
@@ -34,8 +39,13 @@ const manager = new SceneManager<GameState>(appRoot);
 
 manager.register(
 	createIdleScene({
-		onStart: () => {
-			void handleStart();
+		onModeSelect: (mode: GameMode) => {
+			if (mode === "campaign") {
+				state = startCampaign();
+				render();
+			} else {
+				void handleEndlessStart();
+			}
 		},
 	}),
 );
@@ -56,9 +66,22 @@ manager.register(
 	}),
 );
 manager.register(
+	createCampaignScene({
+		onContinueRound: () => {
+			void handleCampaignRoundStart();
+		},
+		onNextChapter: handleNextChapter,
+		onExit: handleReturnToIdle,
+	}),
+);
+manager.register(
 	createErrorScene({
 		onRetry: () => {
-			void handleStart();
+			if (state.mode === "campaign") {
+				void handleCampaignRoundStart();
+			} else {
+				void handleEndlessStart();
+			}
 		},
 		onReturnToIdle: handleReturnToIdle,
 	}),
@@ -75,7 +98,19 @@ function render() {
 			manager.goto("game", state);
 			break;
 		case "finished":
+			if (state.mode === "campaign") {
+				state = commitRoundToChapter(state);
+				render();
+				return;
+			}
 			manager.goto("finished", state);
+			break;
+		case "chapter_intro":
+		case "round_recap":
+		case "chapter_passed":
+		case "chapter_failed":
+		case "campaign_won":
+			manager.goto("campaign", state);
 			break;
 	}
 }
@@ -90,7 +125,7 @@ function scheduleNextReveal() {
 	}, randomRevealDelay());
 }
 
-async function handleStart() {
+async function handleEndlessStart() {
 	manager.goto("loading", state);
 	try {
 		const result = await fetchRound();
@@ -101,6 +136,24 @@ async function handleStart() {
 		console.error("[main] round fetch failed:", err);
 		manager.goto("error", state);
 	}
+}
+
+async function handleCampaignRoundStart() {
+	manager.goto("loading", state);
+	try {
+		const result = await fetchRound();
+		lastSource = result.source;
+		state = beginCampaignRound(state, result.round);
+		render();
+	} catch (err) {
+		console.error("[main] round fetch failed:", err);
+		manager.goto("error", state);
+	}
+}
+
+function handleNextChapter() {
+	state = advanceToNextChapter(state);
+	render();
 }
 
 function handlePromptTyped() {
@@ -119,7 +172,7 @@ function handleChoice(word: string) {
 
 async function handlePlayAgain() {
 	state = createGame();
-	await handleStart();
+	await handleEndlessStart();
 }
 
 function handleReturnToIdle() {

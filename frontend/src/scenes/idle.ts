@@ -1,8 +1,8 @@
 import type { Scene } from "../scene/types.ts";
-import type { GameState } from "../types.ts";
+import type { GameMode, GameState } from "../types.ts";
 
 export type IdleCallbacks = {
-	onStart: () => void;
+	onModeSelect: (mode: GameMode) => void;
 };
 
 type BootLine = { delay: number; text: string; status?: string };
@@ -60,10 +60,24 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
         </p>
       </details>
 
-      <button class="btn btn-start" id="start-btn" type="button">
-        <span class="btn-caret">&gt;</span>
-        <span class="btn-label">INITIATE_SEQUENCE</span>
-      </button>
+      <div class="mode-select" role="group" aria-label="Choose a game mode">
+        <button class="btn btn-mode btn-mode--primary" id="mode-campaign-btn" type="button" data-mode="campaign">
+          <kbd class="btn-key" aria-hidden="true">1</kbd>
+          <span class="btn-mode-text">
+            <span class="btn-mode-title">INFERENCE_RUN</span>
+            <span class="btn-mode-sub">5 chapters · escalating thresholds</span>
+          </span>
+          <span class="btn-caret" aria-hidden="true">&gt;</span>
+        </button>
+        <button class="btn btn-mode btn-mode--secondary" id="mode-endless-btn" type="button" data-mode="endless">
+          <kbd class="btn-key" aria-hidden="true">2</kbd>
+          <span class="btn-mode-text">
+            <span class="btn-mode-title">ENDLESS_MODE</span>
+            <span class="btn-mode-sub">single round · &gt;50% to pass</span>
+          </span>
+          <span class="btn-caret" aria-hidden="true">&gt;</span>
+        </button>
+      </div>
 
       <footer class="idle-stamp" aria-hidden="true">
         NTP.v2087 // OPERATOR_MODE // DIAGNOSTIC_OK
@@ -73,7 +87,12 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
 
 			const boot = document.getElementById("boot")!;
 			const header = root.querySelector<HTMLElement>(".idle-header")!;
-			const btn = document.getElementById("start-btn") as HTMLButtonElement;
+			const campaignBtn = document.getElementById(
+				"mode-campaign-btn",
+			) as HTMLButtonElement;
+			const endlessBtn = document.getElementById(
+				"mode-endless-btn",
+			) as HTMLButtonElement;
 
 			const reducedMotion = window.matchMedia(
 				"(prefers-reduced-motion: reduce)",
@@ -93,26 +112,42 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
 				window.setTimeout(
 					() => {
 						header.dataset.visible = "true";
-						btn.focus({ preventScroll: true });
+						campaignBtn.focus({ preventScroll: true });
 					},
 					reducedMotion ? 0 : HEADER_REVEAL_MS,
 				),
 			);
 
-			btn.addEventListener("click", cb.onStart);
+			const onCampaign = () => cb.onModeSelect("campaign");
+			const onEndless = () => cb.onModeSelect("endless");
+			campaignBtn.addEventListener("click", onCampaign);
+			endlessBtn.addEventListener("click", onEndless);
 
 			const onKey = (e: KeyboardEvent) => {
-				if (e.key !== "Enter") return;
 				const target = e.target as HTMLElement | null;
 				const tag = target?.tagName;
-				if (tag === "SUMMARY" || tag === "BUTTON") return;
-				e.preventDefault();
-				cb.onStart();
+				if (tag === "SUMMARY") return;
+
+				if (e.key === "1") {
+					e.preventDefault();
+					cb.onModeSelect("campaign");
+					return;
+				}
+				if (e.key === "2") {
+					e.preventDefault();
+					cb.onModeSelect("endless");
+					return;
+				}
+				if (e.key === "Enter" && tag !== "BUTTON") {
+					e.preventDefault();
+					cb.onModeSelect("campaign");
+				}
 			};
 			window.addEventListener("keydown", onKey);
 
 			cleanup = () => {
-				btn.removeEventListener("click", cb.onStart);
+				campaignBtn.removeEventListener("click", onCampaign);
+				endlessBtn.removeEventListener("click", onEndless);
 				window.removeEventListener("keydown", onKey);
 				for (const t of timers) window.clearTimeout(t);
 			};
