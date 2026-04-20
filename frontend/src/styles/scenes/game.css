@@ -40,30 +40,11 @@
 	color: var(--text);
 }
 
-.campaign-hud-now {
-	margin-left: auto;
-	font-weight: 600;
-}
-
-.campaign-hud.is-pass .campaign-hud-now {
-	color: var(--correct);
-	text-shadow: 0 0 6px var(--neon-green-dim);
-}
-
-.campaign-hud.is-fail .campaign-hud-now {
-	color: var(--neon-yellow);
-}
-
 @media (max-width: 640px) {
 	.campaign-hud {
 		font-size: 0.58rem;
 		letter-spacing: 0.12em;
 		gap: 0.3rem;
-	}
-
-	.campaign-hud-now {
-		margin-left: 0;
-		flex-basis: 100%;
 	}
 }
 
