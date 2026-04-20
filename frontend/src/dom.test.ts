@@ -23,6 +23,7 @@ const round: Round = {
 function state(overrides: Partial<GameState> = {}): GameState {
 	return {
 		phase: "revealing",
+		mode: "endless",
 		round,
 		tokenIndex: 0,
 		playerChoices: [],

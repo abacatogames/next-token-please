@@ -1,8 +1,20 @@
-import type { GameState, PlayerChoice, Round } from "./types.ts";
+import {
+	FINAL_CHAPTER_INDEX,
+	type InferenceChapter,
+	getChapter,
+} from "./story/inferenceRun.ts";
+import type {
+	CampaignRun,
+	GamePhase,
+	GameState,
+	PlayerChoice,
+	Round,
+} from "./types.ts";
 
 export function createGame(): GameState {
 	return {
 		phase: "idle",
+		mode: "endless",
 		round: null,
 		tokenIndex: 0,
 		playerChoices: [],
@@ -13,10 +25,41 @@ export function createGame(): GameState {
 export function startRound(round: Round): GameState {
 	return {
 		phase: "typing_prompt",
+		mode: "endless",
 		round,
 		tokenIndex: 0,
 		playerChoices: [],
 		revealedWords: [],
+	};
+}
+
+export function startCampaign(): GameState {
+	return {
+		phase: "chapter_intro",
+		mode: "campaign",
+		round: null,
+		tokenIndex: 0,
+		playerChoices: [],
+		revealedWords: [],
+		campaign: {
+			chapterIndex: 0,
+			roundInChapter: 0,
+			chapterCorrect: 0,
+			chapterTotal: 0,
+		},
+	};
+}
+
+export function beginCampaignRound(state: GameState, round: Round): GameState {
+	if (state.mode !== "campaign" || !state.campaign) return state;
+	return {
+		phase: "typing_prompt",
+		mode: "campaign",
+		round,
+		tokenIndex: 0,
+		playerChoices: [],
+		revealedWords: [],
+		campaign: state.campaign,
 	};
 }
 
@@ -79,6 +122,90 @@ export function getScore(state: GameState): { correct: number; total: number } {
 export function isWin(state: GameState): boolean {
 	const { correct, total } = getScore(state);
 	return total > 0 && correct / total > 0.5;
+}
+
+export function commitRoundToChapter(state: GameState): GameState {
+	if (
+		state.phase !== "finished" ||
+		state.mode !== "campaign" ||
+		!state.campaign
+	) {
+		return state;
+	}
+
+	const chapter = getChapter(state.campaign.chapterIndex);
+	if (!chapter) return state;
+
+	const { correct, total } = getScore(state);
+	const nextCampaign: CampaignRun = {
+		chapterIndex: state.campaign.chapterIndex,
+		roundInChapter: state.campaign.roundInChapter + 1,
+		chapterCorrect: state.campaign.chapterCorrect + correct,
+		chapterTotal: state.campaign.chapterTotal + total,
+	};
+
+	let phase: GamePhase;
+	if (nextCampaign.roundInChapter < chapter.rounds) {
+		phase = "round_recap";
+	} else {
+		const passed =
+			nextCampaign.chapterCorrect * 100 >=
+			chapter.requiredPercent * nextCampaign.chapterTotal;
+		if (passed) {
+			phase =
+				state.campaign.chapterIndex === FINAL_CHAPTER_INDEX
+					? "campaign_won"
+					: "chapter_passed";
+		} else {
+			phase = "chapter_failed";
+		}
+	}
+
+	return { ...state, phase, campaign: nextCampaign };
+}
+
+export function advanceToNextChapter(state: GameState): GameState {
+	if (state.phase !== "chapter_passed" || !state.campaign) return state;
+	const nextIndex = state.campaign.chapterIndex + 1;
+	if (nextIndex > FINAL_CHAPTER_INDEX) return state;
+	return {
+		...state,
+		phase: "chapter_intro",
+		round: null,
+		tokenIndex: 0,
+		playerChoices: [],
+		revealedWords: [],
+		campaign: {
+			chapterIndex: nextIndex,
+			roundInChapter: 0,
+			chapterCorrect: 0,
+			chapterTotal: 0,
+		},
+	};
+}
+
+export type ChapterProgress = {
+	chapter: InferenceChapter;
+	correctSoFar: number;
+	totalSoFar: number;
+	pct: number;
+	passing: boolean;
+};
+
+export function chapterProgress(state: GameState): ChapterProgress | null {
+	if (state.mode !== "campaign" || !state.campaign) return null;
+	const chapter = getChapter(state.campaign.chapterIndex);
+	if (!chapter) return null;
+
+	const { correct, total } = getScore(state);
+	const correctSoFar = state.campaign.chapterCorrect + correct;
+	const totalSoFar = state.campaign.chapterTotal + total;
+	const pct = totalSoFar > 0 ? Math.round((correctSoFar / totalSoFar) * 100) : 0;
+	const passing =
+		totalSoFar === 0 ||
+		correctSoFar * 100 >= chapter.requiredPercent * totalSoFar;
+
+	return { chapter, correctSoFar, totalSoFar, pct, passing };
 }
 
 function joinWords(words: string[]): string {

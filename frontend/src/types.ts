@@ -13,7 +13,14 @@ export type GamePhase =
 	| "typing_prompt"
 	| "revealing"
 	| "awaiting_choice"
-	| "finished";
+	| "finished"
+	| "chapter_intro"
+	| "round_recap"
+	| "chapter_passed"
+	| "chapter_failed"
+	| "campaign_won";
+
+export type GameMode = "endless" | "campaign";
 
 export type PlayerChoice = {
 	tokenIndex: number;
@@ -29,11 +36,20 @@ export type Chapter = {
 	roundProvider: RoundProvider;
 };
 
+export type CampaignRun = {
+	chapterIndex: number;
+	roundInChapter: number;
+	chapterCorrect: number;
+	chapterTotal: number;
+};
+
 export type GameState = {
 	phase: GamePhase;
+	mode: GameMode;
 	round: Round | null;
 	tokenIndex: number;
 	playerChoices: PlayerChoice[];
 	revealedWords: string[];
+	campaign?: CampaignRun;
 	chapter?: Chapter;
 };

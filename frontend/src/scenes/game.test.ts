@@ -14,6 +14,7 @@ const round: Round = {
 function state(overrides: Partial<GameState> = {}): GameState {
 	return {
 		phase: "awaiting_choice",
+		mode: "endless",
 		round,
 		tokenIndex: 1,
 		playerChoices: [],
@@ -26,6 +27,7 @@ describe("renderGameHTML", () => {
 	test("returns empty string when no round", () => {
 		const s: GameState = {
 			phase: "idle",
+			mode: "endless",
 			round: null,
 			tokenIndex: 0,
 			playerChoices: [],
