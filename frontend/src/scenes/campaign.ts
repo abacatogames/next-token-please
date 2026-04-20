@@ -1,3 +1,4 @@
+import { highlightDiffs } from "../dom.ts";
 import { getScore } from "../game.ts";
 import type { Scene } from "../scene/types.ts";
 import {
@@ -64,6 +65,29 @@ function renderRoundRecap(state: GameState): string {
 	const passing = pooledCorrect * 100 >= chapter.requiredPercent * pooledTotal;
 	const status = passing ? "ON PACE" : "BELOW TARGET";
 	const statusClass = passing ? "is-pass" : "is-fail";
+	const isLastRound = state.campaign.roundInChapter >= chapter.rounds;
+	const primaryLabel = isLastRound ? "CHAPTER_RESULTS" : "CONTINUE";
+	const hintText = isLastRound ? "see results" : "next round";
+	const comparisonHTML = state.round
+		? `
+      <div class="comparison">
+        <div class="crt-window comparison-col">
+          <header class="crt-title-bar">
+            <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="crt-session">OPERATOR_OUTPUT</span>
+          </header>
+          <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.picked)}</div>
+        </div>
+        <div class="crt-window comparison-col">
+          <header class="crt-title-bar">
+            <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="crt-session">MODEL_GROUND_TRUTH</span>
+          </header>
+          <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.correct)}</div>
+        </div>
+      </div>
+    `
+		: "";
 
 	return `
     <section class="screen campaign-screen campaign-recap" aria-labelledby="recap-title">
@@ -90,11 +114,12 @@ function renderRoundRecap(state: GameState): string {
           </div>
         </div>
       </div>
+      ${comparisonHTML}
       <button class="btn btn-start campaign-primary" id="campaign-primary-btn" type="button">
         <span class="btn-caret">&gt;</span>
-        <span class="btn-label">CONTINUE</span>
+        <span class="btn-label">${primaryLabel}</span>
       </button>
-      <p class="keyhints" aria-hidden="true"><kbd>Enter</kbd> next round</p>
+      <p class="keyhints" aria-hidden="true"><kbd>Enter</kbd> ${hintText}</p>
     </section>
   `;
 }
