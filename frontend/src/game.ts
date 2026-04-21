@@ -144,6 +144,12 @@ export function commitRoundToChapter(state: GameState): GameState {
 		chapterTotal: state.campaign.chapterTotal + total,
 	};
 
+	const isFinalChapter = chapter.index === FINAL_CHAPTER_INDEX;
+	const roundMissed = total > 0 && correct < total;
+	if (isFinalChapter && roundMissed) {
+		return { ...state, phase: "chapter_failed", campaign: nextCampaign };
+	}
+
 	return { ...state, phase: "round_recap", campaign: nextCampaign };
 }
 

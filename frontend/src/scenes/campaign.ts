@@ -163,6 +163,41 @@ function renderChapterFailed(state: GameState): string {
 		state.campaign.chapterCorrect,
 		state.campaign.chapterTotal,
 	);
+	const isFinal = chapter.index === FINAL_CHAPTER_INDEX;
+	const roundScore = getScore(state);
+	const roundPct = pct(roundScore.correct, roundScore.total);
+	const roundInChapter = state.campaign.roundInChapter;
+
+	const subline = isFinal
+		? `Round ${roundInChapter} closed at ${roundPct}% (${roundScore.correct}/${roundScore.total}) — final chapter requires 100% on every round.`
+		: `${state.campaign.chapterCorrect} / ${state.campaign.chapterTotal} — fell short of ${chapter.requiredPercent}% target`;
+	const flavor = isFinal
+		? "One missed token ends the run. Restart from Chapter 1 to try again."
+		: "Restart from Chapter 1 to try again.";
+	const scoreValue = isFinal ? `${roundPct}%` : `${finalPct}%`;
+
+	const comparisonHTML =
+		isFinal && state.round
+			? `
+      <div class="comparison">
+        <div class="crt-window comparison-col">
+          <header class="crt-title-bar">
+            <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="crt-session">OPERATOR_OUTPUT</span>
+          </header>
+          <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.picked)}</div>
+        </div>
+        <div class="crt-window comparison-col">
+          <header class="crt-title-bar">
+            <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="crt-session">MODEL_GROUND_TRUTH</span>
+          </header>
+          <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.correct)}</div>
+        </div>
+      </div>
+    `
+			: "";
+
 	return `
     <section class="screen campaign-screen campaign-end campaign-end--failed" aria-labelledby="end-title">
       <div class="crt-window campaign-window">
@@ -173,12 +208,13 @@ function renderChapterFailed(state: GameState): string {
         <div class="crt-body campaign-body">
           <h2 id="end-title" class="campaign-headline is-fail">RUN TERMINATED</h2>
           <div class="campaign-final-score">
-            <span class="campaign-final-value">${finalPct}%</span>
-            <span class="campaign-final-sub">${state.campaign.chapterCorrect} / ${state.campaign.chapterTotal} — fell short of ${chapter.requiredPercent}% target</span>
+            <span class="campaign-final-value">${scoreValue}</span>
+            <span class="campaign-final-sub">${subline}</span>
           </div>
-          <p class="campaign-flavor">Restart from Chapter 1 to try again.</p>
+          <p class="campaign-flavor">${flavor}</p>
         </div>
       </div>
+      ${comparisonHTML}
       <button class="btn btn-start campaign-primary" id="campaign-primary-btn" type="button">
         <span class="btn-caret">&gt;</span>
         <span class="btn-label">BACK_TO_START</span>

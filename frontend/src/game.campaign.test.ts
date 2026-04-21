@@ -160,6 +160,60 @@ describe("commitRoundToChapter", () => {
 		expect(s.phase).toBe("campaign_won");
 	});
 
+	test("Ch5 mid-chapter imperfect round → immediate chapter_failed (no recap)", () => {
+		const s = { ...startCampaign() };
+		s.campaign = {
+			chapterIndex: 4,
+			roundInChapter: 2,
+			chapterCorrect: 8,
+			chapterTotal: 8,
+		};
+		const next = commitRoundToChapter(finishedRound(s, 3, 1));
+		expect(next.phase).toBe("chapter_failed");
+		expect(next.campaign).toEqual({
+			chapterIndex: 4,
+			roundInChapter: 3,
+			chapterCorrect: 11,
+			chapterTotal: 12,
+		});
+	});
+
+	test("Ch5 perfect round mid-chapter → round_recap (unchanged)", () => {
+		const s = { ...startCampaign() };
+		s.campaign = {
+			chapterIndex: 4,
+			roundInChapter: 1,
+			chapterCorrect: 4,
+			chapterTotal: 4,
+		};
+		const next = commitRoundToChapter(finishedRound(s, 4, 0));
+		expect(next.phase).toBe("round_recap");
+	});
+
+	test("Ch5 imperfect first round → immediate chapter_failed", () => {
+		const s = { ...startCampaign() };
+		s.campaign = {
+			chapterIndex: 4,
+			roundInChapter: 0,
+			chapterCorrect: 0,
+			chapterTotal: 0,
+		};
+		const next = commitRoundToChapter(finishedRound(s, 0, 1));
+		expect(next.phase).toBe("chapter_failed");
+	});
+
+	test("Ch4 (non-final) imperfect round still goes to round_recap", () => {
+		const s = { ...startCampaign() };
+		s.campaign = {
+			chapterIndex: 3,
+			roundInChapter: 0,
+			chapterCorrect: 0,
+			chapterTotal: 0,
+		};
+		const next = commitRoundToChapter(finishedRound(s, 0, 4));
+		expect(next.phase).toBe("round_recap");
+	});
+
 	test("Ch5 last round at 95% → recap → chapter_failed", () => {
 		let s = { ...startCampaign() };
 		s.campaign = {
