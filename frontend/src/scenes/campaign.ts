@@ -18,6 +18,28 @@ function pct(correct: number, total: number): number {
 	return total > 0 ? Math.round((correct / total) * 100) : 0;
 }
 
+function renderComparison(state: GameState): string {
+	if (!state.round) return "";
+	return `
+    <div class="comparison">
+      <div class="crt-window comparison-col">
+        <header class="crt-title-bar">
+          <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="crt-session">OPERATOR_OUTPUT</span>
+        </header>
+        <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.picked)}</div>
+      </div>
+      <div class="crt-window comparison-col">
+        <header class="crt-title-bar">
+          <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="crt-session">MODEL_GROUND_TRUTH</span>
+        </header>
+        <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.correct)}</div>
+      </div>
+    </div>
+  `;
+}
+
 function renderChapterIntro(state: GameState): string {
 	const chapter = getChapter(state.campaign?.chapterIndex ?? -1);
 	if (!chapter) return "";
@@ -68,26 +90,6 @@ function renderRoundRecap(state: GameState): string {
 	const isLastRound = state.campaign.roundInChapter >= chapter.rounds;
 	const primaryLabel = isLastRound ? "CHAPTER_RESULTS" : "CONTINUE";
 	const hintText = isLastRound ? "see results" : "next round";
-	const comparisonHTML = state.round
-		? `
-      <div class="comparison">
-        <div class="crt-window comparison-col">
-          <header class="crt-title-bar">
-            <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="crt-session">OPERATOR_OUTPUT</span>
-          </header>
-          <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.picked)}</div>
-        </div>
-        <div class="crt-window comparison-col">
-          <header class="crt-title-bar">
-            <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="crt-session">MODEL_GROUND_TRUTH</span>
-          </header>
-          <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.correct)}</div>
-        </div>
-      </div>
-    `
-		: "";
 
 	return `
     <section class="screen campaign-screen campaign-recap" aria-labelledby="recap-title">
@@ -114,7 +116,7 @@ function renderRoundRecap(state: GameState): string {
           </div>
         </div>
       </div>
-      ${comparisonHTML}
+      ${renderComparison(state)}
       <button class="btn btn-start campaign-primary" id="campaign-primary-btn" type="button">
         <span class="btn-caret">&gt;</span>
         <span class="btn-label">${primaryLabel}</span>
@@ -156,54 +158,19 @@ function renderChapterPassed(state: GameState): string {
   `;
 }
 
-function renderChapterFailed(state: GameState): string {
-	const chapter = getChapter(state.campaign?.chapterIndex ?? -1);
-	if (!chapter || !state.campaign) return "";
-	const finalPct = pct(
-		state.campaign.chapterCorrect,
-		state.campaign.chapterTotal,
-	);
-	const isFinal = chapter.index === FINAL_CHAPTER_INDEX;
-	const roundScore = getScore(state);
-	const roundPct = pct(roundScore.correct, roundScore.total);
-	const roundInChapter = state.campaign.roundInChapter;
-
-	const subline = isFinal
-		? `Round ${roundInChapter} closed at ${roundPct}% (${roundScore.correct}/${roundScore.total}) — final chapter requires 100% on every round.`
-		: `${state.campaign.chapterCorrect} / ${state.campaign.chapterTotal} — fell short of ${chapter.requiredPercent}% target`;
-	const flavor = isFinal
-		? "One missed token ends the run. Restart from Chapter 1 to try again."
-		: "Restart from Chapter 1 to try again.";
-	const scoreValue = isFinal ? `${roundPct}%` : `${finalPct}%`;
-
-	const comparisonHTML =
-		isFinal && state.round
-			? `
-      <div class="comparison">
-        <div class="crt-window comparison-col">
-          <header class="crt-title-bar">
-            <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="crt-session">OPERATOR_OUTPUT</span>
-          </header>
-          <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.picked)}</div>
-        </div>
-        <div class="crt-window comparison-col">
-          <header class="crt-title-bar">
-            <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="crt-session">MODEL_GROUND_TRUTH</span>
-          </header>
-          <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.correct)}</div>
-        </div>
-      </div>
-    `
-			: "";
-
+function renderFailedShell(
+	chapterIndex: number,
+	scoreValue: string,
+	subline: string,
+	flavor: string,
+	comparisonHTML: string,
+): string {
 	return `
     <section class="screen campaign-screen campaign-end campaign-end--failed" aria-labelledby="end-title">
       <div class="crt-window campaign-window">
         <header class="crt-title-bar">
           <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="crt-session">RUN_TERMINATED // CHAPTER_${chapter.index + 1}</span>
+          <span class="crt-session">RUN_TERMINATED // CHAPTER_${chapterIndex + 1}</span>
         </header>
         <div class="crt-body campaign-body">
           <h2 id="end-title" class="campaign-headline is-fail">RUN TERMINATED</h2>
@@ -222,6 +189,43 @@ function renderChapterFailed(state: GameState): string {
       <p class="keyhints" aria-hidden="true"><kbd>Enter</kbd> exit</p>
     </section>
   `;
+}
+
+function renderFinalChapterFailed(state: GameState): string {
+	if (!state.campaign) return "";
+	const roundScore = getScore(state);
+	const roundPct = pct(roundScore.correct, roundScore.total);
+	const subline = `Round ${state.campaign.roundInChapter} closed at ${roundPct}% (${roundScore.correct}/${roundScore.total}) — final chapter requires 100% on every round.`;
+	const flavor =
+		"One missed token ends the run. Restart from Chapter 1 to try again.";
+	return renderFailedShell(
+		FINAL_CHAPTER_INDEX,
+		`${roundPct}%`,
+		subline,
+		flavor,
+		renderComparison(state),
+	);
+}
+
+function renderChapterFailed(state: GameState): string {
+	const chapter = getChapter(state.campaign?.chapterIndex ?? -1);
+	if (!chapter || !state.campaign) return "";
+	if (chapter.index === FINAL_CHAPTER_INDEX) {
+		return renderFinalChapterFailed(state);
+	}
+	const finalPct = pct(
+		state.campaign.chapterCorrect,
+		state.campaign.chapterTotal,
+	);
+	const subline = `${state.campaign.chapterCorrect} / ${state.campaign.chapterTotal} — fell short of ${chapter.requiredPercent}% target`;
+	const flavor = "Restart from Chapter 1 to try again.";
+	return renderFailedShell(
+		chapter.index,
+		`${finalPct}%`,
+		subline,
+		flavor,
+		"",
+	);
 }
 
 function renderCampaignWon(state: GameState): string {
