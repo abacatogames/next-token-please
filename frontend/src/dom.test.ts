@@ -92,9 +92,16 @@ describe("renderWords", () => {
 		expect(html).toContain('<span class="cursor">');
 	});
 
-	test("omits cursor when not revealing", () => {
+	test("keeps cursor while awaiting a choice", () => {
 		const html = renderWords(
 			state({ phase: "awaiting_choice", revealedWords: ["Hi"] }),
+		);
+		expect(html).toContain('<span class="cursor">');
+	});
+
+	test("omits cursor when round is finished", () => {
+		const html = renderWords(
+			state({ phase: "finished", revealedWords: ["Hi"] }),
 		);
 		expect(html).not.toContain("cursor");
 	});
@@ -106,7 +113,7 @@ describe("renderWords", () => {
 	test("groups word with trailing punctuation and separates groups with space", () => {
 		const html = renderWords(
 			state({
-				phase: "awaiting_choice",
+				phase: "finished",
 				revealedWords: ["Hello", ".", "World"],
 			}),
 		);

@@ -42,8 +42,9 @@ export function renderWords(state: GameState): string {
 		html: wordSpan(w),
 		word: w,
 	}));
-	const cursor =
-		state.phase === "revealing" ? '<span class="cursor"></span>' : "";
+	const showCursor =
+		state.phase === "revealing" || state.phase === "awaiting_choice";
+	const cursor = showCursor ? '<span class="cursor"></span>' : "";
 	return groupWordSpans(items) + cursor;
 }
 
