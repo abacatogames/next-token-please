@@ -68,7 +68,7 @@
 .prompt-caret {
 	display: inline-block;
 	margin-left: 1px;
-	color: var(--neon-cyan);
+	color: var(--neon-cyan-dim);
 	font-style: normal;
 	animation: promptCaretBlink 0.9s steps(2, start) infinite;
 }

@@ -157,14 +157,14 @@
 
 .cursor {
 	display: inline-block;
-	width: 0.55em;
-	height: 1.1em;
-	background: var(--neon-cyan);
-	box-shadow: 0 0 10px var(--neon-cyan-dim);
+	width: 0.35em;
+	height: 1.2em;
+	background: var(--neon-cyan-dim);
+	box-shadow: 0 0 10px var(--neon-cyan);
 	animation:
 		cursorBlink var(--dur-slow) step-end infinite,
 		cursorFlicker 4.3s steps(1) infinite;
-	vertical-align: text-bottom;
+	vertical-align: text-top;
 	margin-left: 2px;
 }
 
