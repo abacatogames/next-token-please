@@ -2,8 +2,6 @@
 
 FastAPI service that generates game rounds for the Next Token Please frontend.
 
-See [`PROJECT.md`](../PROJECT.md) for the game design and the `Round` / `Token` contract the frontend expects.
-
 ## Requirements
 
 - Python 3.11+
