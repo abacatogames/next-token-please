@@ -1,0 +1,130 @@
+.character {
+	position: fixed;
+	right: clamp(12px, 2.5vw, 32px);
+	bottom: clamp(12px, 2.5vw, 32px);
+	width: clamp(64px, 8vw, 112px);
+	aspect-ratio: 1;
+	z-index: var(--z-character);
+	pointer-events: none;
+	opacity: 1;
+	transform: translateY(0);
+	transition:
+		opacity var(--dur-base) var(--ease-out),
+		transform var(--dur-base) var(--ease-out);
+	filter: drop-shadow(0 0 6px var(--neon-cyan-glow));
+	animation: robot-idle-bob 3200ms ease-in-out infinite;
+}
+
+.character--hidden {
+	opacity: 0;
+	transform: translateY(12px);
+	animation: none;
+}
+
+.character .robot {
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+.robot__antenna-wire {
+	fill: var(--text-dim);
+}
+
+.robot__antenna-tip {
+	fill: var(--neon-magenta);
+}
+
+.robot__head-shadow {
+	fill: var(--bg-card-border);
+}
+
+.robot__head-face {
+	fill: var(--bg-card);
+}
+
+.robot__bolt {
+	fill: var(--text-dim);
+}
+
+.robot__eye {
+	fill: var(--neon-cyan);
+	transform-origin: center;
+	transform-box: fill-box;
+	animation: robot-blink 5400ms steps(1, end) infinite;
+}
+
+.robot__mouth {
+	fill: var(--neon-cyan-dim);
+}
+
+.robot__neck-bar {
+	fill: var(--text-dim);
+}
+
+.robot__body-shell {
+	fill: var(--bg-surface);
+	stroke: var(--bg-card-border);
+}
+
+.robot__light {
+	fill: var(--neon-green);
+}
+
+.robot__light--b {
+	fill: var(--neon-yellow);
+	animation: robot-light-pulse 1800ms ease-in-out infinite;
+}
+
+.robot__light--c {
+	fill: var(--neon-magenta);
+}
+
+@keyframes robot-idle-bob {
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-2px);
+	}
+}
+
+@keyframes robot-blink {
+	0%,
+	94%,
+	100% {
+		transform: scaleY(1);
+	}
+	96%,
+	98% {
+		transform: scaleY(0.1);
+	}
+}
+
+@keyframes robot-light-pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.3;
+	}
+}
+
+@media (max-width: 480px) {
+	.character {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.character,
+	.robot__eye,
+	.robot__light--b {
+		animation: none;
+	}
+	.character {
+		transition: opacity var(--dur-fast) linear;
+	}
+}
