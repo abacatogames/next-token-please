@@ -41,11 +41,13 @@ pytest
 ruff check
 ```
 
-## Full Docker stack (backend + Ollama)
+## Full Docker stack (frontend + backend + Ollama)
 
 ```bash
 docker compose --profile full up --build
 ```
+
+Frontend served at `http://localhost/`, API at `http://localhost/api/`.
 
 ## Environment
 

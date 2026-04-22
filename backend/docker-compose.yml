@@ -21,8 +21,17 @@ services:
     environment:
       OLLAMA_URL: http://ollama:11434
       OLLAMA_MODEL: llama3.2:1b
+    expose:
+      - "8000"
+    profiles: ["full"]
+
+  frontend:
+    build: ../frontend
+    container_name: ntp-frontend
+    depends_on:
+      - backend
     ports:
-      - "8000:8000"
+      - "80:80"
     profiles: ["full"]
 
 volumes:
