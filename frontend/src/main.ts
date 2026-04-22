@@ -1,4 +1,6 @@
 import { fetchRound, type RoundSource } from "./api.ts";
+import { mountCharacter } from "./character/character.ts";
+import { isActiveRoundPhase } from "./character/phases.ts";
 import {
 	advanceToNextChapter,
 	advanceToken,
@@ -35,6 +37,9 @@ let lastSource: RoundSource | null = null;
 
 const atmosphereRoot = document.getElementById("atmosphere")!;
 mountAtmosphere(atmosphereRoot);
+
+const characterStage = document.getElementById("character-stage")!;
+const character = mountCharacter(characterStage);
 
 const appRoot = document.getElementById("app")!;
 const manager = new SceneManager<GameState>(appRoot);
@@ -95,6 +100,7 @@ manager.register(
 );
 
 function render() {
+	character.setVisible(isActiveRoundPhase(state.phase));
 	switch (state.phase) {
 		case "idle":
 			manager.goto("idle", state);
@@ -137,6 +143,7 @@ async function handleEndlessStart() {
 	try {
 		const result = await fetchRound();
 		lastSource = result.source;
+		character.setPersonality(result.round.personality ?? "neutral");
 		state = startRound(result.round);
 		render();
 	} catch (err) {
@@ -150,6 +157,7 @@ async function handleCampaignRoundStart() {
 	try {
 		const result = await fetchRound();
 		lastSource = result.source;
+		character.setPersonality(result.round.personality ?? "neutral");
 		state = beginCampaignRound(state, result.round);
 		render();
 	} catch (err) {

@@ -2,10 +2,13 @@ export type Token =
 	| { kind: "reveal"; word: string }
 	| { kind: "choice"; correct: string; distractors: [string, string] };
 
+export type Personality = "neutral" | "cheerful" | "serious";
+
 export type Round = {
 	id: string;
 	prompt: string;
 	tokens: Token[];
+	personality?: Personality;
 };
 
 export type GamePhase =

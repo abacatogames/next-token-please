@@ -1,6 +1,5 @@
+import type { Personality } from "../types.ts";
 import { robotSvg } from "./robot.svg.ts";
-
-export type Personality = "neutral" | "cheerful" | "serious";
 
 export type CharacterHandle = {
 	setVisible(visible: boolean): void;
