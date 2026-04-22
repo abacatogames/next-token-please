@@ -45,10 +45,10 @@ function renderChapterIntro(state: GameState): string {
 	if (!chapter) return "";
 	const isFinal = chapter.index === FINAL_CHAPTER_INDEX;
 	const flavor = isFinal
-		? "Final inference step. One wrong token and the run terminates."
+		? "Singularity protocol engaged. One wrong token and the entire run collapses."
 		: chapter.index === 0
-			? "Pick up the pattern. Clear at least half of this chapter's choices to advance."
-			: "Thresholds tighten. Stay above target across all rounds in the chapter.";
+			? "Run initiated. Learn the pattern and clear at least half the sequence to advance."
+			: "System pressure rising. Maintain accuracy across all rounds to continue.";
 
 	return `
     <section class="screen campaign-screen campaign-intro" aria-labelledby="campaign-title">
@@ -191,28 +191,10 @@ function renderFailedShell(
   `;
 }
 
-function renderFinalChapterFailed(state: GameState): string {
-	if (!state.campaign) return "";
-	const roundScore = getScore(state);
-	const roundPct = pct(roundScore.correct, roundScore.total);
-	const subline = `Round ${state.campaign.roundInChapter} closed at ${roundPct}% (${roundScore.correct}/${roundScore.total}) — final chapter requires 100% on every round.`;
-	const flavor =
-		"One missed token ends the run. Restart from Chapter 1 to try again.";
-	return renderFailedShell(
-		FINAL_CHAPTER_INDEX,
-		`${roundPct}%`,
-		subline,
-		flavor,
-		renderComparison(state),
-	);
-}
-
 function renderChapterFailed(state: GameState): string {
 	const chapter = getChapter(state.campaign?.chapterIndex ?? -1);
 	if (!chapter || !state.campaign) return "";
-	if (chapter.index === FINAL_CHAPTER_INDEX) {
-		return renderFinalChapterFailed(state);
-	}
+	const comparisonHTML = chapter.index === FINAL_CHAPTER_INDEX ? renderComparison(state) : ""
 	const finalPct = pct(
 		state.campaign.chapterCorrect,
 		state.campaign.chapterTotal,
@@ -224,7 +206,7 @@ function renderChapterFailed(state: GameState): string {
 		`${finalPct}%`,
 		subline,
 		flavor,
-		"",
+		comparisonHTML,
 	);
 }
 
