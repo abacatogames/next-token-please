@@ -102,6 +102,19 @@ describe("renderWords", () => {
 	test("empty words still shows cursor during reveal", () => {
 		expect(renderWords(state())).toBe('<span class="cursor"></span>');
 	});
+
+	test("groups word with trailing punctuation and separates groups with space", () => {
+		const html = renderWords(
+			state({
+				phase: "awaiting_choice",
+				revealedWords: ["Hello", ".", "World"],
+			}),
+		);
+		expect(html).toBe(
+			'<span class="word-group"><span class="word">Hello</span><span class="word punc">.</span></span> ' +
+				'<span class="word-group"><span class="word">World</span></span>',
+		);
+	});
 });
 
 describe("shuffleOptions", () => {

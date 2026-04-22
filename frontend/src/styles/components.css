@@ -145,16 +145,14 @@
 
 /* --- Words / cursor (shared across game + finished) --- */
 
-.word {
-	display: inline-block;
-	margin-right: 0.35em;
-	animation: wordReveal 0.2s var(--ease-out);
-	vertical-align: baseline;
+.word-group {
+	white-space: nowrap;
 }
 
-.word.punc {
-	margin-left: -0.35em;
-	margin-right: 0.15em;
+.word {
+	display: inline-block;
+	animation: wordReveal 0.2s var(--ease-out);
+	vertical-align: baseline;
 }
 
 .cursor {
