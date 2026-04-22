@@ -1,23 +1,23 @@
 .character {
 	position: fixed;
-	right: clamp(12px, 2.5vw, 32px);
-	bottom: clamp(12px, 2.5vw, 32px);
-	width: clamp(64px, 8vw, 112px);
+	right: max(16px, calc(50vw - 440px));
+	bottom: clamp(22vh, 30vh, 38vh);
+	width: clamp(48px, 5vw, 72px);
 	aspect-ratio: 1;
 	z-index: var(--z-character);
 	pointer-events: none;
-	opacity: 1;
+	opacity: 0.85;
 	transform: translateY(0);
 	transition:
 		opacity var(--dur-base) var(--ease-out),
 		transform var(--dur-base) var(--ease-out);
-	filter: drop-shadow(0 0 6px var(--neon-cyan-glow));
-	animation: robot-idle-bob 3200ms ease-in-out infinite;
+	filter: drop-shadow(0 0 3px rgba(255, 155, 58, 0.18));
+	animation: robot-idle-bob 3600ms ease-in-out infinite;
 }
 
 .character--hidden {
 	opacity: 0;
-	transform: translateY(12px);
+	transform: translateY(8px);
 	animation: none;
 }
 
@@ -32,52 +32,48 @@
 }
 
 .robot__antenna-tip {
-	fill: var(--neon-magenta);
+	fill: var(--noir-amber-dim);
 }
 
 .robot__head-shadow {
-	fill: var(--bg-card-border);
+	fill: var(--noir-indigo-deep);
 }
 
 .robot__head-face {
-	fill: var(--bg-card);
+	fill: var(--noir-indigo);
 }
 
 .robot__bolt {
-	fill: var(--text-dim);
+	fill: var(--bg-card-border);
 }
 
 .robot__eye {
-	fill: var(--neon-cyan);
+	fill: var(--noir-amber);
 	transform-origin: center;
 	transform-box: fill-box;
-	animation: robot-blink 5400ms steps(1, end) infinite;
+	animation: robot-blink 6200ms steps(1, end) infinite;
 }
 
 .robot__mouth {
-	fill: var(--neon-cyan-dim);
-}
-
-.robot__neck-bar {
 	fill: var(--text-dim);
 }
 
+.robot__neck-bar {
+	fill: var(--bg-card-border);
+}
+
 .robot__body-shell {
-	fill: var(--bg-surface);
+	fill: var(--noir-indigo-deep);
 	stroke: var(--bg-card-border);
 }
 
 .robot__light {
-	fill: var(--neon-green);
+	fill: var(--bg-card-border);
 }
 
 .robot__light--b {
-	fill: var(--neon-yellow);
-	animation: robot-light-pulse 1800ms ease-in-out infinite;
-}
-
-.robot__light--c {
-	fill: var(--neon-magenta);
+	fill: var(--noir-amber-dim);
+	animation: robot-light-pulse 2400ms ease-in-out infinite;
 }
 
 @keyframes robot-idle-bob {
@@ -86,7 +82,7 @@
 		transform: translateY(0);
 	}
 	50% {
-		transform: translateY(-2px);
+		transform: translateY(-1.5px);
 	}
 }
 
@@ -108,7 +104,15 @@
 		opacity: 1;
 	}
 	50% {
-		opacity: 0.3;
+		opacity: 0.35;
+	}
+}
+
+@media (max-width: 640px) {
+	.character {
+		right: clamp(8px, 2vw, 16px);
+		bottom: clamp(12px, 3vh, 24px);
+		width: clamp(40px, 8vw, 56px);
 	}
 }
 
