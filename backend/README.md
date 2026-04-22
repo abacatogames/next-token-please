@@ -16,10 +16,10 @@ source .venv/bin/activate
 pip install -e ".[dev,embeddings]"
 python scripts/bootstrap.py            # WordNet + tokenizers + GloVe-100 (~200 MB)
 # or `python scripts/bootstrap.py --skip-embeddings` for a lighter setup
-docker compose up -d ollama ollama-init
+cd .. && docker compose up -d ollama
 ```
 
-The `ollama-init` one-shot pulls `llama3.2:1b` (~1 GB) on first boot. Wait for it to finish before hitting `/round`.
+The `ollama` image pulls `llama3.2:1b` (~1 GB) at build time. Wait for the healthcheck to pass before hitting `/api/round`.
 
 ## Develop
 
@@ -43,11 +43,15 @@ ruff check
 
 ## Full Docker stack (frontend + backend + Ollama)
 
+Run from repo root:
+
 ```bash
-docker compose --profile full up --build
+docker compose up --build
 ```
 
-Frontend served at `http://localhost/`, API at `http://localhost/api/`.
+Frontend container exposes `:80` (no host port by default so Coolify/Traefik can front it in prod). For local smoke testing, publish it with `docker compose run --service-ports frontend` or add a temporary `ports: ["8080:80"]` override.
+
+On Coolify, deploy this repo as a Docker Compose resource; Coolify detects the frontend's exposed `:80` and routes a domain to it via its built-in Traefik proxy. Configure env vars (e.g. `OLLAMA_MODEL`) through the Coolify UI.
 
 ## Environment
 

@@ -62,7 +62,10 @@ pytest
 
 # Lint
 ruff check
+```
 
-# Full Docker stack (backend + Ollama)
-docker compose --profile full up --build
+#### Full Docker stack (run from repo root)
+
+```bash
+docker compose up --build
 ```
