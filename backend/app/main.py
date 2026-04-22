@@ -5,8 +5,7 @@ from contextlib import asynccontextmanager
 from dataclasses import replace
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter, FastAPI, HTTPException, Query
 
 from app.config import settings
 from app.generator import embeddings, ollama_client
@@ -104,13 +103,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Next Token Please", version="0.1.0", lifespan=lifespan)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origin_list,
-    allow_methods=["GET"],
-    allow_headers=["*"],
-)
+api = APIRouter(prefix="/api")
 
 
 def _current_pool() -> RoundPool | None:
@@ -123,7 +116,7 @@ def _is_pool_request(difficulty: float | None, prompt_id: str | None, seed: int 
     return difficulty is None or difficulty == settings.default_difficulty
 
 
-@app.get("/health", response_model=Health)
+@api.get("/health", response_model=Health)
 async def health() -> Health:
     reachable = await ollama_client.is_reachable()
     pool = _current_pool()
@@ -136,12 +129,12 @@ async def health() -> Health:
     )
 
 
-@app.get("/prompts", response_model=list[PromptSummary])
+@api.get("/prompts", response_model=list[PromptSummary])
 async def list_prompts() -> list[PromptSummary]:
     return [PromptSummary(id=p.id, prompt=p.text) for p in get_store().all()]
 
 
-@app.get("/round", response_model=Round)
+@api.get("/round", response_model=Round)
 async def get_round(
     difficulty: float | None = Query(default=None, ge=0.0, le=1.0),
     prompt_id: str | None = Query(default=None),
@@ -183,3 +176,6 @@ async def get_round(
         total_latency_ms=int((time.perf_counter() - t0) * 1000),
     ))
     return round_obj
+
+
+app.include_router(api)

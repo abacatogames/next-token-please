@@ -21,7 +21,6 @@ services:
     environment:
       OLLAMA_URL: http://ollama:11434
       OLLAMA_MODEL: llama3.2:1b
-      CORS_ORIGINS: http://localhost:5173
     ports:
       - "8000:8000"
     profiles: ["full"]

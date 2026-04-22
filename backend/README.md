@@ -30,8 +30,8 @@ uvicorn app.main:app --reload --port 8000
 Smoke test:
 
 ```bash
-curl -s http://localhost:8000/health | jq
-curl -s http://localhost:8000/prompts | jq
+curl -s http://localhost:8000/api/health | jq
+curl -s http://localhost:8000/api/prompts | jq
 ```
 
 ## Test / lint
@@ -49,4 +49,4 @@ docker compose --profile full up --build
 
 ## Environment
 
-Copy `.env.example` to `.env` to customise. Keys: `OLLAMA_URL`, `OLLAMA_MODEL`, `DEFAULT_DIFFICULTY`, `CORS_ORIGINS`, `CHOICE_TARGET`, `OPENING_REVEAL`, `LOG_LEVEL`, `ROUND_POOL_ENABLED`, `ROUND_POOL_SIZE`, `EMBEDDINGS_ENABLED`, `EMBEDDINGS_MODEL`, `EMBEDDINGS_POOL_SIZE`, `EMBEDDINGS_TOP_K`.
+Copy `.env.example` to `.env` to customise. Keys: `OLLAMA_URL`, `OLLAMA_MODEL`, `DEFAULT_DIFFICULTY`, `CHOICE_TARGET`, `OPENING_REVEAL`, `LOG_LEVEL`, `ROUND_POOL_ENABLED`, `ROUND_POOL_SIZE`, `EMBEDDINGS_ENABLED`, `EMBEDDINGS_MODEL`, `EMBEDDINGS_POOL_SIZE`, `EMBEDDINGS_TOP_K`.

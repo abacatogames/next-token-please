@@ -1,6 +1,5 @@
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -10,7 +9,7 @@ client = TestClient(app)
 
 def test_health_reports_model_and_ok() -> None:
     with patch("app.main.ollama_client.is_reachable", new=AsyncMock(return_value=True)):
-        r = client.get("/health")
+        r = client.get("/api/health")
     assert r.status_code == 200
     body = r.json()
     assert body["ok"] is True
@@ -41,7 +40,7 @@ def test_health_reports_pool_state_when_present() -> None:
     fastapi_app.state.round_pool = pool
     try:
         with patch("app.main.ollama_client.is_reachable", new=AsyncMock(return_value=True)):
-            body = client.get("/health").json()
+            body = client.get("/api/health").json()
         assert body["pool_size"] == 1
         assert body["pool_ready"] is False
     finally:
@@ -51,27 +50,14 @@ def test_health_reports_pool_state_when_present() -> None:
 
 def test_health_when_ollama_down() -> None:
     with patch("app.main.ollama_client.is_reachable", new=AsyncMock(return_value=False)):
-        r = client.get("/health")
+        r = client.get("/api/health")
     assert r.json()["ollama_reachable"] is False
 
 
 def test_prompts_endpoint_returns_list() -> None:
-    r = client.get("/prompts")
+    r = client.get("/api/prompts")
     assert r.status_code == 200
     body = r.json()
     assert isinstance(body, list)
     assert len(body) >= 1
     assert {"id", "prompt"} <= set(body[0].keys())
-
-
-@pytest.mark.parametrize("origin", ["http://localhost:5173"])
-def test_cors_preflight(origin: str) -> None:
-    r = client.options(
-        "/health",
-        headers={
-            "Origin": origin,
-            "Access-Control-Request-Method": "GET",
-        },
-    )
-    assert r.status_code in (200, 204)
-    assert r.headers.get("access-control-allow-origin") == origin

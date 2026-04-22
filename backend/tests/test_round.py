@@ -80,7 +80,7 @@ def test_opening_tokens_are_reveal() -> None:
 
 
 def test_get_round_endpoint_returns_schema_valid_round() -> None:
-    r = client.get("/round?prompt_id=sky-blue&difficulty=0.5&seed=7")
+    r = client.get("/api/round?prompt_id=sky-blue&difficulty=0.5&seed=7")
     assert r.status_code == 200
     body = r.json()
     assert "id" in body and "prompt" in body and "tokens" in body
@@ -95,26 +95,26 @@ def test_get_round_endpoint_returns_schema_valid_round() -> None:
 
 
 def test_get_round_rejects_unknown_prompt_id() -> None:
-    r = client.get("/round?prompt_id=does-not-exist")
+    r = client.get("/api/round?prompt_id=does-not-exist")
     assert r.status_code == 404
 
 
 def test_get_round_rejects_difficulty_out_of_range() -> None:
-    r = client.get("/round?difficulty=1.5")
+    r = client.get("/api/round?difficulty=1.5")
     assert r.status_code == 422
 
 
 def test_round_is_deterministic_under_seed() -> None:
-    r1 = client.get("/round?prompt_id=sky-blue&difficulty=0.5&seed=42").json()
-    r2 = client.get("/round?prompt_id=sky-blue&difficulty=0.5&seed=42").json()
+    r1 = client.get("/api/round?prompt_id=sky-blue&difficulty=0.5&seed=42").json()
+    r2 = client.get("/api/round?prompt_id=sky-blue&difficulty=0.5&seed=42").json()
     r1.pop("id")
     r2.pop("id")
     assert r1 == r2
 
 
 def test_random_prompt_selection_when_omitted() -> None:
-    r = client.get("/round?seed=0").json()
-    prompts = {p["prompt"] for p in client.get("/prompts").json()}
+    r = client.get("/api/round?seed=0").json()
+    prompts = {p["prompt"] for p in client.get("/api/prompts").json()}
     assert r["prompt"] in prompts
 
 
@@ -135,7 +135,7 @@ def test_round_endpoint_emits_telemetry_event(caplog: pytest.LogCaptureFixture) 
     from app.telemetry import LOGGER_NAME
 
     with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
-        r = client.get("/round?prompt_id=sky-blue&difficulty=0.5&seed=7")
+        r = client.get("/api/round?prompt_id=sky-blue&difficulty=0.5&seed=7")
     assert r.status_code == 200
 
     records = [rec for rec in caplog.records if rec.name == LOGGER_NAME and rec.message == "round"]
@@ -165,7 +165,7 @@ def test_error_event_emitted_on_unexpected_failure(caplog: pytest.LogCaptureFixt
         patch("app.round.generate_answer_full", new=boom),
         caplog.at_level(logging.ERROR, logger=LOGGER_NAME),
     ):
-        r = strict_client.get("/round?prompt_id=sky-blue&seed=1")
+        r = strict_client.get("/api/round?prompt_id=sky-blue&seed=1")
     assert r.status_code == 500
 
     error_records = [
@@ -187,7 +187,7 @@ def test_build_round_surfaces_personality_on_round_and_event() -> None:
 
 
 def test_round_endpoint_exposes_personality_field() -> None:
-    body = client.get("/round?prompt_id=sky-blue&seed=1").json()
+    body = client.get("/api/round?prompt_id=sky-blue&seed=1").json()
     assert body.get("personality") == "witty"
 
 
@@ -235,7 +235,7 @@ def test_round_endpoint_uses_pool_when_available(caplog: pytest.LogCaptureFixtur
 
     try:
         with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
-            r = client.get("/round")
+            r = client.get("/api/round")
         assert r.status_code == 200
         assert r.json()["id"] == "round-cached"
         records = [
@@ -273,7 +273,7 @@ def test_round_endpoint_bypasses_pool_when_overrides_present(
 
     try:
         with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
-            r = client.get("/round?prompt_id=sky-blue&seed=1")
+            r = client.get("/api/round?prompt_id=sky-blue&seed=1")
         assert r.status_code == 200
         body = r.json()
         assert body["id"] != "round-cached"
@@ -302,7 +302,7 @@ def test_round_endpoint_falls_back_to_build_when_pool_empty(
 
     try:
         with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
-            r = client.get("/round")
+            r = client.get("/api/round")
         assert r.status_code == 200
         records = [
             rec for rec in caplog.records if rec.name == LOGGER_NAME and rec.message == "round"

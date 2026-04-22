@@ -7,7 +7,6 @@ class Settings(BaseSettings):
     ollama_url: str = "http://localhost:11434"
     ollama_model: str = "llama3.2:1b"
     default_difficulty: float = 1.0
-    cors_origins: str = "http://localhost:5173"
     choice_target_pct: float = 0.30
     opening_reveal: int = 3
     log_level: str = "INFO"
@@ -37,10 +36,6 @@ class Settings(BaseSettings):
     prompt_store_prefer_generated_at: int = 20
     prompt_min_words: int = 4
     prompt_max_words: int = 20
-
-    @property
-    def cors_origin_list(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
 
 settings = Settings()
