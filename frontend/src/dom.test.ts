@@ -122,6 +122,19 @@ describe("renderWords", () => {
 				'<span class="word-group"><span class="word">World</span></span>',
 		);
 	});
+
+	test("attaches possessive apostrophe token to preceding word", () => {
+		const html = renderWords(
+			state({
+				phase: "finished",
+				revealedWords: ["Moon", "'s", "gravity"],
+			}),
+		);
+		expect(html).toBe(
+			'<span class="word-group"><span class="word">Moon</span><span class="word">\'s</span></span> ' +
+				'<span class="word-group"><span class="word">gravity</span></span>',
+		);
+	});
 });
 
 describe("shuffleOptions", () => {

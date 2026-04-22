@@ -14,6 +14,10 @@ export function isPunc(word: string): boolean {
 	return PUNC_RE.test(word);
 }
 
+function attachesLeft(word: string): boolean {
+	return isPunc(word) || word.startsWith("'");
+}
+
 export function wordSpan(word: string, extra?: string): string {
 	const cls = `word${extra ? ` ${extra}` : ""}${isPunc(word) ? " punc" : ""}`;
 	return `<span class="${cls}">${escapeHTML(word)}</span>`;
@@ -24,10 +28,10 @@ function groupWordSpans(items: { html: string; word: string }[]): string {
 	let i = 0;
 	while (i < items.length) {
 		let group = items[i]!.html;
-		const startIsPunc = isPunc(items[i]!.word);
+		const startAttaches = attachesLeft(items[i]!.word);
 		i++;
-		if (!startIsPunc) {
-			while (i < items.length && isPunc(items[i]!.word)) {
+		if (!startAttaches) {
+			while (i < items.length && attachesLeft(items[i]!.word)) {
 				group += items[i]!.html;
 				i++;
 			}

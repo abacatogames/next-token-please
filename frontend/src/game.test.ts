@@ -190,4 +190,33 @@ describe("getPlayerAnswer / getOriginalAnswer", () => {
 	test("getOriginalAnswer returns empty for null round", () => {
 		expect(getOriginalAnswer(createGame())).toBe("");
 	});
+
+	test("attaches possessive and contraction apostrophe tokens", () => {
+		const s = {
+			...startRound(round),
+			revealedWords: ["The", "Moon", "'s", "gravity", "it", "'s", "here", "."],
+		};
+		expect(getPlayerAnswer(s)).toBe("The Moon's gravity it's here.");
+	});
+
+	test("attaches all common contraction suffixes", () => {
+		const s = {
+			...startRound(round),
+			revealedWords: [
+				"I",
+				"'m",
+				"you",
+				"'re",
+				"we",
+				"'ll",
+				"don",
+				"'t",
+				"he",
+				"'d",
+				"they",
+				"'ve",
+			],
+		};
+		expect(getPlayerAnswer(s)).toBe("I'm you're we'll don't he'd they've");
+	});
 });

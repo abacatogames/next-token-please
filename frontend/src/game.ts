@@ -228,7 +228,7 @@ export function chapterProgress(state: GameState): ChapterProgress | null {
 }
 
 function joinWords(words: string[]): string {
-	return words.join(" ").replace(/ ([.,;:!?—'])/g, "$1");
+	return words.join(" ").replace(/ ([.,;:!?—]|'\S*)/g, "$1");
 }
 
 export function getPlayerAnswer(state: GameState): string {
