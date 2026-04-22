@@ -9,17 +9,13 @@ function nextMock(): Round {
 	return r;
 }
 
-export type RoundSource = "backend" | "fallback" | "local";
+export type RoundSource = "backend" | "fallback";
 
 export type RoundResult = { round: Round; source: RoundSource };
 
-export async function fetchRound(
-	difficulty = 1.0,
-	baseUrl: string | undefined = import.meta.env.VITE_API_URL,
-): Promise<RoundResult> {
-	if (!baseUrl) return { round: nextMock(), source: "local" };
+export async function fetchRound(difficulty = 1.0): Promise<RoundResult> {
 	try {
-		const response = await fetch(`${baseUrl}/round?difficulty=${difficulty}`);
+		const response = await fetch(`/api/round?difficulty=${difficulty}`);
 		if (!response.ok) throw new Error(`round fetch failed: ${response.status}`);
 		return { round: (await response.json()) as Round, source: "backend" };
 	} catch (err) {

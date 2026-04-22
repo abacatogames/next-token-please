@@ -89,7 +89,6 @@ describe("renderGameHTML", () => {
 		expect(renderGameHTML(state(), null, "backend")).not.toContain(
 			"FALLBACK",
 		);
-		expect(renderGameHTML(state(), null, "local")).not.toContain("FALLBACK");
 		expect(renderGameHTML(state(), null, null)).not.toContain("FALLBACK");
 	});
 });
