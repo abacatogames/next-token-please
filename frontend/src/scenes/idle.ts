@@ -54,9 +54,9 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
       <details class="about">
         <summary>How does it work?</summary>
         <p>
-          One prompt. One answer. The model types it word by word — occasionally it
-          pauses and hands you three candidates for the next token. Clear more than
-          half and you pass. No feedback until the end.
+          One prompt. One answer. The model writes in real time, token by token — until the 
+		  signal breaks and control is handed to you. Three candidates appear. Choose the 
+		  true token and clear the threshold to survive.
         </p>
       </details>
 

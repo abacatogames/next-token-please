@@ -21,8 +21,8 @@ describe("INFERENCE_RUN", () => {
 			{ rounds: 3, requiredPercent: 50 },
 			{ rounds: 5, requiredPercent: 60 },
 			{ rounds: 10, requiredPercent: 75 },
-			{ rounds: 7, requiredPercent: 90 },
-			{ rounds: 5, requiredPercent: 100 },
+			{ rounds: 5, requiredPercent: 90 },
+			{ rounds: 3, requiredPercent: 100 },
 		];
 		INFERENCE_RUN.forEach((c, i) => {
 			expect(c.rounds).toBe(spec[i]!.rounds);
