@@ -1,5 +1,5 @@
 import { TIMING } from "../constants.ts";
-import { crtWindow, highlightDiffs } from "../dom.ts";
+import { crtWindow, renderComparison } from "../dom.ts";
 import { getScore, isWin } from "../game.ts";
 import { prefersReducedMotion } from "../motion.ts";
 import type { Scene } from "../scene/types.ts";
@@ -87,28 +87,11 @@ export function createFinishedScene(cb: FinishedCallbacks): Scene<GameState> {
         `,
 			});
 
-			const operatorCol = crtWindow({
-				windowClass: "comparison-col",
-				bodyClass: "comparison-text",
-				title: "OPERATOR_OUTPUT",
-				body: highlightDiffs(state, (c) => c.picked),
-			});
-
-			const truthCol = crtWindow({
-				windowClass: "comparison-col",
-				bodyClass: "comparison-text",
-				title: "MODEL_GROUND_TRUTH",
-				body: highlightDiffs(state, (c) => c.correct),
-			});
-
 			root.innerHTML = `
     <section class="screen finished-screen" aria-labelledby="eval-title">
       ${evaluationHTML}
 
-      <div class="comparison">
-        ${operatorCol}
-        ${truthCol}
-      </div>
+      ${renderComparison(state)}
 
       <div class="btn-row">
         <button class="btn btn-start" id="play-again-btn" type="button">

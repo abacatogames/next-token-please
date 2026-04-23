@@ -1,4 +1,4 @@
-import { crtWindow, highlightDiffs } from "../dom.ts";
+import { crtWindow, renderComparison } from "../dom.ts";
 import { getScore } from "../game.ts";
 import type { Scene } from "../scene/types.ts";
 import {
@@ -16,28 +16,6 @@ export type CampaignCallbacks = {
 
 function pct(correct: number, total: number): number {
 	return total > 0 ? Math.round((correct / total) * 100) : 0;
-}
-
-function renderComparison(state: GameState): string {
-	if (!state.round) return "";
-	const operatorCol = crtWindow({
-		windowClass: "comparison-col",
-		bodyClass: "comparison-text",
-		title: "OPERATOR_OUTPUT",
-		body: highlightDiffs(state, (c) => c.picked),
-	});
-	const truthCol = crtWindow({
-		windowClass: "comparison-col",
-		bodyClass: "comparison-text",
-		title: "MODEL_GROUND_TRUTH",
-		body: highlightDiffs(state, (c) => c.correct),
-	});
-	return `
-    <div class="comparison">
-      ${operatorCol}
-      ${truthCol}
-    </div>
-  `;
 }
 
 function renderChapterIntro(state: GameState): string {

@@ -4,6 +4,7 @@ import {
 	escapeAttr,
 	escapeHTML,
 	highlightDiffs,
+	renderComparison,
 	renderWords,
 	shuffleOptions,
 	wordSpan,
@@ -183,6 +184,27 @@ describe("shuffleOptions", () => {
 		const options = shuffleOptions(token);
 		expect(options).toHaveLength(3);
 		expect(options.sort()).toEqual(["earth", "planet", "world"]);
+	});
+});
+
+describe("renderComparison", () => {
+	test("returns empty string when no round", () => {
+		expect(renderComparison(state({ round: null }))).toBe("");
+	});
+
+	test("emits operator and ground-truth CRT windows inside a comparison wrapper", () => {
+		const html = renderComparison(
+			state({
+				playerChoices: [{ tokenIndex: 1, picked: "earth", correct: "world" }],
+			}),
+		);
+		expect(html).toContain('<div class="comparison">');
+		expect(html).toContain('<span class="crt-session">OPERATOR_OUTPUT</span>');
+		expect(html).toContain(
+			'<span class="crt-session">MODEL_GROUND_TRUTH</span>',
+		);
+		expect(html).toContain(">earth<");
+		expect(html).toContain(">world<");
 	});
 });
 

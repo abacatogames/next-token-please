@@ -82,6 +82,28 @@ export function shuffleOptions(
 	return options;
 }
 
+export function renderComparison(state: GameState): string {
+	if (!state.round) return "";
+	const operatorCol = crtWindow({
+		windowClass: "comparison-col",
+		bodyClass: "comparison-text",
+		title: "OPERATOR_OUTPUT",
+		body: highlightDiffs(state, (c) => c.picked),
+	});
+	const truthCol = crtWindow({
+		windowClass: "comparison-col",
+		bodyClass: "comparison-text",
+		title: "MODEL_GROUND_TRUTH",
+		body: highlightDiffs(state, (c) => c.correct),
+	});
+	return `
+    <div class="comparison">
+      ${operatorCol}
+      ${truthCol}
+    </div>
+  `;
+}
+
 export function highlightDiffs(
 	state: GameState,
 	getWord: (c: PlayerChoice) => string,
