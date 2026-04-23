@@ -81,7 +81,6 @@ const VALID_MODES: ReadonlySet<GameMode> = new Set<GameMode>([
 	"campaign",
 ]);
 
-const VALID_PERSONALITIES = new Set(["neutral", "cheerful", "serious"]);
 
 export function saveSession(state: GameState): void {
 	try {
@@ -208,12 +207,7 @@ function parseRound(value: unknown): Round | null | undefined {
 
 	const round: Round = { id: value.id, prompt: value.prompt, tokens };
 	if (value.personality !== undefined) {
-		if (
-			typeof value.personality !== "string" ||
-			!VALID_PERSONALITIES.has(value.personality)
-		) {
-			return undefined;
-		}
+		if (typeof value.personality !== "string") return undefined;
 		round.personality = value.personality as Round["personality"];
 	}
 	return round;

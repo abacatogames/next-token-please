@@ -319,18 +319,35 @@ describe("saveSession / loadSession", () => {
 		expect(loadSession()).toBeNull();
 	});
 
-	test("round with unknown personality returns null", () => {
+	test("round with non-string personality returns null", () => {
 		const payload = {
 			schemaVersion: 1,
 			savedAt: 0,
 			mode: "endless",
 			phase: "typing_prompt",
-			round: { ...SAMPLE_ROUND, personality: "grumpy" },
+			round: { ...SAMPLE_ROUND, personality: 42 },
 			tokenIndex: 0,
 			playerChoices: [],
 			revealedWords: [],
 		};
 		localStorage.setItem("ntp.session.v1", JSON.stringify(payload));
 		expect(loadSession()).toBeNull();
+	});
+
+	test("unrecognized backend personality is preserved as a string", () => {
+		const payload = {
+			schemaVersion: 1,
+			savedAt: 0,
+			mode: "endless",
+			phase: "typing_prompt",
+			round: { ...SAMPLE_ROUND, personality: "deadpan" },
+			tokenIndex: 0,
+			playerChoices: [],
+			revealedWords: [],
+		};
+		localStorage.setItem("ntp.session.v1", JSON.stringify(payload));
+		const loaded = loadSession();
+		expect(loaded).not.toBeNull();
+		expect(loaded?.round?.personality).toBe("deadpan");
 	});
 });
