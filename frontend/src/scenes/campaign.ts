@@ -126,7 +126,7 @@ function renderRoundRecap(state: GameState): string {
           <span class="btn-label">RETURN_HOME</span>
         </button>
       </div>
-      <p class="keyhints" aria-hidden="true"><kbd>Enter</kbd> ${hintText}</p>
+      <p class="keyhints" aria-hidden="true"><kbd>Enter</kbd> ${hintText}  //  <kbd>Esc</kbd> exit</p>
     </section>
   `;
 }
@@ -163,7 +163,7 @@ function renderChapterPassed(state: GameState): string {
           <span class="btn-label">RETURN_HOME</span>
         </button>
       </div>
-      <p class="keyhints" aria-hidden="true"><kbd>Enter</kbd> continue</p>
+      <p class="keyhints" aria-hidden="true"><kbd>Enter</kbd> continue  //  <kbd>Esc</kbd> exit</p>
     </section>
   `;
 }
@@ -290,6 +290,7 @@ export function createCampaignScene(cb: CampaignCallbacks): Scene<GameState> {
 	let mountRoot: HTMLElement | null = null;
 	let keyHandler: ((e: KeyboardEvent) => void) | null = null;
 	let currentAction: (() => void) | null = null;
+	let exitAction: (() => void) | null = null;
 
 	function render(state: GameState) {
 		if (!mountRoot) return;
@@ -307,6 +308,9 @@ export function createCampaignScene(cb: CampaignCallbacks): Scene<GameState> {
 		);
 		if (exitBtn) {
 			exitBtn.addEventListener("click", cb.onExit);
+			exitAction = cb.onExit;
+		} else {
+			exitAction = null;
 		}
 	}
 
@@ -315,6 +319,12 @@ export function createCampaignScene(cb: CampaignCallbacks): Scene<GameState> {
 		mount(root, state) {
 			mountRoot = root;
 			keyHandler = (e: KeyboardEvent) => {
+				if (e.key === "Escape") {
+					if (!exitAction) return;
+					e.preventDefault();
+					exitAction();
+					return;
+				}
 				if (e.key !== "Enter" && e.key !== " ") return;
 				const tag = (e.target as HTMLElement | null)?.tagName;
 				if (tag === "BUTTON") return;
@@ -332,6 +342,7 @@ export function createCampaignScene(cb: CampaignCallbacks): Scene<GameState> {
 			if (keyHandler) window.removeEventListener("keydown", keyHandler);
 			keyHandler = null;
 			currentAction = null;
+			exitAction = null;
 			mountRoot = null;
 		},
 	};
