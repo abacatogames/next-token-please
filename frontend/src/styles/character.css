@@ -27,12 +27,8 @@
 	display: block;
 }
 
-.robot__antenna-wire {
-	fill: var(--text-dim);
-}
-
 .robot__antenna-tip {
-	fill: var(--noir-amber-dim);
+	fill: var(--noir-indigo-deep);
 }
 
 .robot__head-shadow {
@@ -48,7 +44,7 @@
 }
 
 .robot__eye {
-	fill: var(--noir-amber);
+	fill: var(--neon-cyan);
 	transform-origin: center;
 	transform-box: fill-box;
 	animation: robot-blink 6200ms steps(1, end) infinite;
@@ -72,7 +68,7 @@
 }
 
 .robot__light--b {
-	fill: var(--noir-amber-dim);
+	fill: var(--neon-yellow);
 	animation: robot-light-pulse 2400ms ease-in-out infinite;
 }
 

@@ -1,8 +1,7 @@
 export const robotSvg = `
 <svg class="robot" viewBox="0 0 24 24" shape-rendering="crispEdges" xmlns="http://www.w3.org/2000/svg" role="img" focusable="false">
   <g class="robot__antenna">
-    <rect class="robot__antenna-wire" x="11" y="1" width="2" height="3"/>
-    <rect class="robot__antenna-tip" x="10" y="0" width="4" height="2"/>
+    <rect class="robot__antenna-tip" x="10" y="3" width="4" height="1"/>
   </g>
   <g class="robot__head">
     <rect class="robot__head-shadow" x="4" y="4" width="16" height="14"/>
