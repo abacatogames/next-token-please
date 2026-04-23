@@ -1,6 +1,7 @@
 import { fetchRound, type RoundSource } from "./api.ts";
 import { mountCharacter } from "./character/character.ts";
 import { isActiveRoundPhase } from "./character/phases.ts";
+import { TIMING } from "./constants.ts";
 import {
 	advanceToNextChapter,
 	advanceToken,
@@ -30,11 +31,11 @@ import {
 } from "./storage.ts";
 import type { GameMode, GameState } from "./types.ts";
 
-const REVEAL_DELAY_MIN = 80;
-const REVEAL_DELAY_MAX = 120;
-
 function randomRevealDelay(): number {
-	return REVEAL_DELAY_MIN + Math.random() * (REVEAL_DELAY_MAX - REVEAL_DELAY_MIN);
+	return (
+		TIMING.REVEAL_DELAY_MIN +
+		Math.random() * (TIMING.REVEAL_DELAY_MAX - TIMING.REVEAL_DELAY_MIN)
+	);
 }
 
 let state: GameState = createGame();

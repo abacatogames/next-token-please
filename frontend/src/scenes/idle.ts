@@ -1,3 +1,5 @@
+import { TIMING } from "../constants.ts";
+import { prefersReducedMotion } from "../motion.ts";
 import type { Scene } from "../scene/types.ts";
 import type { GameMode, GameState } from "../types.ts";
 
@@ -14,8 +16,6 @@ const BOOT_LINES: BootLine[] = [
 	{ delay: 600, text: "SYNC // MODEL HOST", status: "LINK" },
 	{ delay: 820, text: "OPERATOR HANDSHAKE", status: "AWAIT" },
 ];
-
-const HEADER_REVEAL_MS = 960;
 
 function stamp(ms: number): string {
 	return `[0.${String(ms).padStart(3, "0")}]`;
@@ -94,9 +94,7 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
 				"mode-endless-btn",
 			) as HTMLButtonElement;
 
-			const reducedMotion = window.matchMedia(
-				"(prefers-reduced-motion: reduce)",
-			).matches;
+			const reducedMotion = prefersReducedMotion();
 			const timers: number[] = [];
 
 			for (const line of BOOT_LINES) {
@@ -114,7 +112,7 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
 						header.dataset.visible = "true";
 						campaignBtn.focus({ preventScroll: true });
 					},
-					reducedMotion ? 0 : HEADER_REVEAL_MS,
+					reducedMotion ? 0 : TIMING.IDLE_HEADER_REVEAL_MS,
 				),
 			);
 

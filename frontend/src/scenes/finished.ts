@@ -1,5 +1,7 @@
+import { TIMING } from "../constants.ts";
 import { crtWindow, highlightDiffs } from "../dom.ts";
 import { getScore, isWin } from "../game.ts";
+import { prefersReducedMotion } from "../motion.ts";
 import type { Scene } from "../scene/types.ts";
 import {
 	type BestRun,
@@ -19,8 +21,7 @@ function animateCountUp(
 	target: number,
 	durationMs: number,
 ): () => void {
-	const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-	if (reduced) {
+	if (prefersReducedMotion()) {
 		el.textContent = `${target}%`;
 		return () => {};
 	}
@@ -135,7 +136,7 @@ export function createFinishedScene(cb: FinishedCallbacks): Scene<GameState> {
 			homeBtn.addEventListener("click", cb.onReturnToIdle);
 
 			const scoreEl = document.getElementById("eval-score-value")!;
-			const cancelCount = animateCountUp(scoreEl, percent, 720);
+			const cancelCount = animateCountUp(scoreEl, percent, TIMING.SCORE_ANIMATE_MS);
 
 			const onKey = (e: KeyboardEvent) => {
 				if (e.key === "Escape") {

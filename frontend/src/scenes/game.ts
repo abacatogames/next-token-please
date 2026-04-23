@@ -1,4 +1,5 @@
 import type { RoundSource } from "../api.ts";
+import { TIMING } from "../constants.ts";
 import {
 	crtWindow,
 	escapeAttr,
@@ -6,6 +7,7 @@ import {
 	renderWords,
 	shuffleOptions,
 } from "../dom.ts";
+import { prefersReducedMotion } from "../motion.ts";
 import type { Scene } from "../scene/types.ts";
 import { INFERENCE_RUN, getChapter } from "../story/inferenceRun.ts";
 import type { GameState } from "../types.ts";
@@ -16,21 +18,9 @@ export type GameCallbacks = {
 	getRoundSource: () => RoundSource | null;
 };
 
-const TYPE_DELAY_MIN = 22;
-const TYPE_DELAY_MAX = 55;
-const TYPE_PUNC_PAUSE = 140;
-
 function sessionTag(id: string): string {
 	const slug = id.replace(/[^a-zA-Z0-9]/g, "").slice(-4).toUpperCase();
 	return slug.length < 4 ? slug.padStart(4, "0") : slug;
-}
-
-function prefersReducedMotion(): boolean {
-	return (
-		typeof window !== "undefined" &&
-		typeof window.matchMedia === "function" &&
-		window.matchMedia("(prefers-reduced-motion: reduce)").matches
-	);
 }
 
 function renderHUD(state: GameState): string {
@@ -169,13 +159,14 @@ export function createGameScene(cb: GameCallbacks): Scene<GameState> {
 
 			const isPunc = /[.,;:!?—]/.test(ch);
 			const jitter =
-				TYPE_DELAY_MIN + Math.random() * (TYPE_DELAY_MAX - TYPE_DELAY_MIN);
-			const delay = isPunc ? jitter + TYPE_PUNC_PAUSE : jitter;
+				TIMING.TYPE_DELAY_MIN +
+				Math.random() * (TIMING.TYPE_DELAY_MAX - TIMING.TYPE_DELAY_MIN);
+			const delay = isPunc ? jitter + TIMING.TYPE_PUNC_PAUSE : jitter;
 
 			typingTimer = setTimeout(tick, delay);
 		};
 
-		typingTimer = setTimeout(tick, TYPE_DELAY_MIN);
+		typingTimer = setTimeout(tick, TIMING.TYPE_DELAY_MIN);
 	}
 
 	function render(state: GameState) {

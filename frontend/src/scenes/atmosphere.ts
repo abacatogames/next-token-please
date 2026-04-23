@@ -1,3 +1,5 @@
+import { prefersReducedMotion } from "../motion.ts";
+
 const RAIN_STREAK_COUNT = 70;
 
 export function mountAtmosphere(root: HTMLElement): void {
@@ -8,10 +10,7 @@ export function mountAtmosphere(root: HTMLElement): void {
     <div class="atm-flicker"></div>
   `;
 
-	const reducedMotion = window.matchMedia(
-		"(prefers-reduced-motion: reduce)",
-	).matches;
-	if (reducedMotion) return;
+	if (prefersReducedMotion()) return;
 
 	const rain = document.getElementById("atm-rain");
 	if (!rain) return;
