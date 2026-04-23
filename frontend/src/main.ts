@@ -22,6 +22,12 @@ import { createFinishedScene } from "./scenes/finished.ts";
 import { createGameScene } from "./scenes/game.ts";
 import { createIdleScene } from "./scenes/idle.ts";
 import { createLoadingScene } from "./scenes/loading.ts";
+import {
+	clearSession,
+	loadSession,
+	saveSession,
+	sessionToGameState,
+} from "./storage.ts";
 import type { GameMode, GameState } from "./types.ts";
 
 const REVEAL_DELAY_MIN = 80;
@@ -35,11 +41,17 @@ let state: GameState = createGame();
 let revealTimer: ReturnType<typeof setTimeout> | null = null;
 let lastSource: RoundSource | null = null;
 
+const restoredSession = loadSession();
+if (restoredSession) {
+	state = sessionToGameState(restoredSession);
+}
+
 const atmosphereRoot = document.getElementById("atmosphere")!;
 mountAtmosphere(atmosphereRoot);
 
 const characterStage = document.getElementById("character-stage")!;
 const character = mountCharacter(characterStage);
+if (state.round?.personality) character.setPersonality(state.round.personality);
 
 const appRoot = document.getElementById("app")!;
 const manager = new SceneManager<GameState>(appRoot);
@@ -99,7 +111,16 @@ manager.register(
 	}),
 );
 
+function persistOrClear() {
+	if (state.phase === "idle" || state.phase === "campaign_won") {
+		clearSession();
+	} else {
+		saveSession(state);
+	}
+}
+
 function render() {
+	persistOrClear();
 	character.setVisible(isActiveRoundPhase(state.phase));
 	switch (state.phase) {
 		case "idle":
@@ -197,3 +218,4 @@ function handleReturnToIdle() {
 }
 
 render();
+if (state.phase === "revealing") scheduleNextReveal();
