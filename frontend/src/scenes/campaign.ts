@@ -123,7 +123,7 @@ function renderRoundRecap(state: GameState): string {
           <span class="btn-label">${primaryLabel}</span>
         </button>
         <button class="btn btn-secondary" id="campaign-exit-btn" type="button">
-          <span class="btn-label">RETURN_HOME</span>
+          <span class="btn-label">EXIT</span>
         </button>
       </div>
       <p class="keyhints" aria-hidden="true"><kbd>Enter</kbd> ${hintText}  //  <kbd>Esc</kbd> exit</p>
@@ -160,7 +160,7 @@ function renderChapterPassed(state: GameState): string {
           <span class="btn-label">NEXT_CHAPTER</span>
         </button>
         <button class="btn btn-secondary" id="campaign-exit-btn" type="button">
-          <span class="btn-label">RETURN_HOME</span>
+          <span class="btn-label">EXIT</span>
         </button>
       </div>
       <p class="keyhints" aria-hidden="true"><kbd>Enter</kbd> continue  //  <kbd>Esc</kbd> exit</p>

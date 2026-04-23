@@ -109,10 +109,10 @@ export function createFinishedScene(cb: FinishedCallbacks): Scene<GameState> {
       <div class="btn-row">
         <button class="btn btn-start" id="play-again-btn" type="button">
           <span class="btn-caret">&gt;</span>
-          <span class="btn-label">REPLAY_SEQUENCE</span>
+          <span class="btn-label">NEXT_PROMPT</span>
         </button>
         <button class="btn btn-secondary" id="return-home-btn" type="button">
-          <span class="btn-label">RETURN_HOME</span>
+          <span class="btn-label">EXIT</span>
         </button>
       </div>
 
