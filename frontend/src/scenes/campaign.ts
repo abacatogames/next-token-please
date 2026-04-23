@@ -117,10 +117,15 @@ function renderRoundRecap(state: GameState): string {
         </div>
       </div>
       ${renderComparison(state)}
-      <button class="btn btn-start campaign-primary" id="campaign-primary-btn" type="button">
-        <span class="btn-caret">&gt;</span>
-        <span class="btn-label">${primaryLabel}</span>
-      </button>
+      <div class="btn-row">
+        <button class="btn btn-start campaign-primary" id="campaign-primary-btn" type="button">
+          <span class="btn-caret">&gt;</span>
+          <span class="btn-label">${primaryLabel}</span>
+        </button>
+        <button class="btn btn-secondary" id="campaign-exit-btn" type="button">
+          <span class="btn-label">RETURN_HOME</span>
+        </button>
+      </div>
       <p class="keyhints" aria-hidden="true"><kbd>Enter</kbd> ${hintText}</p>
     </section>
   `;
@@ -149,10 +154,15 @@ function renderChapterPassed(state: GameState): string {
           <p class="campaign-flavor">Loading next chapter…</p>
         </div>
       </div>
-      <button class="btn btn-start campaign-primary" id="campaign-primary-btn" type="button">
-        <span class="btn-caret">&gt;</span>
-        <span class="btn-label">NEXT_CHAPTER</span>
-      </button>
+      <div class="btn-row">
+        <button class="btn btn-start campaign-primary" id="campaign-primary-btn" type="button">
+          <span class="btn-caret">&gt;</span>
+          <span class="btn-label">NEXT_CHAPTER</span>
+        </button>
+        <button class="btn btn-secondary" id="campaign-exit-btn" type="button">
+          <span class="btn-label">RETURN_HOME</span>
+        </button>
+      </div>
       <p class="keyhints" aria-hidden="true"><kbd>Enter</kbd> continue</p>
     </section>
   `;
@@ -291,6 +301,12 @@ export function createCampaignScene(cb: CampaignCallbacks): Scene<GameState> {
 		if (btn && currentAction) {
 			btn.addEventListener("click", currentAction);
 			btn.focus({ preventScroll: true });
+		}
+		const exitBtn = mountRoot.querySelector<HTMLButtonElement>(
+			"#campaign-exit-btn",
+		);
+		if (exitBtn) {
+			exitBtn.addEventListener("click", cb.onExit);
 		}
 	}
 

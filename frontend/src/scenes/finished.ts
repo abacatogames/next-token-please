@@ -106,10 +106,15 @@ export function createFinishedScene(cb: FinishedCallbacks): Scene<GameState> {
         </div>
       </div>
 
-      <button class="btn btn-start" id="play-again-btn" type="button">
-        <span class="btn-caret">&gt;</span>
-        <span class="btn-label">REPLAY_SEQUENCE</span>
-      </button>
+      <div class="btn-row">
+        <button class="btn btn-start" id="play-again-btn" type="button">
+          <span class="btn-caret">&gt;</span>
+          <span class="btn-label">REPLAY_SEQUENCE</span>
+        </button>
+        <button class="btn btn-secondary" id="return-home-btn" type="button">
+          <span class="btn-label">RETURN_HOME</span>
+        </button>
+      </div>
 
       <p class="keyhints" aria-hidden="true">
         <kbd>Enter</kbd> replay  //  <kbd>Esc</kbd> exit
@@ -120,6 +125,11 @@ export function createFinishedScene(cb: FinishedCallbacks): Scene<GameState> {
 			const btn = document.getElementById("play-again-btn") as HTMLButtonElement;
 			btn.addEventListener("click", cb.onPlayAgain);
 			btn.focus({ preventScroll: true });
+
+			const homeBtn = document.getElementById(
+				"return-home-btn",
+			) as HTMLButtonElement;
+			homeBtn.addEventListener("click", cb.onReturnToIdle);
 
 			const scoreEl = document.getElementById("eval-score-value")!;
 			const cancelCount = animateCountUp(scoreEl, percent, 720);
@@ -140,6 +150,7 @@ export function createFinishedScene(cb: FinishedCallbacks): Scene<GameState> {
 
 			cleanup = () => {
 				btn.removeEventListener("click", cb.onPlayAgain);
+				homeBtn.removeEventListener("click", cb.onReturnToIdle);
 				window.removeEventListener("keydown", onKey);
 				cancelCount();
 			};

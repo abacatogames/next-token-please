@@ -52,6 +52,28 @@
 	border-width: 2px;
 }
 
+.btn-secondary {
+	font-size: 0.8rem;
+	padding: 0.55rem 1.4rem;
+	min-height: 36px;
+	color: var(--text-dim);
+	border-color: var(--bg-card-border);
+}
+
+.btn-secondary:hover {
+	background: var(--bg-card);
+	color: var(--text-bright);
+	border-color: var(--neon-cyan-dim);
+	box-shadow: var(--glow-sm);
+}
+
+.btn-row {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.6rem;
+}
+
 /* --- CRT window chrome --- */
 
 .crt-window {
