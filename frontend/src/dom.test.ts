@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+	crtWindow,
 	escapeAttr,
 	escapeHTML,
 	highlightDiffs,
@@ -43,6 +44,41 @@ describe("escapeHTML", () => {
 
 	test("escapes ampersand before other entities", () => {
 		expect(escapeHTML("&lt;")).toBe("&amp;lt;");
+	});
+});
+
+describe("crtWindow", () => {
+	test("renders title-bar dots and session title", () => {
+		const html = crtWindow({ title: "HELLO", body: "x" });
+		expect(html).toContain(
+			'<span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>',
+		);
+		expect(html).toContain('<span class="crt-session">HELLO</span>');
+		expect(html).toContain('<div class="crt-window">');
+		expect(html).toContain('<div class="crt-body">x</div>');
+	});
+
+	test("appends windowClass and bodyClass modifiers", () => {
+		const html = crtWindow({
+			title: "T",
+			body: "y",
+			windowClass: "prompt-window",
+			bodyClass: "prompt-body",
+		});
+		expect(html).toContain('<div class="crt-window prompt-window">');
+		expect(html).toContain('<div class="crt-body prompt-body">y</div>');
+	});
+
+	test("inlines bodyAttrs after the body class", () => {
+		const html = crtWindow({
+			title: "T",
+			body: "z",
+			bodyClass: "answer-body",
+			bodyAttrs: `id="answer" aria-live="polite"`,
+		});
+		expect(html).toContain(
+			'<div class="crt-body answer-body" id="answer" aria-live="polite">z</div>',
+		);
 	});
 });
 

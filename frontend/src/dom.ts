@@ -10,6 +10,25 @@ export function escapeAttr(s: string): string {
 	return escapeHTML(s).replace(/"/g, "&quot;");
 }
 
+export function crtWindow(opts: {
+	title: string;
+	body: string;
+	windowClass?: string;
+	bodyClass?: string;
+	bodyAttrs?: string;
+}): string {
+	const wc = opts.windowClass ? ` ${opts.windowClass}` : "";
+	const bc = opts.bodyClass ? ` ${opts.bodyClass}` : "";
+	const attrs = opts.bodyAttrs ? ` ${opts.bodyAttrs}` : "";
+	return `<div class="crt-window${wc}">
+      <header class="crt-title-bar">
+        <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="crt-session">${opts.title}</span>
+      </header>
+      <div class="crt-body${bc}"${attrs}>${opts.body}</div>
+    </div>`;
+}
+
 export function isPunc(word: string): boolean {
 	return PUNC_RE.test(word);
 }

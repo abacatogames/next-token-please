@@ -1,5 +1,11 @@
 import type { RoundSource } from "../api.ts";
-import { escapeAttr, escapeHTML, renderWords, shuffleOptions } from "../dom.ts";
+import {
+	crtWindow,
+	escapeAttr,
+	escapeHTML,
+	renderWords,
+	shuffleOptions,
+} from "../dom.ts";
 import type { Scene } from "../scene/types.ts";
 import { INFERENCE_RUN, getChapter } from "../story/inferenceRun.ts";
 import type { GameState } from "../types.ts";
@@ -61,27 +67,22 @@ export function renderGameHTML(
 		? `<span class="prompt-text"></span><span class="prompt-caret" aria-hidden="true"></span>`
 		: escapeHTML(state.round.prompt);
 
-	const promptHTML = `
-    <div class="crt-window prompt-window">
-      <header class="crt-title-bar">
-        <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span class="crt-session">PROMPT_${tag} // INPUT</span>
-      </header>
-      <div class="crt-body prompt-body">${promptBody}</div>
-    </div>
-  `;
+	const promptHTML = crtWindow({
+		windowClass: "prompt-window",
+		bodyClass: "prompt-body",
+		title: `PROMPT_${tag} // INPUT`,
+		body: promptBody,
+	});
 
 	const answerBody = isTyping ? "" : renderWords(state);
 
-	const answerHTML = `
-    <div class="crt-window answer-window">
-      <header class="crt-title-bar">
-        <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-        <span class="crt-session">MODEL_OUTPUT_${tag} // STREAM</span>
-      </header>
-      <div class="crt-body answer-body" id="answer" aria-live="polite">${answerBody}</div>
-    </div>
-  `;
+	const answerHTML = crtWindow({
+		windowClass: "answer-window",
+		bodyClass: "answer-body",
+		bodyAttrs: `id="answer" aria-live="polite"`,
+		title: `MODEL_OUTPUT_${tag} // STREAM`,
+		body: answerBody,
+	});
 
 	let choiceHTML = "";
 	if (state.phase === "awaiting_choice" && shuffledOptions) {

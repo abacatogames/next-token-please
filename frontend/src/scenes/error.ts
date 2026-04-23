@@ -1,3 +1,4 @@
+import { crtWindow } from "../dom.ts";
 import type { Scene } from "../scene/types.ts";
 import type { GameState } from "../types.ts";
 
@@ -12,14 +13,10 @@ export function createErrorScene(cb: ErrorCallbacks): Scene<GameState> {
 	return {
 		id: "error",
 		mount(root) {
-			root.innerHTML = `
-    <section class="screen error-screen" aria-labelledby="err-title" role="alert">
-      <div class="crt-window">
-        <header class="crt-title-bar">
-          <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="crt-session">SIGNAL_LOST // FAULT</span>
-        </header>
-        <div class="crt-body error-body">
+			const windowHTML = crtWindow({
+				bodyClass: "error-body",
+				title: "SIGNAL_LOST // FAULT",
+				body: `
           <h2 id="err-title" class="result-title lose">Channel unreachable.</h2>
           <p class="error-line">&gt; BACKEND_OFFLINE // CACHE_EXHAUSTED</p>
           <p class="error-line error-line--dim">&gt; RETRY_OR_RETURN_TO_STANDBY</p>
@@ -33,8 +30,11 @@ export function createErrorScene(cb: ErrorCallbacks): Scene<GameState> {
               <span class="btn-label">STANDBY</span>
             </button>
           </div>
-        </div>
-      </div>
+        `,
+			});
+			root.innerHTML = `
+    <section class="screen error-screen" aria-labelledby="err-title" role="alert">
+      ${windowHTML}
       <p class="keyhints" aria-hidden="true">
         <kbd>Enter</kbd> retry  //  <kbd>Esc</kbd> exit
       </p>

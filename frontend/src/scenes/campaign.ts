@@ -1,4 +1,4 @@
-import { highlightDiffs } from "../dom.ts";
+import { crtWindow, highlightDiffs } from "../dom.ts";
 import { getScore } from "../game.ts";
 import type { Scene } from "../scene/types.ts";
 import {
@@ -20,22 +20,22 @@ function pct(correct: number, total: number): number {
 
 function renderComparison(state: GameState): string {
 	if (!state.round) return "";
+	const operatorCol = crtWindow({
+		windowClass: "comparison-col",
+		bodyClass: "comparison-text",
+		title: "OPERATOR_OUTPUT",
+		body: highlightDiffs(state, (c) => c.picked),
+	});
+	const truthCol = crtWindow({
+		windowClass: "comparison-col",
+		bodyClass: "comparison-text",
+		title: "MODEL_GROUND_TRUTH",
+		body: highlightDiffs(state, (c) => c.correct),
+	});
 	return `
     <div class="comparison">
-      <div class="crt-window comparison-col">
-        <header class="crt-title-bar">
-          <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="crt-session">OPERATOR_OUTPUT</span>
-        </header>
-        <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.picked)}</div>
-      </div>
-      <div class="crt-window comparison-col">
-        <header class="crt-title-bar">
-          <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="crt-session">MODEL_GROUND_TRUTH</span>
-        </header>
-        <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.correct)}</div>
-      </div>
+      ${operatorCol}
+      ${truthCol}
     </div>
   `;
 }
@@ -50,14 +50,11 @@ function renderChapterIntro(state: GameState): string {
 			? "Run initiated. Learn the pattern and clear at least half the sequence to advance."
 			: "System pressure rising. Maintain accuracy across all rounds to continue.";
 
-	return `
-    <section class="screen campaign-screen campaign-intro" aria-labelledby="campaign-title">
-      <div class="crt-window campaign-window">
-        <header class="crt-title-bar">
-          <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="crt-session">INFERENCE_RUN // CHAPTER ${chapter.index + 1} / ${INFERENCE_RUN.length}</span>
-        </header>
-        <div class="crt-body campaign-body">
+	const windowHTML = crtWindow({
+		windowClass: "campaign-window",
+		bodyClass: "campaign-body",
+		title: `INFERENCE_RUN // CHAPTER ${chapter.index + 1} / ${INFERENCE_RUN.length}`,
+		body: `
           <h2 id="campaign-title" class="campaign-title">${chapter.title}</h2>
           <p class="campaign-flavor">${flavor}</p>
           <dl class="campaign-stats">
@@ -65,8 +62,11 @@ function renderChapterIntro(state: GameState): string {
             <div><dt>Target</dt><dd>${chapter.requiredPercent}%</dd></div>
             <div><dt>Scoring</dt><dd>POOLED</dd></div>
           </dl>
-        </div>
-      </div>
+        `,
+	});
+	return `
+    <section class="screen campaign-screen campaign-intro" aria-labelledby="campaign-title">
+      ${windowHTML}
       <button class="btn btn-start campaign-primary" id="campaign-primary-btn" type="button">
         <span class="btn-caret">&gt;</span>
         <span class="btn-label">BEGIN_CHAPTER</span>
@@ -91,14 +91,11 @@ function renderRoundRecap(state: GameState): string {
 	const primaryLabel = isLastRound ? "CHAPTER_RESULTS" : "CONTINUE";
 	const hintText = isLastRound ? "see results" : "next round";
 
-	return `
-    <section class="screen campaign-screen campaign-recap" aria-labelledby="recap-title">
-      <div class="crt-window campaign-window">
-        <header class="crt-title-bar">
-          <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="crt-session">${chapter.title.toUpperCase()} // ROUND ${state.campaign.roundInChapter} / ${chapter.rounds}</span>
-        </header>
-        <div class="crt-body campaign-body">
+	const windowHTML = crtWindow({
+		windowClass: "campaign-window",
+		bodyClass: "campaign-body",
+		title: `${chapter.title.toUpperCase()} // ROUND ${state.campaign.roundInChapter} / ${chapter.rounds}`,
+		body: `
           <h2 id="recap-title" class="campaign-title campaign-title--sm">ROUND ${state.campaign.roundInChapter}</h2>
           <div class="recap-score">
             <span class="recap-score-value">${roundPct}%</span>
@@ -114,8 +111,11 @@ function renderRoundRecap(state: GameState): string {
               <span class="recap-value recap-target ${statusClass}">${chapter.requiredPercent}% — ${status}</span>
             </div>
           </div>
-        </div>
-      </div>
+        `,
+	});
+	return `
+    <section class="screen campaign-screen campaign-recap" aria-labelledby="recap-title">
+      ${windowHTML}
       ${renderComparison(state)}
       <div class="btn-row">
         <button class="btn btn-start campaign-primary" id="campaign-primary-btn" type="button">
@@ -138,22 +138,22 @@ function renderChapterPassed(state: GameState): string {
 		state.campaign.chapterCorrect,
 		state.campaign.chapterTotal,
 	);
-	return `
-    <section class="screen campaign-screen campaign-end campaign-end--passed" aria-labelledby="end-title">
-      <div class="crt-window campaign-window">
-        <header class="crt-title-bar">
-          <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="crt-session">CHAPTER_${chapter.index + 1} // COMPLETE</span>
-        </header>
-        <div class="crt-body campaign-body">
+	const windowHTML = crtWindow({
+		windowClass: "campaign-window",
+		bodyClass: "campaign-body",
+		title: `CHAPTER_${chapter.index + 1} // COMPLETE`,
+		body: `
           <h2 id="end-title" class="campaign-headline is-pass">CHAPTER ${chapter.index + 1} COMPLETE</h2>
           <div class="campaign-final-score">
             <span class="campaign-final-value">${finalPct}%</span>
             <span class="campaign-final-sub">${state.campaign.chapterCorrect} / ${state.campaign.chapterTotal} — cleared ${chapter.requiredPercent}% target</span>
           </div>
           <p class="campaign-flavor">Loading next chapter…</p>
-        </div>
-      </div>
+        `,
+	});
+	return `
+    <section class="screen campaign-screen campaign-end campaign-end--passed" aria-labelledby="end-title">
+      ${windowHTML}
       <div class="btn-row">
         <button class="btn btn-start campaign-primary" id="campaign-primary-btn" type="button">
           <span class="btn-caret">&gt;</span>
@@ -175,22 +175,22 @@ function renderFailedShell(
 	flavor: string,
 	comparisonHTML: string,
 ): string {
-	return `
-    <section class="screen campaign-screen campaign-end campaign-end--failed" aria-labelledby="end-title">
-      <div class="crt-window campaign-window">
-        <header class="crt-title-bar">
-          <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="crt-session">RUN_TERMINATED // CHAPTER_${chapterIndex + 1}</span>
-        </header>
-        <div class="crt-body campaign-body">
+	const windowHTML = crtWindow({
+		windowClass: "campaign-window",
+		bodyClass: "campaign-body",
+		title: `RUN_TERMINATED // CHAPTER_${chapterIndex + 1}`,
+		body: `
           <h2 id="end-title" class="campaign-headline is-fail">RUN TERMINATED</h2>
           <div class="campaign-final-score">
             <span class="campaign-final-value">${scoreValue}</span>
             <span class="campaign-final-sub">${subline}</span>
           </div>
           <p class="campaign-flavor">${flavor}</p>
-        </div>
-      </div>
+        `,
+	});
+	return `
+    <section class="screen campaign-screen campaign-end campaign-end--failed" aria-labelledby="end-title">
+      ${windowHTML}
       ${comparisonHTML}
       <button class="btn btn-start campaign-primary" id="campaign-primary-btn" type="button">
         <span class="btn-caret">&gt;</span>
@@ -226,22 +226,22 @@ function renderCampaignWon(state: GameState): string {
 		state.campaign.chapterCorrect,
 		state.campaign.chapterTotal,
 	);
-	return `
-    <section class="screen campaign-screen campaign-end campaign-end--won" aria-labelledby="end-title">
-      <div class="crt-window campaign-window">
-        <header class="crt-title-bar">
-          <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="crt-session">INFERENCE_COMPLETE // RUN_CLEAR</span>
-        </header>
-        <div class="crt-body campaign-body">
+	const windowHTML = crtWindow({
+		windowClass: "campaign-window",
+		bodyClass: "campaign-body",
+		title: "INFERENCE_COMPLETE // RUN_CLEAR",
+		body: `
           <h2 id="end-title" class="campaign-headline is-won">INFERENCE COMPLETE</h2>
           <div class="campaign-final-score">
             <span class="campaign-final-value">${finalPct}%</span>
             <span class="campaign-final-sub">final chapter cleared at 100%</span>
           </div>
           <p class="campaign-flavor">All five chapters cleared. The model approves.</p>
-        </div>
-      </div>
+        `,
+	});
+	return `
+    <section class="screen campaign-screen campaign-end campaign-end--won" aria-labelledby="end-title">
+      ${windowHTML}
       <button class="btn btn-start campaign-primary" id="campaign-primary-btn" type="button">
         <span class="btn-caret">&gt;</span>
         <span class="btn-label">RETURN</span>

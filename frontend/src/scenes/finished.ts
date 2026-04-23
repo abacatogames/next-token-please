@@ -1,4 +1,4 @@
-import { highlightDiffs } from "../dom.ts";
+import { crtWindow, highlightDiffs } from "../dom.ts";
 import { getScore, isWin } from "../game.ts";
 import type { Scene } from "../scene/types.ts";
 import {
@@ -65,14 +65,11 @@ export function createFinishedScene(cb: FinishedCallbacks): Scene<GameState> {
 				? `<div class="eval-record">NEW RECORD</div>`
 				: "";
 
-			root.innerHTML = `
-    <section class="screen finished-screen" aria-labelledby="eval-title">
-      <div class="crt-window evaluation-window">
-        <header class="crt-title-bar">
-          <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-          <span class="crt-session">MODEL_EVALUATION // REPORT</span>
-        </header>
-        <div class="crt-body evaluation-body">
+			const evaluationHTML = crtWindow({
+				windowClass: "evaluation-window",
+				bodyClass: "evaluation-body",
+				title: "MODEL_EVALUATION // REPORT",
+				body: `
           <h2 id="eval-title" class="result-title ${won ? "win" : "lose"}">
             ${won ? "Model accepted." : "Model rejected."}
           </h2>
@@ -86,24 +83,30 @@ export function createFinishedScene(cb: FinishedCallbacks): Scene<GameState> {
               ${prevLine}
             </div>
           </div>
-        </div>
-      </div>
+        `,
+			});
+
+			const operatorCol = crtWindow({
+				windowClass: "comparison-col",
+				bodyClass: "comparison-text",
+				title: "OPERATOR_OUTPUT",
+				body: highlightDiffs(state, (c) => c.picked),
+			});
+
+			const truthCol = crtWindow({
+				windowClass: "comparison-col",
+				bodyClass: "comparison-text",
+				title: "MODEL_GROUND_TRUTH",
+				body: highlightDiffs(state, (c) => c.correct),
+			});
+
+			root.innerHTML = `
+    <section class="screen finished-screen" aria-labelledby="eval-title">
+      ${evaluationHTML}
 
       <div class="comparison">
-        <div class="crt-window comparison-col">
-          <header class="crt-title-bar">
-            <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="crt-session">OPERATOR_OUTPUT</span>
-          </header>
-          <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.picked)}</div>
-        </div>
-        <div class="crt-window comparison-col">
-          <header class="crt-title-bar">
-            <span class="crt-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="crt-session">MODEL_GROUND_TRUTH</span>
-          </header>
-          <div class="crt-body comparison-text">${highlightDiffs(state, (c) => c.correct)}</div>
-        </div>
+        ${operatorCol}
+        ${truthCol}
       </div>
 
       <div class="btn-row">
