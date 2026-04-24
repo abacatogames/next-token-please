@@ -10,19 +10,18 @@ dependencies = [
     "pydantic>=2.9",
     "pydantic-settings>=2.6",
     "nltk>=3.9",
+    "numpy>=1.26",
     "wordfreq>=3.1",
 ]
 
 [project.optional-dependencies]
 embeddings = [
     "gensim>=4.3",
-    "numpy>=1.26",
 ]
 dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.24",
     "ruff>=0.7",
-    "numpy>=1.26",
 ]
 
 [build-system]
