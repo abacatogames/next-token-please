@@ -83,3 +83,10 @@ def log_error(event: ErrorEvent, exc: BaseException | None = None) -> None:
     if exc is not None:
         kwargs["exc_info"] = (type(exc), exc, exc.__traceback__)
     logger.error("round_failed", **kwargs)
+
+
+def log_warning_event(logger: logging.Logger, event: str, exc: BaseException) -> None:
+    logger.warning(
+        event,
+        extra={"event": {"error": type(exc).__name__, "message": str(exc)}},
+    )

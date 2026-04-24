@@ -4,7 +4,7 @@ import logging
 from collections.abc import Awaitable, Callable
 
 from app.schemas import Round
-from app.telemetry import RoundEvent
+from app.telemetry import RoundEvent, log_warning_event
 
 PoolItem = tuple[Round, RoundEvent]
 Builder = Callable[[], Awaitable[PoolItem]]
@@ -74,10 +74,7 @@ class RoundPool:
                 except asyncio.CancelledError:
                     raise
                 except Exception as exc:
-                    LOGGER.warning(
-                        "pool_refill_failed",
-                        extra={"event": {"error": type(exc).__name__, "message": str(exc)}},
-                    )
+                    log_warning_event(LOGGER, "pool_refill_failed", exc)
                     await asyncio.sleep(self._error_sleep)
         except asyncio.CancelledError:
             return

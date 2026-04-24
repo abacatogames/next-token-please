@@ -9,6 +9,7 @@ from collections.abc import Awaitable, Callable, Iterable
 from pathlib import Path
 
 from app.prompts import Prompt
+from app.telemetry import log_warning_event
 
 LOGGER = logging.getLogger("ntp.prompt_store")
 
@@ -128,10 +129,7 @@ class PromptStore:
             data = self._cache_path.read_text(encoding="utf-8")
             prompts = _deserialize(data)
         except (OSError, json.JSONDecodeError, KeyError) as exc:
-            LOGGER.warning(
-                "prompt_cache_load_failed",
-                extra={"event": {"error": type(exc).__name__, "message": str(exc)}},
-            )
+            log_warning_event(LOGGER, "prompt_cache_load_failed", exc)
             return
         for p in prompts:
             if p.id in self._seed_ids or p.id in self._generated:
@@ -150,10 +148,7 @@ class PromptStore:
                 _serialize(list(self._generated.values())), encoding="utf-8"
             )
         except OSError as exc:
-            LOGGER.warning(
-                "prompt_cache_write_failed",
-                extra={"event": {"error": type(exc).__name__, "message": str(exc)}},
-            )
+            log_warning_event(LOGGER, "prompt_cache_write_failed", exc)
 
     def start(self) -> None:
         if self._batch_producer is None or self.running:
@@ -183,10 +178,7 @@ class PromptStore:
                 except asyncio.CancelledError:
                     raise
                 except Exception as exc:
-                    LOGGER.warning(
-                        "prompt_refill_failed",
-                        extra={"event": {"error": type(exc).__name__, "message": str(exc)}},
-                    )
+                    log_warning_event(LOGGER, "prompt_refill_failed", exc)
                     await asyncio.sleep(self._error_sleep)
         except asyncio.CancelledError:
             return
