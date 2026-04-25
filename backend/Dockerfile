@@ -1,12 +1,12 @@
 FROM python:3.11-slim
 
-ARG WITH_EMBEDDINGS=false
+ARG INSTALL_EMBEDDINGS=false
 
 WORKDIR /srv
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
 COPY pyproject.toml ./
-RUN if [ "$WITH_EMBEDDINGS" = "true" ]; then \
+RUN if [ "$INSTALL_EMBEDDINGS" = "true" ]; then \
       pip install --no-cache-dir ".[embeddings]"; \
     else \
       pip install --no-cache-dir .; \
@@ -14,7 +14,7 @@ RUN if [ "$WITH_EMBEDDINGS" = "true" ]; then \
 
 COPY app ./app
 COPY scripts ./scripts
-RUN if [ "$WITH_EMBEDDINGS" = "true" ]; then \
+RUN if [ "$INSTALL_EMBEDDINGS" = "true" ]; then \
       python scripts/bootstrap.py; \
     else \
       python scripts/bootstrap.py --skip-embeddings; \
