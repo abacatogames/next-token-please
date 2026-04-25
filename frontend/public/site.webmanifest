@@ -2,11 +2,11 @@
   "name": "Next Token Please",
   "short_name": "NTP",
   "description": "A browser game where you role-play as a language model, guessing the next word.",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#05060f",
   "theme_color": "#05060f",
   "icons": [
-    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any" }
+    { "src": "./favicon.svg", "type": "image/svg+xml", "sizes": "any" }
   ]
 }

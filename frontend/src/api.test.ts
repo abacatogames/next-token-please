@@ -2,8 +2,11 @@ import { afterEach, describe, expect, mock, spyOn, test } from "bun:test";
 import { fetchRound } from "./api.ts";
 import { mockRounds } from "./mock-rounds.ts";
 
+const env = import.meta.env as Record<string, string | undefined>;
+
 afterEach(() => {
 	mock.restore();
+	delete env.VITE_API_BASE_URL;
 });
 
 describe("fetchRound", () => {
@@ -31,6 +34,20 @@ describe("fetchRound", () => {
 
 		await fetchRound(0.42);
 		expect(fetchSpy).toHaveBeenCalledWith("/api/round?difficulty=0.42");
+	});
+
+	test("prefixes VITE_API_BASE_URL when set", async () => {
+		env.VITE_API_BASE_URL = "https://api.example.com";
+		const fetchSpy = spyOn(globalThis, "fetch").mockResolvedValue(
+			new Response(JSON.stringify({ id: "x", prompt: "p", tokens: [] }), {
+				status: 200,
+			}),
+		);
+
+		await fetchRound(0.5);
+		expect(fetchSpy).toHaveBeenCalledWith(
+			"https://api.example.com/api/round?difficulty=0.5",
+		);
 	});
 
 	test("falls back to mock tagged fallback on non-ok response", async () => {
