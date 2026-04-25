@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     prompt_store_prefer_generated_at: int = 20
     prompt_min_words: int = 4
     prompt_max_words: int = 20
+    cors_allow_origin_regex: str = r"^https://([a-z0-9-]+\.)*(itch\.io|itch\.zone)$"
+    rate_limit_enabled: bool = True
+    rate_limit_per_minute: int = 30
 
 
 settings = Settings()

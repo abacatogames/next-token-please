@@ -10,11 +10,16 @@ bun run dev        # vite dev server
 bun test           # bun:test suite
 bun run typecheck  # tsc --noEmit
 bun run lint       # eslint
-bun run build      # vite build → dist/
+bun run build      # vite build → dist/ (Coolify deployment)
+bun run build:itch # vite build --mode itch → dist-itch/ (itch.io upload)
 bun run preview    # preview dist/
 ```
 
-Optional env: `VITE_API_URL=http://localhost:8000` to hit the backend. Omit to run against bundled mock rounds.
+The default `build` produces a same-origin bundle: `fetch("/api/round")` runs through the Nginx reverse proxy on the Docker stack. The `build:itch` mode reads `frontend/.env.itch` and bakes `VITE_API_BASE_URL` into the bundle so the static itch.io upload can reach the cross-origin backend.
+
+## Itch.io release
+
+`scripts/build-itch.sh` (at the repo root) runs `build:itch` and zips `dist-itch/` into `next-token-please-itch.zip` for upload. Edit `frontend/.env.itch` to set the real backend domain before building.
 
 ## Architecture
 

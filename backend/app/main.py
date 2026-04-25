@@ -5,7 +5,12 @@ from contextlib import asynccontextmanager
 from dataclasses import replace
 from pathlib import Path
 
-from fastapi import APIRouter, FastAPI, HTTPException, Query
+from fastapi import APIRouter, FastAPI, HTTPException, Query, Request
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 
 from app.config import settings
 from app.generator import embeddings, ollama_client
@@ -97,6 +102,25 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Next Token Please", version="0.1.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origin_regex=settings.cors_allow_origin_regex,
+    allow_credentials=False,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    enabled=settings.rate_limit_enabled,
+)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
+
+_RATE_LIMIT = f"{settings.rate_limit_per_minute}/minute"
+
 api = APIRouter(prefix="/api")
 
 
@@ -124,12 +148,15 @@ async def health() -> Health:
 
 
 @api.get("/prompts", response_model=list[PromptSummary])
-async def list_prompts() -> list[PromptSummary]:
+@limiter.limit(_RATE_LIMIT)
+async def list_prompts(request: Request) -> list[PromptSummary]:
     return [PromptSummary(id=p.id, prompt=p.text) for p in get_store().all()]
 
 
 @api.get("/round", response_model=Round)
+@limiter.limit(_RATE_LIMIT)
 async def get_round(
+    request: Request,
     difficulty: float | None = Query(default=None, ge=0.0, le=1.0),
     prompt_id: str | None = Query(default=None),
     seed: int | None = Query(default=None),

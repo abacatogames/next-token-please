@@ -13,9 +13,13 @@ export type RoundSource = "backend" | "fallback";
 
 export type RoundResult = { round: Round; source: RoundSource };
 
+function apiBase(): string {
+	return import.meta.env.VITE_API_BASE_URL ?? "";
+}
+
 export async function fetchRound(difficulty = 1.0): Promise<RoundResult> {
 	try {
-		const response = await fetch(`/api/round?difficulty=${difficulty}`);
+		const response = await fetch(`${apiBase()}/api/round?difficulty=${difficulty}`);
 		if (!response.ok) throw new Error(`round fetch failed: ${response.status}`);
 		return { round: (await response.json()) as Round, source: "backend" };
 	} catch (err) {
