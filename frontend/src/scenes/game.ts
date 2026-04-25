@@ -88,7 +88,7 @@ export function renderGameHTML(
 
 		choiceHTML = `
       <div class="choice-container" role="group" aria-label="Pick the next token">
-        <p class="choice-prompt">&gt; pick_next_token()</p>
+        <p class="choice-prompt">&gt; await_next_token()</p>
         <div class="choice-buttons">${buttons}</div>
       </div>
     `;
