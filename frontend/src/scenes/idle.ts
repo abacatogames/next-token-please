@@ -56,7 +56,7 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
         <p>
           One prompt. One answer. The model writes in real time, token by token — until the 
 		  signal breaks and control is handed to you. Three candidates appear. Choose the 
-		  true token and clear the threshold to survive.
+		  correct token and clear the threshold to survive.
         </p>
       </details>
 

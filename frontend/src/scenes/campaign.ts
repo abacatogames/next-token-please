@@ -22,18 +22,21 @@ function renderChapterIntro(state: GameState): string {
 	const chapter = getChapter(state.campaign?.chapterIndex ?? -1);
 	if (!chapter) return "";
 	const isFinal = chapter.index === FINAL_CHAPTER_INDEX;
+	const isSemiFinal = chapter.index === FINAL_CHAPTER_INDEX - 1;
 	const flavor = isFinal
-		? "Singularity protocol engaged. One wrong token and the entire run collapses."
-		: chapter.index === 0
-			? "Run initiated. Learn the pattern and clear at least half the sequence to advance."
-			: "System pressure rising. Maintain accuracy across all rounds to continue.";
+		? "Singularity engaged. One wrong token and the entire run collapses."
+		: isSemiFinal
+			? "Critical phase — error tolerance nearly gone. Stay on target."
+			: chapter.index === 0
+				? "Run initiated. Learn the pattern and clear half the sequence to advance."
+				: "Thresholds tighten. Maintain accuracy across all rounds to continue.";
 
 	const windowHTML = crtWindow({
 		windowClass: "campaign-window",
 		bodyClass: "campaign-body",
 		title: `INFERENCE_RUN // CHAPTER ${chapter.index + 1} / ${INFERENCE_RUN.length}`,
 		body: `
-          <h2 id="campaign-title" class="campaign-title">${chapter.title}</h2>
+          <h2 id="campaign-title" class="campaign-title">Chapter ${chapter.index + 1} — ${chapter.title}</h2>
           <p class="campaign-flavor">${flavor}</p>
           <dl class="campaign-stats">
             <div><dt>Rounds</dt><dd>${chapter.rounds}</dd></div>

@@ -35,9 +35,13 @@
 }
 
 .campaign-hud-chapter,
-.campaign-hud-round,
-.campaign-hud-target {
+.campaign-hud-round {
 	color: var(--text);
+}
+
+.campaign-hud-target {
+	color: var(--neon-cyan-dim);
+	margin-left: auto;
 }
 
 @media (max-width: 640px) {
