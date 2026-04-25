@@ -1,5 +1,20 @@
+import pytest
+
 from app.schemas import RevealToken, Round, Token
 from app.telemetry import RoundEvent
+
+
+@pytest.fixture(autouse=True)
+def _disable_rate_limiter():
+    from app.main import limiter
+
+    previous = limiter.enabled
+    limiter.enabled = False
+    try:
+        yield
+    finally:
+        limiter.enabled = previous
+        limiter._storage.reset()
 
 
 def make_pool_item(
