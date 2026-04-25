@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { attachesLeft } from "./dom.ts";
 import {
 	advanceToken,
 	beginRevealing,
@@ -27,10 +28,6 @@ const round: Round = {
 	],
 };
 
-function attaches(word: string): boolean {
-	return /^[^\w]+$/u.test(word) || word.startsWith("'");
-}
-
 function roundFromWords(words: string[]): Round {
 	return {
 		id: "t",
@@ -38,7 +35,7 @@ function roundFromWords(words: string[]): Round {
 		tokens: words.map((word, i) => ({
 			kind: "reveal" as const,
 			word,
-			leading_space: i > 0 && !attaches(word),
+			leading_space: i > 0 && !attachesLeft(word),
 		})),
 	};
 }

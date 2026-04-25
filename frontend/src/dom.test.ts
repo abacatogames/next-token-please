@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+	attachesLeft,
 	crtWindow,
 	escapeAttr,
 	escapeHTML,
@@ -32,16 +33,16 @@ const round: Round = {
 	],
 };
 
-function tokensFor(words: string[]): Round["tokens"] {
-	return words.map((word, i) => ({
-		kind: "reveal" as const,
-		word,
-		leading_space: i > 0 && !/^[^\w]+$/u.test(word) && !word.startsWith("'"),
-	}));
-}
-
 function roundWith(words: string[]): Round {
-	return { id: "test", prompt: "p", tokens: tokensFor(words) };
+	return {
+		id: "test",
+		prompt: "p",
+		tokens: words.map((word, i) => ({
+			kind: "reveal" as const,
+			word,
+			leading_space: i > 0 && !attachesLeft(word),
+		})),
+	};
 }
 
 function state(overrides: Partial<GameState> = {}): GameState {

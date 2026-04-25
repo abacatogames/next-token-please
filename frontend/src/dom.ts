@@ -33,6 +33,10 @@ export function isPunc(word: string): boolean {
 	return PUNC_RE.test(word);
 }
 
+export function attachesLeft(word: string): boolean {
+	return isPunc(word) || word.startsWith("'");
+}
+
 export function wordSpan(word: string, extra?: string): string {
 	const cls = `word${extra ? ` ${extra}` : ""}${isPunc(word) ? " punc" : ""}`;
 	return `<span class="${cls}">${escapeHTML(word)}</span>`;
