@@ -1,7 +1,8 @@
+import { attachesLeft } from "./dom.ts";
 import type { Round } from "./types.ts";
 
 function r(word: string) {
-	return { kind: "reveal" as const, word };
+	return { kind: "reveal" as const, word, leading_space: !attachesLeft(word) };
 }
 
 function c(correct: string, d1: string, d2: string) {
@@ -9,6 +10,7 @@ function c(correct: string, d1: string, d2: string) {
 		kind: "choice" as const,
 		correct,
 		distractors: [d1, d2] as [string, string],
+		leading_space: !attachesLeft(correct),
 	};
 }
 

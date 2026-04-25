@@ -31,7 +31,7 @@ def test_health_reports_pool_state_when_present() -> None:
     pool.put_nowait(
         make_pool_item(
             round_id="round-x", prompt="x", prompt_id="x",
-            tokens=[RevealToken(word="x")],
+            tokens=[RevealToken(word="x", leading_space=False)],
             answer_latency_ms=1, answer_word_count=1,
         )
     )

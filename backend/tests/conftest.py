@@ -19,7 +19,7 @@ def make_pool_item(
     round_obj = Round(
         id=round_id,
         prompt=prompt,
-        tokens=tokens if tokens is not None else [RevealToken(word="hi")],
+        tokens=tokens if tokens is not None else [RevealToken(word="hi", leading_space=False)],
     )
     event = RoundEvent(
         round_id=round_id,

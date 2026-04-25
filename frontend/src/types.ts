@@ -1,6 +1,11 @@
 export type Token =
-	| { kind: "reveal"; word: string }
-	| { kind: "choice"; correct: string; distractors: [string, string] };
+	| { kind: "reveal"; word: string; leading_space: boolean }
+	| {
+			kind: "choice";
+			correct: string;
+			distractors: [string, string];
+			leading_space: boolean;
+	  };
 
 export type Personality = string;
 

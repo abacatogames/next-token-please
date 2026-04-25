@@ -39,3 +39,60 @@ def test_tagged_word_classifies_punct_and_digits() -> None:
     assert not TaggedWord(0, "sky", "NN").is_punct
     assert TaggedWord(0, "2026", "CD").is_digit
     assert not TaggedWord(0, "sky", "NN").is_digit
+
+
+def _spacing(text: str) -> list[tuple[str, bool]]:
+    return [(tw.word, tw.leading_space) for tw in analyze(text)]
+
+
+def test_leading_space_first_token_is_false() -> None:
+    assert _spacing("Hello world.")[0] == ("Hello", False)
+
+
+def test_leading_space_glues_contraction_suffix() -> None:
+    assert _spacing("Don't worry.") == [
+        ("Do", False),
+        ("n't", False),
+        ("worry", True),
+        (".", False),
+    ]
+    assert _spacing("He doesn't care.") == [
+        ("He", False),
+        ("does", True),
+        ("n't", False),
+        ("care", True),
+        (".", False),
+    ]
+
+
+def test_leading_space_glues_parentheses() -> None:
+    assert _spacing("It (probably) works.") == [
+        ("It", False),
+        ("(", True),
+        ("probably", False),
+        (")", False),
+        ("works", True),
+        (".", False),
+    ]
+
+
+def test_leading_space_glues_quoted_word() -> None:
+    assert _spacing('She said "hi" quickly.') == [
+        ("She", False),
+        ("said", True),
+        ('"', True),
+        ("hi", False),
+        ('"', False),
+        ("quickly", True),
+        (".", False),
+    ]
+
+
+def test_leading_space_glues_possessive_clitic() -> None:
+    assert _spacing("The Moon's gravity.") == [
+        ("The", False),
+        ("Moon", True),
+        ("'s", False),
+        ("gravity", True),
+        (".", False),
+    ]

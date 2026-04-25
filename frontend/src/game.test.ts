@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { attachesLeft } from "./dom.ts";
 import {
 	advanceToken,
 	beginRevealing,
@@ -16,11 +17,28 @@ const round: Round = {
 	id: "test",
 	prompt: "Test prompt",
 	tokens: [
-		{ kind: "reveal", word: "Hello" },
-		{ kind: "choice", correct: "world", distractors: ["earth", "planet"] },
-		{ kind: "reveal", word: "." },
+		{ kind: "reveal", word: "Hello", leading_space: false },
+		{
+			kind: "choice",
+			correct: "world",
+			distractors: ["earth", "planet"],
+			leading_space: true,
+		},
+		{ kind: "reveal", word: ".", leading_space: false },
 	],
 };
+
+function roundFromWords(words: string[]): Round {
+	return {
+		id: "t",
+		prompt: "p",
+		tokens: words.map((word, i) => ({
+			kind: "reveal" as const,
+			word,
+			leading_space: i > 0 && !attachesLeft(word),
+		})),
+	};
+}
 
 describe("createGame", () => {
 	test("returns idle state", () => {
@@ -192,31 +210,86 @@ describe("getPlayerAnswer / getOriginalAnswer", () => {
 	});
 
 	test("attaches possessive and contraction apostrophe tokens", () => {
-		const s = {
-			...startRound(round),
-			revealedWords: ["The", "Moon", "'s", "gravity", "it", "'s", "here", "."],
-		};
+		const words = [
+			"The",
+			"Moon",
+			"'s",
+			"gravity",
+			"it",
+			"'s",
+			"here",
+			".",
+		];
+		const s = { ...startRound(roundFromWords(words)), revealedWords: words };
 		expect(getPlayerAnswer(s)).toBe("The Moon's gravity it's here.");
 	});
 
 	test("attaches all common contraction suffixes", () => {
-		const s = {
-			...startRound(round),
-			revealedWords: [
-				"I",
-				"'m",
-				"you",
-				"'re",
-				"we",
-				"'ll",
-				"don",
-				"'t",
-				"he",
-				"'d",
-				"they",
-				"'ve",
-			],
-		};
+		const words = [
+			"I",
+			"'m",
+			"you",
+			"'re",
+			"we",
+			"'ll",
+			"don",
+			"'t",
+			"he",
+			"'d",
+			"they",
+			"'ve",
+		];
+		const s = { ...startRound(roundFromWords(words)), revealedWords: words };
 		expect(getPlayerAnswer(s)).toBe("I'm you're we'll don't he'd they've");
+	});
+
+	test("glues NLTK n't contraction without leading apostrophe", () => {
+		const tokens: Round["tokens"] = [
+			{ kind: "reveal", word: "Do", leading_space: false },
+			{ kind: "reveal", word: "n't", leading_space: false },
+			{ kind: "reveal", word: "stop", leading_space: true },
+			{ kind: "reveal", word: ".", leading_space: false },
+		];
+		const r: Round = { id: "t", prompt: "p", tokens };
+		const s = {
+			...startRound(r),
+			revealedWords: ["Do", "n't", "stop", "."],
+		};
+		expect(getPlayerAnswer(s)).toBe("Don't stop.");
+		expect(getOriginalAnswer(s)).toBe("Don't stop.");
+	});
+
+	test("glues parentheses to inner content", () => {
+		const tokens: Round["tokens"] = [
+			{ kind: "reveal", word: "It", leading_space: false },
+			{ kind: "reveal", word: "(", leading_space: true },
+			{ kind: "reveal", word: "really", leading_space: false },
+			{ kind: "reveal", word: ")", leading_space: false },
+			{ kind: "reveal", word: "works", leading_space: true },
+			{ kind: "reveal", word: ".", leading_space: false },
+		];
+		const r: Round = { id: "t", prompt: "p", tokens };
+		const s = {
+			...startRound(r),
+			revealedWords: ["It", "(", "really", ")", "works", "."],
+		};
+		expect(getPlayerAnswer(s)).toBe("It (really) works.");
+	});
+
+	test("glues straight quotes around inner word", () => {
+		const tokens: Round["tokens"] = [
+			{ kind: "reveal", word: "She", leading_space: false },
+			{ kind: "reveal", word: "said", leading_space: true },
+			{ kind: "reveal", word: '"', leading_space: true },
+			{ kind: "reveal", word: "hi", leading_space: false },
+			{ kind: "reveal", word: '"', leading_space: false },
+			{ kind: "reveal", word: ".", leading_space: false },
+		];
+		const r: Round = { id: "t", prompt: "p", tokens };
+		const s = {
+			...startRound(r),
+			revealedWords: ["She", "said", '"', "hi", '"', "."],
+		};
+		expect(getPlayerAnswer(s)).toBe('She said "hi".');
 	});
 });

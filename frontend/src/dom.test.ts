@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+	attachesLeft,
 	crtWindow,
 	escapeAttr,
 	escapeHTML,
@@ -15,12 +16,34 @@ const round: Round = {
 	id: "test",
 	prompt: "Test prompt",
 	tokens: [
-		{ kind: "reveal", word: "Hello" },
-		{ kind: "choice", correct: "world", distractors: ["earth", "planet"] },
-		{ kind: "reveal", word: "." },
-		{ kind: "choice", correct: "Cheers", distractors: ["bye", "ciao"] },
+		{ kind: "reveal", word: "Hello", leading_space: false },
+		{
+			kind: "choice",
+			correct: "world",
+			distractors: ["earth", "planet"],
+			leading_space: true,
+		},
+		{ kind: "reveal", word: ".", leading_space: false },
+		{
+			kind: "choice",
+			correct: "Cheers",
+			distractors: ["bye", "ciao"],
+			leading_space: true,
+		},
 	],
 };
+
+function roundWith(words: string[]): Round {
+	return {
+		id: "test",
+		prompt: "p",
+		tokens: words.map((word, i) => ({
+			kind: "reveal" as const,
+			word,
+			leading_space: i > 0 && !attachesLeft(word),
+		})),
+	};
+}
 
 function state(overrides: Partial<GameState> = {}): GameState {
 	return {
@@ -123,7 +146,10 @@ describe("wordSpan", () => {
 
 describe("renderWords", () => {
 	test("renders revealed words with trailing cursor while revealing", () => {
-		const html = renderWords(state({ revealedWords: ["Hi", "there"] }));
+		const words = ["Hi", "there"];
+		const html = renderWords(
+			state({ round: roundWith(words), revealedWords: words }),
+		);
 		expect(html).toContain(">Hi<");
 		expect(html).toContain(">there<");
 		expect(html).toContain('<span class="cursor">');
@@ -131,14 +157,22 @@ describe("renderWords", () => {
 
 	test("keeps cursor while awaiting a choice", () => {
 		const html = renderWords(
-			state({ phase: "awaiting_choice", revealedWords: ["Hi"] }),
+			state({
+				round: roundWith(["Hi"]),
+				phase: "awaiting_choice",
+				revealedWords: ["Hi"],
+			}),
 		);
 		expect(html).toContain('<span class="cursor">');
 	});
 
 	test("omits cursor when round is finished", () => {
 		const html = renderWords(
-			state({ phase: "finished", revealedWords: ["Hi"] }),
+			state({
+				round: roundWith(["Hi"]),
+				phase: "finished",
+				revealedWords: ["Hi"],
+			}),
 		);
 		expect(html).not.toContain("cursor");
 	});
@@ -148,10 +182,12 @@ describe("renderWords", () => {
 	});
 
 	test("groups word with trailing punctuation and separates groups with space", () => {
+		const words = ["Hello", ".", "World"];
 		const html = renderWords(
 			state({
+				round: roundWith(words),
 				phase: "finished",
-				revealedWords: ["Hello", ".", "World"],
+				revealedWords: words,
 			}),
 		);
 		expect(html).toBe(
@@ -161,15 +197,80 @@ describe("renderWords", () => {
 	});
 
 	test("attaches possessive apostrophe token to preceding word", () => {
+		const words = ["Moon", "'s", "gravity"];
 		const html = renderWords(
 			state({
+				round: roundWith(words),
 				phase: "finished",
-				revealedWords: ["Moon", "'s", "gravity"],
+				revealedWords: words,
 			}),
 		);
 		expect(html).toBe(
 			'<span class="word-group"><span class="word">Moon</span><span class="word">\'s</span></span> ' +
 				'<span class="word-group"><span class="word">gravity</span></span>',
+		);
+	});
+
+	test("attaches contraction n't to preceding verb", () => {
+		const tokens: Round["tokens"] = [
+			{ kind: "reveal", word: "Do", leading_space: false },
+			{ kind: "reveal", word: "n't", leading_space: false },
+			{ kind: "reveal", word: "stop", leading_space: true },
+		];
+		const html = renderWords(
+			state({
+				round: { id: "t", prompt: "p", tokens },
+				phase: "finished",
+				revealedWords: ["Do", "n't", "stop"],
+			}),
+		);
+		expect(html).toBe(
+			'<span class="word-group"><span class="word">Do</span><span class="word">n\'t</span></span> ' +
+				'<span class="word-group"><span class="word">stop</span></span>',
+		);
+	});
+
+	test("glues parentheses to inner word", () => {
+		const tokens: Round["tokens"] = [
+			{ kind: "reveal", word: "It", leading_space: false },
+			{ kind: "reveal", word: "(", leading_space: true },
+			{ kind: "reveal", word: "really", leading_space: false },
+			{ kind: "reveal", word: ")", leading_space: false },
+			{ kind: "reveal", word: "works", leading_space: true },
+		];
+		const html = renderWords(
+			state({
+				round: { id: "t", prompt: "p", tokens },
+				phase: "finished",
+				revealedWords: ["It", "(", "really", ")", "works"],
+			}),
+		);
+		expect(html).toBe(
+			'<span class="word-group"><span class="word">It</span></span> ' +
+				'<span class="word-group"><span class="word punc">(</span><span class="word">really</span><span class="word punc">)</span></span> ' +
+				'<span class="word-group"><span class="word">works</span></span>',
+		);
+	});
+
+	test("glues straight quotes to inner word", () => {
+		const tokens: Round["tokens"] = [
+			{ kind: "reveal", word: "She", leading_space: false },
+			{ kind: "reveal", word: "said", leading_space: true },
+			{ kind: "reveal", word: '"', leading_space: true },
+			{ kind: "reveal", word: "hi", leading_space: false },
+			{ kind: "reveal", word: '"', leading_space: false },
+		];
+		const html = renderWords(
+			state({
+				round: { id: "t", prompt: "p", tokens },
+				phase: "finished",
+				revealedWords: ["She", "said", '"', "hi", '"'],
+			}),
+		);
+		expect(html).toBe(
+			'<span class="word-group"><span class="word">She</span></span> ' +
+				'<span class="word-group"><span class="word">said</span></span> ' +
+				'<span class="word-group"><span class="word punc">"</span><span class="word">hi</span><span class="word punc">"</span></span>',
 		);
 	});
 });
@@ -180,6 +281,7 @@ describe("shuffleOptions", () => {
 			kind: "choice" as const,
 			correct: "world",
 			distractors: ["earth", "planet"] as [string, string],
+			leading_space: true,
 		};
 		const options = shuffleOptions(token);
 		expect(options).toHaveLength(3);

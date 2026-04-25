@@ -220,7 +220,7 @@ def test_round_endpoint_uses_pool_when_available(caplog: pytest.LogCaptureFixtur
 
     cached = make_pool_item(
         round_id="round-cached", prompt="cached", prompt_id="cached-prompt",
-        tokens=[RevealToken(word="hello")],
+        tokens=[RevealToken(word="hello", leading_space=False)],
         answer_latency_ms=42, answer_retries=1, answer_word_count=55,
         choice_count=12,
         distractor_sources={"synonym": 5, "embedding": 0, "random": 19},
@@ -260,7 +260,7 @@ def test_round_endpoint_bypasses_pool_when_overrides_present(
 
     cached = make_pool_item(
         round_id="round-cached", prompt="cached", prompt_id="cached-prompt",
-        tokens=[RevealToken(word="hello")],
+        tokens=[RevealToken(word="hello", leading_space=False)],
         answer_latency_ms=1, answer_word_count=5,
     )
 

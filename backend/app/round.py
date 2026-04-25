@@ -53,7 +53,7 @@ async def build_round(*, prompt_id: str | None = None, difficulty: float | None 
     prefix: list[str] = []
     for tw, kind in zip(tagged, kinds, strict=True):
         if kind == "reveal":
-            tokens.append(RevealToken(word=tw.word))
+            tokens.append(RevealToken(word=tw.word, leading_space=tw.leading_space))
             prefix.append(tw.word)
             continue
         d1, d2, src = pick_distractors_full(
@@ -61,7 +61,9 @@ async def build_round(*, prompt_id: str | None = None, difficulty: float | None 
         )
         sources[src[0]] += 1
         sources[src[1]] += 1
-        tokens.append(ChoiceToken(correct=tw.word, distractors=(d1, d2)))
+        tokens.append(
+            ChoiceToken(correct=tw.word, distractors=(d1, d2), leading_space=tw.leading_space)
+        )
         prefix.append(tw.word)
 
     choice_count = sum(1 for t in tokens if t.kind == "choice")

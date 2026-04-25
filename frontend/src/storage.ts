@@ -215,9 +215,14 @@ function parseRound(value: unknown): Round | null | undefined {
 
 function parseToken(value: unknown): Token | null {
 	if (!isObject(value)) return null;
+	if (typeof value.leading_space !== "boolean") return null;
 	if (value.kind === "reveal") {
 		if (typeof value.word !== "string") return null;
-		return { kind: "reveal", word: value.word };
+		return {
+			kind: "reveal",
+			word: value.word,
+			leading_space: value.leading_space,
+		};
 	}
 	if (value.kind === "choice") {
 		if (typeof value.correct !== "string") return null;
@@ -226,7 +231,12 @@ function parseToken(value: unknown): Token | null {
 		const a: unknown = distractors[0];
 		const b: unknown = distractors[1];
 		if (typeof a !== "string" || typeof b !== "string") return null;
-		return { kind: "choice", correct: value.correct, distractors: [a, b] };
+		return {
+			kind: "choice",
+			correct: value.correct,
+			distractors: [a, b],
+			leading_space: value.leading_space,
+		};
 	}
 	return null;
 }

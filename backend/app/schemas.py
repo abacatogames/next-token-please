@@ -6,12 +6,14 @@ from pydantic import BaseModel, Field
 class RevealToken(BaseModel):
     kind: Literal["reveal"] = "reveal"
     word: str
+    leading_space: bool
 
 
 class ChoiceToken(BaseModel):
     kind: Literal["choice"] = "choice"
     correct: str
     distractors: tuple[str, str]
+    leading_space: bool
 
 
 Token = Annotated[RevealToken | ChoiceToken, Field(discriminator="kind")]

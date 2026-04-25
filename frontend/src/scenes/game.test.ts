@@ -6,8 +6,13 @@ const round: Round = {
 	id: "test-round-abc123",
 	prompt: "Why?",
 	tokens: [
-		{ kind: "reveal", word: "Because" },
-		{ kind: "choice", correct: "science", distractors: ["magic", "vibes"] },
+		{ kind: "reveal", word: "Because", leading_space: false },
+		{
+			kind: "choice",
+			correct: "science",
+			distractors: ["magic", "vibes"],
+			leading_space: true,
+		},
 	],
 };
 
