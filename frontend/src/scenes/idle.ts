@@ -5,6 +5,7 @@ import type { GameMode, GameState } from "../types.ts";
 
 export type IdleCallbacks = {
 	onModeSelect: (mode: GameMode) => void;
+	onAbout: () => void;
 };
 
 type BootLine = { delay: number; text: string; status?: string };
@@ -79,8 +80,9 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
         </button>
       </div>
 
-      <footer class="idle-stamp" aria-hidden="true">
-        NTP.v2087 // OPERATOR_MODE // DIAGNOSTIC_OK
+      <footer class="idle-stamp">
+        <button class="idle-about-link" id="idle-about-btn" type="button">ABOUT</button>
+        <span aria-hidden="true">NTP.v2087 // OPERATOR_MODE // DIAGNOSTIC_OK</span>
       </footer>
     </section>
   `;
@@ -92,6 +94,9 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
 			) as HTMLButtonElement;
 			const endlessBtn = document.getElementById(
 				"mode-endless-btn",
+			) as HTMLButtonElement;
+			const aboutBtn = document.getElementById(
+				"idle-about-btn",
 			) as HTMLButtonElement;
 
 			const reducedMotion = prefersReducedMotion();
@@ -118,8 +123,10 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
 
 			const onCampaign = () => cb.onModeSelect("campaign");
 			const onEndless = () => cb.onModeSelect("endless");
+			const onAbout = () => cb.onAbout();
 			campaignBtn.addEventListener("click", onCampaign);
 			endlessBtn.addEventListener("click", onEndless);
+			aboutBtn.addEventListener("click", onAbout);
 
 			const onKey = (e: KeyboardEvent) => {
 				const target = e.target as HTMLElement | null;
@@ -146,6 +153,7 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
 			cleanup = () => {
 				campaignBtn.removeEventListener("click", onCampaign);
 				endlessBtn.removeEventListener("click", onEndless);
+				aboutBtn.removeEventListener("click", onAbout);
 				window.removeEventListener("keydown", onKey);
 				for (const t of timers) window.clearTimeout(t);
 			};

@@ -17,6 +17,7 @@ import {
 } from "./game.ts";
 import { SceneManager } from "./scene/sceneManager.ts";
 import { mountAtmosphere } from "./scenes/atmosphere.ts";
+import { createAboutScene } from "./scenes/about.ts";
 import { createCampaignScene } from "./scenes/campaign.ts";
 import { createErrorScene } from "./scenes/error.ts";
 import { createFinishedScene } from "./scenes/finished.ts";
@@ -67,6 +68,12 @@ manager.register(
 				void handleEndlessStart();
 			}
 		},
+		onAbout: () => manager.goto("about", state),
+	}),
+);
+manager.register(
+	createAboutScene({
+		onReturnToIdle: handleReturnToIdle,
 	}),
 );
 manager.register(createLoadingScene());
