@@ -79,7 +79,7 @@ jobs:
           cache-from: type=gha,scope=backend
           cache-to: type=gha,scope=backend,mode=max
           build-args: |
-            WITH_EMBEDDINGS=false
+            INSTALL_EMBEDDINGS=false
 
       - name: Build frontend image
         uses: docker/build-push-action@v6

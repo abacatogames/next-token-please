@@ -23,7 +23,6 @@ from app.telemetry import (
     log_error,
     log_prompt_gen,
     log_round,
-    log_warning_event,
 )
 
 LOGGER = logging.getLogger("ntp.main")
@@ -60,13 +59,10 @@ def _build_batch_producer():
 async def lifespan(app: FastAPI):
     configure_logging(settings.log_level)
     if settings.embeddings_enabled:
-        try:
-            embeddings.load(
-                pool_size=settings.embeddings_pool_size,
-                model_name=settings.embeddings_model,
-            )
-        except Exception as exc:
-            log_warning_event(LOGGER, "embeddings_load_failed", exc)
+        embeddings.load(
+            pool_size=settings.embeddings_pool_size,
+            model_name=settings.embeddings_model,
+        )
 
     producer = _build_batch_producer() if settings.prompt_generation_enabled else None
     store = PromptStore(

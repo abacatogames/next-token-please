@@ -19,7 +19,7 @@ services:
     build:
       context: ./backend
       args:
-        WITH_EMBEDDINGS: "false"
+        INSTALL_EMBEDDINGS: "false"
     depends_on:
       ollama:
         condition: service_healthy
