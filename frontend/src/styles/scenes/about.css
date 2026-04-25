@@ -14,7 +14,7 @@
 
 .about-heading {
 	font-family: var(--font-display);
-	font-size: var(--type-h2);
+	font-size: var(--type-caption);
 	font-weight: 700;
 	letter-spacing: 0.04em;
 	color: var(--neon-cyan);
@@ -134,6 +134,13 @@
 	gap: 0.75rem;
 	margin-top: 0.5rem;
 	flex-wrap: wrap;
+	justify-content: center;
+}
+
+.about-actions:hover .btn-caret,
+.about-actions:focus-visible .btn-caret {
+	transform: translateX(1px);
+	color: var(--bg);
 }
 
 .idle-about-link {
@@ -141,7 +148,7 @@
 	font-size: 0.6rem;
 	letter-spacing: 0.2em;
 	text-transform: uppercase;
-	color: var(--neon-cyan-dim);
+	color: var(--bg-card-border);
 	background: transparent;
 	border: none;
 	padding: 0.1rem 0.3rem;
@@ -153,7 +160,7 @@
 
 .idle-about-link:hover,
 .idle-about-link:focus-visible {
-	color: var(--neon-cyan);
+	color: var(--neon-cyan-dim);
 	text-shadow: 0 0 6px var(--neon-cyan-glow);
 	outline: none;
 }

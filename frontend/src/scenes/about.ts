@@ -44,20 +44,20 @@ export function createAboutScene(cb: AboutCallbacks): Scene<GameState> {
           </section>
 
           <section class="about-section about-disclaimer" aria-labelledby="about-disclaimer-title">
-            <h3 id="about-disclaimer-title" class="about-section-title">&gt; DISCLAIMER</h3>
+            <h3 id="about-disclaimer-title" class="about-section-title">&gt; NOTICE</h3>
             <p>
               All prompts and answers in this game are AI-generated. They may be
-              inaccurate, biased, or surprising and do not reflect the views of the
-              authors. Treat output as fiction.
+              inaccurate, biased, unexpected, or nonsensical, and do not reflect 
+              the views of the authors. Treat all output as fiction.
             </p>
           </section>
 
           <section class="about-section about-meta" aria-label="Credits and contact">
-            <p class="about-copyright">&copy; Abacato Games</p>
             <p class="about-contact">
-              <span class="about-list-key">CONTACT</span>
+              <span class="about-list-key">&gt; CONTACT</span>
               <a class="about-link" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>
             </p>
+            <p class="about-copyright">&copy; Abacato Games</p>
           </section>
 
           <div class="about-actions">
