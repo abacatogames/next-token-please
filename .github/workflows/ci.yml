@@ -146,3 +146,43 @@ jobs:
           echo "::group::frontend logs"
           docker logs frontend 2>&1 || true
           echo "::endgroup::"
+
+  itch:
+    name: Itch.io build & publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Build itch.io zip
+        run: scripts/build-itch.sh
+
+      - name: Upload itch.io zip artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-token-please-itch
+          path: next-token-please-itch.zip
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish to itch.io
+        env:
+          BUTLER_API_KEY: ${{ secrets.BUTLER_API_KEY }}
+          ITCH_TARGET: ${{ vars.ITCH_TARGET }}
+        run: |
+          if [ -z "${BUTLER_API_KEY}" ] || [ -z "${ITCH_TARGET}" ]; then
+            echo "::warning title=itch.io publish skipped::Set the BUTLER_API_KEY secret and ITCH_TARGET variable (e.g. user/game:html5) to enable publishing."
+            exit 0
+          fi
+          curl -sSL -o butler.zip 'https://broth.itch.zone/butler/linux-amd64/LATEST/archive/default'
+          unzip -q butler.zip -d butler-bin
+          chmod +x butler-bin/butler
+          ./butler-bin/butler -V
+          if ! ./butler-bin/butler push next-token-please-itch.zip "${ITCH_TARGET}" --userversion "${GITHUB_SHA::7}"; then
+            echo "::error title=itch.io upload failed::butler push to ${ITCH_TARGET} failed; see log above."
+            exit 1
+          fi
