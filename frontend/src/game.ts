@@ -227,17 +227,26 @@ export function chapterProgress(state: GameState): ChapterProgress | null {
 	return { chapter, correctSoFar, totalSoFar, pct, passing };
 }
 
-function joinWords(words: string[]): string {
-	return words.join(" ").replace(/ ([.,;:!?—]|'\S*)/g, "$1");
+function joinSpacedWords(words: string[], leadingSpaces: boolean[]): string {
+	let out = "";
+	for (let i = 0; i < words.length; i++) {
+		if (i > 0 && leadingSpaces[i]) out += " ";
+		out += words[i];
+	}
+	return out;
 }
 
 export function getPlayerAnswer(state: GameState): string {
-	return joinWords(state.revealedWords);
+	const tokens = state.round?.tokens ?? [];
+	const leading = state.revealedWords.map((_, i) => tokens[i]?.leading_space ?? i > 0);
+	return joinSpacedWords(state.revealedWords, leading);
 }
 
 export function getOriginalAnswer(state: GameState): string {
 	if (!state.round) return "";
-	return joinWords(
-		state.round.tokens.map((t) => (t.kind === "reveal" ? t.word : t.correct)),
+	const words = state.round.tokens.map((t) =>
+		t.kind === "reveal" ? t.word : t.correct,
 	);
+	const leading = state.round.tokens.map((t) => t.leading_space);
+	return joinSpacedWords(words, leading);
 }

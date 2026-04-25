@@ -11,7 +11,7 @@ describe("fetchRound", () => {
 		const backendRound = {
 			id: "backend-1",
 			prompt: "hello",
-			tokens: [{ kind: "reveal" as const, word: "hi" }],
+			tokens: [{ kind: "reveal" as const, word: "hi", leading_space: false }],
 		};
 		spyOn(globalThis, "fetch").mockResolvedValue(
 			new Response(JSON.stringify(backendRound), { status: 200 }),

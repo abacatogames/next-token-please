@@ -94,9 +94,14 @@ const SAMPLE_ROUND: Round = {
 	id: "round-1",
 	prompt: "Test prompt",
 	tokens: [
-		{ kind: "reveal", word: "Hello" },
-		{ kind: "choice", correct: "world", distractors: ["earth", "planet"] },
-		{ kind: "reveal", word: "." },
+		{ kind: "reveal", word: "Hello", leading_space: false },
+		{
+			kind: "choice",
+			correct: "world",
+			distractors: ["earth", "planet"],
+			leading_space: true,
+		},
+		{ kind: "reveal", word: ".", leading_space: false },
 	],
 	personality: "cheerful",
 };
@@ -294,7 +299,14 @@ describe("saveSession / loadSession", () => {
 			round: {
 				id: "x",
 				prompt: "p",
-				tokens: [{ kind: "choice", correct: "a", distractors: ["b"] }],
+				tokens: [
+					{
+						kind: "choice",
+						correct: "a",
+						distractors: ["b"],
+						leading_space: false,
+					},
+				],
 			},
 			tokenIndex: 0,
 			playerChoices: [],

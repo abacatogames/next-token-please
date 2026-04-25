@@ -1,6 +1,6 @@
 import type { GameState, PlayerChoice, Token } from "./types.ts";
 
-const PUNC_RE = /^[.,;:!?—']$/;
+const PUNC_RE = /^[^\w]+$/u;
 
 export function escapeHTML(s: string): string {
 	return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -33,37 +33,32 @@ export function isPunc(word: string): boolean {
 	return PUNC_RE.test(word);
 }
 
-function attachesLeft(word: string): boolean {
-	return isPunc(word) || word.startsWith("'");
-}
-
 export function wordSpan(word: string, extra?: string): string {
 	const cls = `word${extra ? ` ${extra}` : ""}${isPunc(word) ? " punc" : ""}`;
 	return `<span class="${cls}">${escapeHTML(word)}</span>`;
 }
 
-function groupWordSpans(items: { html: string; word: string }[]): string {
-	const out: string[] = [];
-	let i = 0;
-	while (i < items.length) {
-		let group = items[i]!.html;
-		const startAttaches = attachesLeft(items[i]!.word);
-		i++;
-		if (!startAttaches) {
-			while (i < items.length && attachesLeft(items[i]!.word)) {
-				group += items[i]!.html;
-				i++;
-			}
+type SpacedItem = { html: string; leading_space: boolean };
+
+function groupWordSpans(items: SpacedItem[]): string {
+	const groups: string[][] = [];
+	for (const item of items) {
+		if (groups.length === 0 || item.leading_space) {
+			groups.push([item.html]);
+		} else {
+			groups[groups.length - 1]!.push(item.html);
 		}
-		out.push(`<span class="word-group">${group}</span>`);
 	}
-	return out.join(" ");
+	return groups
+		.map((g) => `<span class="word-group">${g.join("")}</span>`)
+		.join(" ");
 }
 
 export function renderWords(state: GameState): string {
-	const items = state.revealedWords.map((w) => ({
+	const tokens = state.round?.tokens ?? [];
+	const items: SpacedItem[] = state.revealedWords.map((w, i) => ({
 		html: wordSpan(w),
-		word: w,
+		leading_space: tokens[i]?.leading_space ?? i > 0,
 	}));
 	const showCursor =
 		state.phase === "revealing" || state.phase === "awaiting_choice";
@@ -110,12 +105,15 @@ export function highlightDiffs(
 ): string {
 	if (!state.round) return "";
 
-	const items: { html: string; word: string }[] = [];
+	const items: SpacedItem[] = [];
 	let choiceIdx = 0;
 
 	for (const token of state.round.tokens) {
 		if (token.kind === "reveal") {
-			items.push({ html: wordSpan(token.word), word: token.word });
+			items.push({
+				html: wordSpan(token.word),
+				leading_space: token.leading_space,
+			});
 		} else {
 			const choice = state.playerChoices[choiceIdx];
 			choiceIdx++;
@@ -124,7 +122,10 @@ export function highlightDiffs(
 			const word = getWord(choice);
 			const extra =
 				choice.picked === choice.correct ? "diff-correct" : "diff-wrong";
-			items.push({ html: wordSpan(word, extra), word });
+			items.push({
+				html: wordSpan(word, extra),
+				leading_space: token.leading_space,
+			});
 		}
 	}
 
