@@ -19,7 +19,7 @@ services:
     build:
       context: ./backend
       args:
-        INSTALL_EMBEDDINGS: "false"
+        INSTALL_EMBEDDINGS: "${INSTALL_EMBEDDINGS:-false}"
     depends_on:
       ollama:
         condition: service_healthy
@@ -27,7 +27,7 @@ services:
       OLLAMA_URL: http://ollama:11434
       OLLAMA_MODEL: llama3.2:1b
       LOG_LEVEL: INFO
-      EMBEDDINGS_ENABLED: "false"
+      EMBEDDINGS_ENABLED: "${EMBEDDINGS_ENABLED:-false}"
       PROMPT_STORE_CACHE_PATH: data/prompt_cache.json
     volumes:
       - backend_data:/srv/data
