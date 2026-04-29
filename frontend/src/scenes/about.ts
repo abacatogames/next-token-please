@@ -25,20 +25,20 @@ export function createAboutScene(cb: AboutCallbacks): Scene<GameState> {
             token one word at a time.
           </p>
 
-          <section class="about-section" aria-labelledby="about-stack-title">
-            <h3 id="about-stack-title" class="about-section-title">&gt; STACK</h3>
+          <section class="about-section" aria-labelledby="about-how-title">
+            <h3 id="about-how-title" class="about-section-title">&gt; HOW IT WORKS</h3>
             <ul class="about-list">
               <li>
                 <span class="about-list-key">FRONTEND</span>
-                <span class="about-list-val">TypeScript + Vite, vanilla DOM, no frameworks</span>
+                <span class="about-list-val">Shows the game and handles your picks as you play.</span>
               </li>
               <li>
                 <span class="about-list-key">BACKEND</span>
-                <span class="about-list-val">Python 3.11 + FastAPI</span>
+                <span class="about-list-val">Runs the rules, sets up each round, and tracks your progress.</span>
               </li>
               <li>
-                <span class="about-list-key">GENERATION</span>
-                <span class="about-list-val">Local LLM via Ollama — prompts and answers are produced on demand</span>
+                <span class="about-list-key">AI</span>
+                <span class="about-list-val">Writes the prompts and answers you're guessing word by word.</span>
               </li>
             </ul>
           </section>
@@ -53,6 +53,10 @@ export function createAboutScene(cb: AboutCallbacks): Scene<GameState> {
           </section>
 
           <section class="about-section about-meta" aria-label="Credits and contact">
+            <p class="about-github">
+              Enjoying the game? Give it a star on
+              <a class="about-link" href="https://github.com/abacatogames/next-token-please" target="_blank" rel="noopener noreferrer">GitHub</a>.
+            </p>
             <p class="about-contact">
               <span class="about-list-key">&gt; CONTACT</span>
               <a class="about-link" href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>

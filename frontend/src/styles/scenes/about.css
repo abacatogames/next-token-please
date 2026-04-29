@@ -102,6 +102,14 @@
 	letter-spacing: 0.08em;
 }
 
+.about-github {
+	margin: 0;
+	color: var(--text);
+	font-family: var(--font-mono);
+	font-size: var(--type-mono-sm);
+	line-height: 1.7;
+}
+
 .about-contact {
 	margin: 0;
 	display: flex;
