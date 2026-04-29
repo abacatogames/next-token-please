@@ -79,6 +79,14 @@
 	color: var(--text);
 }
 
+.about-how p {
+	margin: 0;
+	color: var(--text);
+	font-size: var(--type-caption);
+	line-height: 1.7;
+	letter-spacing: 0.02em;
+}
+
 .about-disclaimer p {
 	margin: 0;
 	color: var(--text-dim);

@@ -25,22 +25,21 @@ export function createAboutScene(cb: AboutCallbacks): Scene<GameState> {
             token one word at a time.
           </p>
 
-          <section class="about-section" aria-labelledby="about-how-title">
+          <section class="about-section about-how" aria-labelledby="about-how-title">
             <h3 id="about-how-title" class="about-section-title">&gt; HOW IT WORKS</h3>
-            <ul class="about-list">
-              <li>
-                <span class="about-list-key">FRONTEND</span>
-                <span class="about-list-val">Shows the game and handles your picks as you play.</span>
-              </li>
-              <li>
-                <span class="about-list-key">BACKEND</span>
-                <span class="about-list-val">Runs the rules, sets up each round, and tracks your progress.</span>
-              </li>
-              <li>
-                <span class="about-list-key">AI</span>
-                <span class="about-list-val">Writes the prompts and answers you're guessing word by word.</span>
-              </li>
-            </ul>
+            <p>
+              Each round starts with a question. A local language model, served
+              through Ollama on the same machine that hosts the game, generates
+              both the question and a short factual answer in plain prose.
+            </p>
+            <p>
+              The Python backend orchestrates this: it prompts the model, picks
+              which words in the answer become guesses, and builds each slot
+              from the correct token plus two plausible distractors &mdash; drawn
+              from synonyms, embedding-nearest neighbours, or general vocabulary.
+              The browser frontend renders the round, captures your picks, and
+              walks you through the answer one token at a time.
+            </p>
           </section>
 
           <section class="about-section about-disclaimer" aria-labelledby="about-disclaimer-title">
