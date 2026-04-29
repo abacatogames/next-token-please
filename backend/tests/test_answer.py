@@ -37,7 +37,7 @@ async def test_passes_on_first_attempt() -> None:
     with patch("app.generator.answer.ollama_client.generate", _mock_generate(GOOD)) as m:
         out = (await answer.generate_answer_full("why is the sky blue?")).text
     assert out.endswith(".")
-    assert 30 <= len(out.split()) <= 80
+    assert 25 <= len(out.split()) <= 75
     assert m.await_count == 1
 
 
@@ -55,7 +55,7 @@ async def test_retries_on_short_answer() -> None:
     with patch("app.generator.answer.ollama_client.generate",
                _mock_generate(SHORT, SHORT, GOOD)) as m:
         out = (await answer.generate_answer_full("why is the sky blue?")).text
-    assert len(out.split()) >= 30
+    assert len(out.split()) >= 25
     assert m.await_count == 3
 
 
@@ -64,7 +64,7 @@ async def test_truncates_overlong_to_sentence_boundary() -> None:
     with patch("app.generator.answer.ollama_client.generate",
                _mock_generate(TOO_LONG)) as m:
         out = (await answer.generate_answer_full("why is the sky blue?")).text
-    assert len(out.split()) <= 80
+    assert len(out.split()) <= 75
     assert out.endswith((".", "!", "?"))
     assert m.await_count == 1
 

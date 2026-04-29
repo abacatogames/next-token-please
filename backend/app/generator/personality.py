@@ -2,7 +2,7 @@ import random
 from dataclasses import dataclass
 
 _FORMAT_REMINDER = (
-    "Keep the required format: 40 to 60 words, plain prose, no lists, no markdown, "
+    "Keep the required format: 35 to 55 words, plain prose, no lists, no markdown, "
     "no headings, end at the period of the final sentence, and never begin with "
     "\"Sure\", \"Here\", \"I\", \"Okay\", \"Certainly\", or similar preamble."
 )

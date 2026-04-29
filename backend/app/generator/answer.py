@@ -20,14 +20,14 @@ class AnswerResult:
 
 SYSTEM = (
     "You write short factual answers. Strict format:\n"
-    "- 40 to 60 words\n"
+    "- 35 to 55 words\n"
     "- plain prose, no lists, no markdown, no headings\n"
     "- answer directly; do not begin with \"Sure\", \"Here\", \"I\"\n"
     "- stop at the period of the final sentence"
 )
 
-MIN_WORDS = 30
-MAX_WORDS = 80
+MIN_WORDS = 25
+MAX_WORDS = 75
 RETRIES = 3
 
 
