@@ -18,7 +18,7 @@ def test_expected_personalities_present() -> None:
 
 def test_every_style_mentions_format_guardrails() -> None:
     for name, p in personality.PERSONALITIES.items():
-        assert "40 to 60 words" in p.style, name
+        assert "35 to 55 words" in p.style, name
         assert "Sure" in p.style and "Here" in p.style, name
         assert p.name == name
 
