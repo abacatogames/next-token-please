@@ -51,6 +51,50 @@ export function isNewBest(current: BestRun, previous: BestRun | null): boolean {
 	return current.percent > previous.percent;
 }
 
+const AUDIO_KEY = "ntp.audio.v1";
+
+export type AudioPrefs = {
+	volume: number; // 0..1
+	muted: boolean;
+};
+
+export const DEFAULT_AUDIO_PREFS: AudioPrefs = { volume: 0.5, muted: false };
+
+export function clampVolume(v: number): number {
+	if (!Number.isFinite(v)) return DEFAULT_AUDIO_PREFS.volume;
+	return Math.min(1, Math.max(0, v));
+}
+
+export function loadAudioPrefs(): AudioPrefs {
+	try {
+		const raw = localStorage.getItem(AUDIO_KEY);
+		if (!raw) return { ...DEFAULT_AUDIO_PREFS };
+		const parsed: unknown = JSON.parse(raw);
+		if (
+			parsed &&
+			typeof parsed === "object" &&
+			typeof (parsed as AudioPrefs).volume === "number" &&
+			typeof (parsed as AudioPrefs).muted === "boolean"
+		) {
+			return {
+				volume: clampVolume((parsed as AudioPrefs).volume),
+				muted: (parsed as AudioPrefs).muted,
+			};
+		}
+		return { ...DEFAULT_AUDIO_PREFS };
+	} catch {
+		return { ...DEFAULT_AUDIO_PREFS };
+	}
+}
+
+export function saveAudioPrefs(prefs: AudioPrefs): void {
+	try {
+		localStorage.setItem(AUDIO_KEY, JSON.stringify(prefs));
+	} catch {
+		/* localStorage unavailable (private mode, quota, etc.) — silently skip */
+	}
+}
+
 export type SavedSession = {
 	schemaVersion: typeof SESSION_SCHEMA;
 	savedAt: number;
