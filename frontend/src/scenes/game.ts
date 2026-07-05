@@ -99,7 +99,7 @@ function renderEndlessProgress(state: GameState): string {
 	if (state.mode !== "endless") return "";
 	const { correct, total } = getScore(state);
 	const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
-	const fillClass = total > 0 && correct / total > 0.5 ? "is-pass" : "is-fail";
+	const fillClass = total > 0 && correct / total >= 0.5 ? "is-pass" : "is-fail";
 	const width = progressFillWidth(pct, total);
 	return `
     <div class="endless-progress" role="status" aria-live="polite">

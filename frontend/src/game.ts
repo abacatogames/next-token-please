@@ -121,7 +121,7 @@ export function getScore(state: GameState): { correct: number; total: number } {
 
 export function isWin(state: GameState): boolean {
 	const { correct, total } = getScore(state);
-	return total > 0 && correct / total > 0.5;
+	return total > 0 && correct / total >= 0.5;
 }
 
 export function commitRoundToChapter(state: GameState): GameState {
