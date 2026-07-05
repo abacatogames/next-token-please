@@ -13,6 +13,20 @@ import type { Scene } from "../scene/types.ts";
 import { INFERENCE_RUN, getChapter } from "../story/inferenceRun.ts";
 import type { GameState } from "../types.ts";
 
+const PROGRESS_FILL_MIN_WIDTH_PCT = 0.5;
+const ENDLESS_TARGET_PCT = 50;
+
+function progressFillWidth(pct: number, total: number): number {
+	return total > 0 ? Math.max(pct, PROGRESS_FILL_MIN_WIDTH_PCT) : 0;
+}
+
+function renderScoreTargetCells(scorePct: number, targetPct: number): string {
+	return `
+      <span class="campaign-hud-score">SCORE ${scorePct}%</span>
+      <span class="campaign-hud-sep">//</span>
+      <span class="campaign-hud-target">TARGET ${targetPct}%</span>`;
+}
+
 export type GameCallbacks = {
 	onChoice: (word: string) => void;
 	onPromptTyped: () => void;
@@ -36,10 +50,12 @@ function renderProgressBar(
 		return `<span class="campaign-progress-pip${filled}"></span>`;
 	}).join("");
 
+	const width = progressFillWidth(progress.pct, progress.totalSoFar);
+
 	return `
     <div class="campaign-progress" aria-hidden="true">
       <div class="progress-track">
-        <div class="${fillClass}" style="width: ${progress.pct}%"></div>
+        <div class="${fillClass}" style="width: ${width}%"></div>
       </div>
       <div class="campaign-progress-pips">${pips}</div>
     </div>
@@ -61,11 +77,21 @@ function renderHUD(state: GameState): string {
       <span class="campaign-hud-sep">·</span>
       <span class="campaign-hud-round">ROUND ${roundsPlayed}/${chapter.rounds}</span>
       <span class="campaign-hud-sep">·</span>
-      <span class="campaign-hud-score">SCORE ${progress.pct}%</span>
-      <span class="campaign-hud-sep">·</span>
-      <span class="campaign-hud-target">TARGET ${chapter.requiredPercent}%</span>
+      ${renderScoreTargetCells(progress.pct, chapter.requiredPercent)}
     </div>
     ${renderProgressBar(progress, roundsPlayed)}
+  `;
+}
+
+function renderEndlessHUD(state: GameState): string {
+	if (state.mode !== "endless") return "";
+	const { correct, total } = getScore(state);
+	const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+	return `
+    <div class="campaign-hud" role="status" aria-live="polite">
+      <span class="campaign-hud-tag">ENDLESS_MODE</span>
+      ${renderScoreTargetCells(pct, ENDLESS_TARGET_PCT)}
+    </div>
   `;
 }
 
@@ -74,10 +100,11 @@ function renderEndlessProgress(state: GameState): string {
 	const { correct, total } = getScore(state);
 	const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
 	const fillClass = total > 0 && correct / total > 0.5 ? "is-pass" : "is-fail";
+	const width = progressFillWidth(pct, total);
 	return `
     <div class="endless-progress" role="status" aria-live="polite">
       <div class="progress-track">
-        <div class="progress-fill ${fillClass}" style="width: ${pct}%"></div>
+        <div class="progress-fill ${fillClass}" style="width: ${width}%"></div>
       </div>
     </div>
   `;
@@ -93,7 +120,8 @@ export function renderGameHTML(
 	const tag = sessionTag(state.round.id);
 	const isTyping = state.phase === "typing_prompt";
 
-	const hudHTML = renderHUD(state) + renderEndlessProgress(state);
+	const hudHTML =
+		renderHUD(state) + renderEndlessHUD(state) + renderEndlessProgress(state);
 
 	const promptBody = isTyping
 		? `<span class="prompt-text"></span><span class="prompt-caret" aria-hidden="true"></span>`

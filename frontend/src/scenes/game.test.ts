@@ -105,10 +105,10 @@ describe("renderGameHTML", () => {
 		);
 	});
 
-	test("omits campaign progress bar and score outside campaign mode", () => {
+	test("omits campaign progress bar outside campaign mode", () => {
 		const html = renderGameHTML(state(), null, null);
 		expect(html).not.toContain("campaign-progress");
-		expect(html).not.toContain("campaign-hud-score");
+		expect(html).not.toContain("INFERENCE_RUN");
 	});
 
 	test("shows a simple progress bar in endless mode", () => {
