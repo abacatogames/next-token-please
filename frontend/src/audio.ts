@@ -258,7 +258,7 @@ function playWrong(c: AudioContext, out: GainNode): void {
 		osc.frequency.exponentialRampToValueAtTime(85, now + 0.16);
 
 		const envelope = c.createGain();
-		envelope.gain.setValueAtTime(0.07, now);
+		envelope.gain.setValueAtTime(0.03, now);
 		envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
 
 		osc.connect(envelope);
