@@ -5,7 +5,7 @@ import {
 	saveAudioPrefs,
 } from "./storage.ts";
 
-export type SfxName = "type" | "hover" | "confirm";
+export type SfxName = "type" | "hover" | "correct" | "wrong";
 
 /* Keeps the absolute output subtle even at volume=1. */
 const MASTER_SCALE = 0.6;
@@ -17,7 +17,8 @@ const THUNDER_MAX_DELAY_MS = 45_000;
 export const SFX_MIN_GAP_MS: Record<SfxName, number> = {
 	type: 30,
 	hover: 60,
-	confirm: 0,
+	correct: 0,
+	wrong: 0,
 };
 
 export function effectiveGain(prefs: AudioPrefs): number {
@@ -57,7 +58,8 @@ let muteSuspendTimer: ReturnType<typeof setTimeout> | null = null;
 const lastPlayedAt: Record<SfxName, number> = {
 	type: Number.NEGATIVE_INFINITY,
 	hover: Number.NEGATIVE_INFINITY,
-	confirm: Number.NEGATIVE_INFINITY,
+	correct: Number.NEGATIVE_INFINITY,
+	wrong: Number.NEGATIVE_INFINITY,
 };
 
 function getNoiseBuffer(c: AudioContext): AudioBuffer {
@@ -219,43 +221,48 @@ function playHover(c: AudioContext, out: GainNode): void {
 	osc.stop(now + 0.02);
 }
 
-function playConfirm(c: AudioContext, out: GainNode): void {
+function playCorrect(c: AudioContext, out: GainNode): void {
 	const now = c.currentTime;
 
-	/* Low mechanical thump, like a heavy key landing. */
+	/* Two quick soft notes rising a fifth — rewarding but understated. */
+	const notes: Array<[number, number, number]> = [
+		[660, now, 0.06],
+		[880, now + 0.07, 0.1],
+	];
+	for (const [freq, start, dur] of notes) {
+		const osc = c.createOscillator();
+		osc.type = "triangle";
+		osc.frequency.value = freq;
+
+		const envelope = c.createGain();
+		envelope.gain.setValueAtTime(0.1, start);
+		envelope.gain.exponentialRampToValueAtTime(0.001, start + dur);
+
+		osc.connect(envelope);
+		envelope.connect(out);
+
+		osc.start(start);
+		osc.stop(start + dur + 0.01);
+	}
+}
+
+function playWrong(c: AudioContext, out: GainNode): void {
+	const now = c.currentTime;
+
 	const osc = c.createOscillator();
-	osc.type = "triangle";
-	osc.frequency.setValueAtTime(160, now);
-	osc.frequency.exponentialRampToValueAtTime(70, now + 0.12);
+	osc.type = "square";
+	osc.frequency.setValueAtTime(220, now);
+	osc.frequency.exponentialRampToValueAtTime(440, now + 0.09);
 
 	const envelope = c.createGain();
-	envelope.gain.setValueAtTime(0.18, now);
-	envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+	envelope.gain.setValueAtTime(0.12, now);
+	envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
 
 	osc.connect(envelope);
 	envelope.connect(out);
 
 	osc.start(now);
-	osc.stop(now + 0.15);
-
-	/* Short noise transient on top for the click of the mechanism. */
-	const filter = c.createBiquadFilter();
-	filter.type = "bandpass";
-	filter.frequency.value = 900;
-	filter.Q.value = 1.5;
-
-	const clickEnvelope = c.createGain();
-	clickEnvelope.gain.setValueAtTime(0.1, now);
-	clickEnvelope.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
-
-	const source = c.createBufferSource();
-	source.buffer = getNoiseBuffer(c);
-	source.connect(filter);
-	filter.connect(clickEnvelope);
-	clickEnvelope.connect(out);
-
-	source.start(now);
-	source.stop(now + 0.03);
+	osc.stop(now + 0.1);
 }
 
 export const audio = {
@@ -284,7 +291,8 @@ export const audio = {
 
 		if (name === "type") playType(ctx, sfxGain);
 		else if (name === "hover") playHover(ctx, sfxGain);
-		else playConfirm(ctx, sfxGain);
+		else if (name === "correct") playCorrect(ctx, sfxGain);
+		else playWrong(ctx, sfxGain);
 	},
 
 	startAmbience,

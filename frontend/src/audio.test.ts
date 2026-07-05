@@ -64,8 +64,9 @@ describe("isThrottled", () => {
 		);
 	});
 
-	test("confirm has no gap", () => {
-		expect(isThrottled(100, 100, SFX_MIN_GAP_MS.confirm)).toBe(false);
+	test("correct and wrong have no gap", () => {
+		expect(isThrottled(100, 100, SFX_MIN_GAP_MS.correct)).toBe(false);
+		expect(isThrottled(100, 100, SFX_MIN_GAP_MS.wrong)).toBe(false);
 	});
 });
 
@@ -73,7 +74,8 @@ describe("audio engine without AudioContext", () => {
 	test("play is a no-op before unlock", () => {
 		expect(() => audio.play("type")).not.toThrow();
 		expect(() => audio.play("hover")).not.toThrow();
-		expect(() => audio.play("confirm")).not.toThrow();
+		expect(() => audio.play("correct")).not.toThrow();
+		expect(() => audio.play("wrong")).not.toThrow();
 	});
 
 	test("ambience controls are no-ops before unlock", () => {

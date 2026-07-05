@@ -224,7 +224,10 @@ function handlePromptTyped() {
 }
 
 function handleChoice(word: string) {
-	audio.play("confirm");
+	const token = state.round?.tokens[state.tokenIndex];
+	if (token?.kind === "choice") {
+		audio.play(token.correct === word ? "correct" : "wrong");
+	}
 	if (revealTimer) clearTimeout(revealTimer);
 	state = makeChoice(state, word);
 	render();
