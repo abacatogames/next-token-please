@@ -87,6 +87,24 @@ describe("renderGameHTML", () => {
 		expect(new Set(classes).size).toBe(1);
 	});
 
+	test("shows diff feedback on the answer word right after a pick", () => {
+		const html = renderGameHTML(
+			state({
+				phase: "revealing",
+				tokenIndex: 2,
+				revealedWords: ["Because", "science"],
+				playerChoices: [
+					{ tokenIndex: 1, picked: "science", correct: "science" },
+				],
+			}),
+			null,
+			null,
+		);
+		expect(html).toContain(
+			'<span class="word diff-correct word-feedback-in">science</span>',
+		);
+	});
+
 	test("shows fallback log only when source is fallback", () => {
 		expect(renderGameHTML(state(), null, "fallback")).toContain(
 			"FALLBACK: LOCAL_CACHE",

@@ -134,6 +134,33 @@
 	border-radius: 2px;
 }
 
+/* --- Live pick feedback --- */
+
+.answer-body .word.diff-correct {
+	color: var(--correct);
+	text-shadow: 0 0 6px var(--neon-green-dim);
+}
+
+.answer-body .word.diff-wrong {
+	color: var(--wrong);
+	text-shadow: 0 0 6px var(--neon-red-dim);
+}
+
+.answer-body .word-feedback-in {
+	animation: wordFeedbackPop var(--dur-fast) var(--ease-out) both;
+}
+
+@keyframes wordFeedbackPop {
+	0% {
+		transform: scale(1.5);
+		filter: brightness(1.6);
+	}
+	100% {
+		transform: scale(1);
+		filter: brightness(1);
+	}
+}
+
 /* --- Choice UI --- */
 
 .choice-container {
@@ -349,7 +376,8 @@
 	.btn-choice,
 	.choice-prompt,
 	.loading-label,
-	.loading-dot {
+	.loading-dot,
+	.word-feedback-in {
 		animation: none;
 	}
 }

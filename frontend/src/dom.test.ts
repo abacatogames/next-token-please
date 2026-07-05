@@ -181,6 +181,39 @@ describe("renderWords", () => {
 		expect(renderWords(state())).toBe('<span class="cursor"></span>');
 	});
 
+	test("marks the just-revealed choice word with diff class and feedback-in", () => {
+		const html = renderWords(
+			state({
+				revealedWords: ["Hello", "world"],
+				playerChoices: [{ tokenIndex: 1, picked: "world", correct: "world" }],
+			}),
+		);
+		expect(html).toContain(
+			'<span class="word diff-correct word-feedback-in">world</span>',
+		);
+	});
+
+	test("marks an earlier choice word with diff class but no feedback-in", () => {
+		const html = renderWords(
+			state({
+				revealedWords: ["Hello", "world", ".", "bye"],
+				playerChoices: [
+					{ tokenIndex: 1, picked: "world", correct: "world" },
+					{ tokenIndex: 3, picked: "bye", correct: "Cheers" },
+				],
+			}),
+		);
+		expect(html).toContain('<span class="word diff-correct">world</span>');
+		expect(html).toContain(
+			'<span class="word diff-wrong word-feedback-in">bye</span>',
+		);
+	});
+
+	test("does not mark reveal-kind words with diff classes", () => {
+		const html = renderWords(state({ revealedWords: ["Hello"] }));
+		expect(html).not.toContain("diff-");
+	});
+
 	test("groups word with trailing punctuation and separates groups with space", () => {
 		const words = ["Hello", ".", "World"];
 		const html = renderWords(
