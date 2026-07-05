@@ -1,4 +1,5 @@
 import { fetchRound, type RoundSource } from "./api.ts";
+import { audio } from "./audio.ts";
 import { mountCharacter } from "./character/character.ts";
 import { isActiveRoundPhase } from "./character/phases.ts";
 import { TIMING } from "./constants.ts";
@@ -24,6 +25,7 @@ import { createFinishedScene } from "./scenes/finished.ts";
 import { createGameScene } from "./scenes/game.ts";
 import { createIdleScene } from "./scenes/idle.ts";
 import { createLoadingScene } from "./scenes/loading.ts";
+import { mountAudioControl } from "./scenes/audioControl.ts";
 import {
 	clearSession,
 	loadSession,
@@ -50,6 +52,20 @@ if (restoredSession) {
 
 const atmosphereRoot = document.getElementById("atmosphere")!;
 mountAtmosphere(atmosphereRoot);
+
+audio.attachUnlock();
+mountAudioControl(document.getElementById("hud")!);
+
+/* Hover/focus tick for every button, current and future, via delegation. */
+document.addEventListener("pointerover", (e) => {
+	const btn = (e.target as HTMLElement | null)?.closest("button");
+	if (!btn) return;
+	if (e.relatedTarget instanceof Node && btn.contains(e.relatedTarget)) return;
+	audio.play("hover");
+});
+document.addEventListener("focusin", (e) => {
+	if ((e.target as HTMLElement | null)?.closest("button")) audio.play("hover");
+});
 
 const characterStage = document.getElementById("character-stage")!;
 const character = mountCharacter(characterStage);
@@ -208,6 +224,10 @@ function handlePromptTyped() {
 }
 
 function handleChoice(word: string) {
+	const token = state.round?.tokens[state.tokenIndex];
+	if (token?.kind === "choice") {
+		audio.play(token.correct === word ? "correct" : "wrong");
+	}
 	if (revealTimer) clearTimeout(revealTimer);
 	state = makeChoice(state, word);
 	render();

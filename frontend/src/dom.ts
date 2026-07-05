@@ -33,7 +33,10 @@ export function isPunc(word: string): boolean {
 	return PUNC_RE.test(word);
 }
 
+const DASH_RE = /^[—–]$/u;
+
 export function attachesLeft(word: string): boolean {
+	if (DASH_RE.test(word)) return false;
 	return isPunc(word) || word.startsWith("'");
 }
 

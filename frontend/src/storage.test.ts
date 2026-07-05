@@ -1,9 +1,13 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import {
+	clampVolume,
 	clearSession,
+	DEFAULT_AUDIO_PREFS,
 	isNewBest,
+	loadAudioPrefs,
 	loadBestRun,
 	loadSession,
+	saveAudioPrefs,
 	saveBestRun,
 	saveSession,
 	sessionToGameState,
@@ -54,6 +58,50 @@ describe("loadBestRun / saveBestRun", () => {
 	test("returns null on shape mismatch", () => {
 		localStorage.setItem("ntp.bestRun", JSON.stringify({ percent: "high" }));
 		expect(loadBestRun()).toBeNull();
+	});
+});
+
+describe("audio prefs", () => {
+	test("returns defaults when nothing stored", () => {
+		expect(loadAudioPrefs()).toEqual(DEFAULT_AUDIO_PREFS);
+	});
+
+	test("round-trips stored prefs", () => {
+		saveAudioPrefs({ volume: 0.3, muted: true });
+		expect(loadAudioPrefs()).toEqual({ volume: 0.3, muted: true });
+	});
+
+	test("returns defaults on malformed payload", () => {
+		localStorage.setItem("ntp.audio.v1", "not-json");
+		expect(loadAudioPrefs()).toEqual(DEFAULT_AUDIO_PREFS);
+	});
+
+	test("returns defaults on shape mismatch", () => {
+		localStorage.setItem("ntp.audio.v1", JSON.stringify({ volume: "loud" }));
+		expect(loadAudioPrefs()).toEqual(DEFAULT_AUDIO_PREFS);
+	});
+
+	test("clamps out-of-range stored volume", () => {
+		localStorage.setItem(
+			"ntp.audio.v1",
+			JSON.stringify({ volume: 3.5, muted: false }),
+		);
+		expect(loadAudioPrefs().volume).toBe(1);
+	});
+});
+
+describe("clampVolume", () => {
+	test("clamps to [0, 1]", () => {
+		expect(clampVolume(-0.5)).toBe(0);
+		expect(clampVolume(0.42)).toBe(0.42);
+		expect(clampVolume(2)).toBe(1);
+	});
+
+	test("falls back to default on non-finite input", () => {
+		expect(clampVolume(Number.NaN)).toBe(DEFAULT_AUDIO_PREFS.volume);
+		expect(clampVolume(Number.POSITIVE_INFINITY)).toBe(
+			DEFAULT_AUDIO_PREFS.volume,
+		);
 	});
 });
 
