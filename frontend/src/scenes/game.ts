@@ -1,4 +1,5 @@
 import type { RoundSource } from "../api.ts";
+import { audio } from "../audio.ts";
 import { TIMING } from "../constants.ts";
 import {
 	crtWindow,
@@ -226,6 +227,7 @@ export function createGameScene(cb: GameCallbacks): Scene<GameState> {
 			const ch = prompt[i]!;
 			target.textContent = (target.textContent ?? "") + ch;
 			i++;
+			audio.play("type");
 
 			const isPunc = /[.,;:!?—]/.test(ch);
 			const jitter =
@@ -260,6 +262,8 @@ export function createGameScene(cb: GameCallbacks): Scene<GameState> {
 					btn.addEventListener("click", () => {
 						cb.onChoice(btn.dataset.word!);
 					});
+					btn.addEventListener("pointerenter", () => audio.play("hover"));
+					btn.addEventListener("focus", () => audio.play("hover"));
 				});
 		}
 

@@ -170,7 +170,7 @@
 .audio-control {
 	position: absolute;
 	bottom: 0.75rem;
-	right: 0.9rem;
+	left: 0.9rem;
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;

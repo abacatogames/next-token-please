@@ -1,4 +1,5 @@
 import { fetchRound, type RoundSource } from "./api.ts";
+import { audio } from "./audio.ts";
 import { mountCharacter } from "./character/character.ts";
 import { isActiveRoundPhase } from "./character/phases.ts";
 import { TIMING } from "./constants.ts";
@@ -24,6 +25,7 @@ import { createFinishedScene } from "./scenes/finished.ts";
 import { createGameScene } from "./scenes/game.ts";
 import { createIdleScene } from "./scenes/idle.ts";
 import { createLoadingScene } from "./scenes/loading.ts";
+import { mountAudioControl } from "./scenes/audioControl.ts";
 import {
 	clearSession,
 	loadSession,
@@ -50,6 +52,9 @@ if (restoredSession) {
 
 const atmosphereRoot = document.getElementById("atmosphere")!;
 mountAtmosphere(atmosphereRoot);
+
+audio.attachUnlock();
+mountAudioControl(document.getElementById("hud")!);
 
 const characterStage = document.getElementById("character-stage")!;
 const character = mountCharacter(characterStage);
@@ -208,6 +213,7 @@ function handlePromptTyped() {
 }
 
 function handleChoice(word: string) {
+	audio.play("confirm");
 	if (revealTimer) clearTimeout(revealTimer);
 	state = makeChoice(state, word);
 	render();
