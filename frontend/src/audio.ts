@@ -249,20 +249,24 @@ function playCorrect(c: AudioContext, out: GainNode): void {
 function playWrong(c: AudioContext, out: GainNode): void {
 	const now = c.currentTime;
 
-	const osc = c.createOscillator();
-	osc.type = "square";
-	osc.frequency.setValueAtTime(220, now);
-	osc.frequency.exponentialRampToValueAtTime(440, now + 0.09);
+	/* Descending buzz — two slightly detuned squares falling in pitch. */
+	for (const detune of [0, 12]) {
+		const osc = c.createOscillator();
+		osc.type = "square";
+		osc.detune.value = detune;
+		osc.frequency.setValueAtTime(180, now);
+		osc.frequency.exponentialRampToValueAtTime(85, now + 0.16);
 
-	const envelope = c.createGain();
-	envelope.gain.setValueAtTime(0.12, now);
-	envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+		const envelope = c.createGain();
+		envelope.gain.setValueAtTime(0.07, now);
+		envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
 
-	osc.connect(envelope);
-	envelope.connect(out);
+		osc.connect(envelope);
+		envelope.connect(out);
 
-	osc.start(now);
-	osc.stop(now + 0.1);
+		osc.start(now);
+		osc.stop(now + 0.19);
+	}
 }
 
 export const audio = {
