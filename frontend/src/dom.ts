@@ -58,10 +58,22 @@ function groupWordSpans(items: SpacedItem[]): string {
 		.join(" ");
 }
 
+function pickFeedbackClass(state: GameState, index: number): string | undefined {
+	const token = state.round?.tokens[index];
+	if (!token || token.kind !== "choice") return undefined;
+
+	const choice = state.playerChoices.find((c) => c.tokenIndex === index);
+	if (!choice) return undefined;
+
+	const diffClass = choice.picked === choice.correct ? "diff-correct" : "diff-wrong";
+	const isLast = index === state.revealedWords.length - 1;
+	return isLast ? `${diffClass} word-feedback-in` : diffClass;
+}
+
 export function renderWords(state: GameState): string {
 	const tokens = state.round?.tokens ?? [];
 	const items: SpacedItem[] = state.revealedWords.map((w, i) => ({
-		html: wordSpan(w),
+		html: wordSpan(w, pickFeedbackClass(state, i)),
 		leading_space: tokens[i]?.leading_space ?? i > 0,
 	}));
 	const showCursor =

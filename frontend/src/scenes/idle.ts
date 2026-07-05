@@ -74,7 +74,7 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
           <kbd class="btn-key" aria-hidden="true">2</kbd>
           <span class="btn-mode-text">
             <span class="btn-mode-title">ENDLESS_MODE</span>
-            <span class="btn-mode-sub">single round · &gt;50% to pass</span>
+            <span class="btn-mode-sub">play forever · ≥50% to pass</span>
           </span>
           <span class="btn-caret" aria-hidden="true">&gt;</span>
         </button>

@@ -87,6 +87,83 @@ describe("renderGameHTML", () => {
 		expect(new Set(classes).size).toBe(1);
 	});
 
+	test("shows diff feedback on the answer word right after a pick", () => {
+		const html = renderGameHTML(
+			state({
+				phase: "revealing",
+				tokenIndex: 2,
+				revealedWords: ["Because", "science"],
+				playerChoices: [
+					{ tokenIndex: 1, picked: "science", correct: "science" },
+				],
+			}),
+			null,
+			null,
+		);
+		expect(html).toContain(
+			'<span class="word diff-correct word-feedback-in">science</span>',
+		);
+	});
+
+	test("omits campaign progress bar outside campaign mode", () => {
+		const html = renderGameHTML(state(), null, null);
+		expect(html).not.toContain("campaign-progress");
+		expect(html).not.toContain("INFERENCE_RUN");
+	});
+
+	test("shows a simple progress bar in endless mode", () => {
+		const html = renderGameHTML(
+			state({
+				playerChoices: [{ tokenIndex: 1, picked: "science", correct: "science" }],
+			}),
+			null,
+			null,
+		);
+		expect(html).toContain('<div class="endless-progress"');
+		expect(html).toContain('style="width: 100%"');
+		expect(html).toContain("progress-fill is-pass");
+		expect(html).not.toContain("campaign-progress-pip");
+	});
+
+	test("renders progress bar, score, and pips reflecting chapter progress", () => {
+		const html = renderGameHTML(
+			state({
+				mode: "campaign",
+				campaign: {
+					chapterIndex: 0,
+					roundInChapter: 1,
+					chapterCorrect: 1,
+					chapterTotal: 3,
+				},
+			}),
+			null,
+			null,
+		);
+		expect(html).toContain('style="width: 33%"');
+		expect(html).toContain("progress-fill is-fail");
+		expect(html).toContain('<span class="campaign-hud-score">SCORE 33%</span>');
+		const pips = [...html.matchAll(/class="campaign-progress-pip( is-filled)?"/g)];
+		expect(pips).toHaveLength(3);
+		expect(pips.filter((m) => m[1]).length).toBe(2);
+	});
+
+	test("colors progress bar as passing when above target", () => {
+		const html = renderGameHTML(
+			state({
+				mode: "campaign",
+				campaign: {
+					chapterIndex: 0,
+					roundInChapter: 2,
+					chapterCorrect: 2,
+					chapterTotal: 2,
+				},
+			}),
+			null,
+			null,
+		);
+		expect(html).toContain("progress-fill is-pass");
+	});
+
 	test("shows fallback log only when source is fallback", () => {
 		expect(renderGameHTML(state(), null, "fallback")).toContain(
 			"FALLBACK: LOCAL_CACHE",

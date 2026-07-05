@@ -61,6 +61,7 @@
 	--glow-cyan: 0 0 8px var(--neon-cyan-glow), 0 0 20px #00f0ff15;
 	--glow-magenta: 0 0 8px #ff2d7b33, 0 0 20px #ff2d7b15;
 	--glow-green: 0 0 8px #00ff8833, 0 0 20px #00ff8815;
+	--glow-red: 0 0 8px #ff335533, 0 0 20px #ff335515;
 
 	/* --- Motion --- */
 	--ease-out: cubic-bezier(0.2, 0.9, 0.3, 1);

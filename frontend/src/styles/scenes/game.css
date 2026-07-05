@@ -39,9 +39,13 @@
 	color: var(--text);
 }
 
+.campaign-hud-score {
+	color: var(--text);
+	margin-left: auto;
+}
+
 .campaign-hud-target {
 	color: var(--neon-cyan-dim);
-	margin-left: auto;
 }
 
 @media (max-width: 640px) {
@@ -50,6 +54,62 @@
 		letter-spacing: 0.12em;
 		gap: 0.3rem;
 	}
+}
+
+/* --- Progress meter (shared track/fill) --- */
+
+.progress-track {
+	width: 100%;
+	height: 4px;
+	background: var(--bg-card-border);
+	border-radius: var(--radius);
+	overflow: hidden;
+}
+
+.progress-fill {
+	height: 100%;
+	transition: width var(--dur-base) var(--ease-out);
+}
+
+.progress-fill.is-pass {
+	background: var(--correct);
+	box-shadow: var(--glow-green);
+}
+
+.progress-fill.is-fail {
+	background: var(--wrong);
+	box-shadow: var(--glow-red);
+}
+
+/* --- Campaign progress meter --- */
+
+.campaign-progress {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	margin-top: 0.4rem;
+}
+
+.campaign-progress-pips {
+	display: flex;
+	gap: 0.3rem;
+}
+
+.campaign-progress-pip {
+	width: 8px;
+	height: 3px;
+	background: var(--bg-card-border);
+	border-radius: var(--radius);
+}
+
+.campaign-progress-pip.is-filled {
+	background: var(--neon-cyan-dim);
+}
+
+/* --- Endless mode progress meter --- */
+
+.endless-progress {
+	padding: 0.3rem 0.85rem;
 }
 
 /* --- Prompt window --- */
@@ -132,6 +192,33 @@
 .answer-body::-webkit-scrollbar-thumb {
 	background: var(--bg-card-border);
 	border-radius: 2px;
+}
+
+/* --- Live pick feedback --- */
+
+.answer-body .word.diff-correct {
+	color: var(--correct);
+	text-shadow: 0 0 6px var(--neon-green-dim);
+}
+
+.answer-body .word.diff-wrong {
+	color: var(--wrong);
+	text-shadow: 0 0 6px var(--neon-red-dim);
+}
+
+.answer-body .word-feedback-in {
+	animation: wordFeedbackPop var(--dur-fast) var(--ease-out) both;
+}
+
+@keyframes wordFeedbackPop {
+	0% {
+		transform: scale(1.5);
+		filter: brightness(1.6);
+	}
+	100% {
+		transform: scale(1);
+		filter: brightness(1);
+	}
 }
 
 /* --- Choice UI --- */
@@ -349,7 +436,8 @@
 	.btn-choice,
 	.choice-prompt,
 	.loading-label,
-	.loading-dot {
+	.loading-dot,
+	.word-feedback-in {
 		animation: none;
 	}
 }
