@@ -1,4 +1,3 @@
-import { audio } from "../audio.ts";
 import { TIMING } from "../constants.ts";
 import { prefersReducedMotion } from "../motion.ts";
 import type { Scene } from "../scene/types.ts";
@@ -129,12 +128,6 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
 			endlessBtn.addEventListener("click", onEndless);
 			aboutBtn.addEventListener("click", onAbout);
 
-			const onHover = () => audio.play("hover");
-			for (const btn of [campaignBtn, endlessBtn, aboutBtn]) {
-				btn.addEventListener("pointerenter", onHover);
-				btn.addEventListener("focus", onHover);
-			}
-
 			const onKey = (e: KeyboardEvent) => {
 				const target = e.target as HTMLElement | null;
 				const tag = target?.tagName;
@@ -161,10 +154,6 @@ export function createIdleScene(cb: IdleCallbacks): Scene<GameState> {
 				campaignBtn.removeEventListener("click", onCampaign);
 				endlessBtn.removeEventListener("click", onEndless);
 				aboutBtn.removeEventListener("click", onAbout);
-				for (const btn of [campaignBtn, endlessBtn, aboutBtn]) {
-					btn.removeEventListener("pointerenter", onHover);
-					btn.removeEventListener("focus", onHover);
-				}
 				window.removeEventListener("keydown", onKey);
 				for (const t of timers) window.clearTimeout(t);
 			};

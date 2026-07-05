@@ -56,6 +56,17 @@ mountAtmosphere(atmosphereRoot);
 audio.attachUnlock();
 mountAudioControl(document.getElementById("hud")!);
 
+/* Hover/focus tick for every button, current and future, via delegation. */
+document.addEventListener("pointerover", (e) => {
+	const btn = (e.target as HTMLElement | null)?.closest("button");
+	if (!btn) return;
+	if (e.relatedTarget instanceof Node && btn.contains(e.relatedTarget)) return;
+	audio.play("hover");
+});
+document.addEventListener("focusin", (e) => {
+	if ((e.target as HTMLElement | null)?.closest("button")) audio.play("hover");
+});
+
 const characterStage = document.getElementById("character-stage")!;
 const character = mountCharacter(characterStage);
 if (state.round?.personality) character.setPersonality(state.round.personality);

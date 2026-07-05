@@ -139,7 +139,7 @@ function playThunder(): void {
 	const envelope = ctx.createGain();
 	const now = ctx.currentTime;
 	envelope.gain.setValueAtTime(0, now);
-	envelope.gain.linearRampToValueAtTime(0.22, now + 0.3);
+	envelope.gain.linearRampToValueAtTime(0.45, now + 0.3);
 	envelope.gain.setTargetAtTime(0, now + 0.3, 3.5 / 3);
 
 	const source = ctx.createBufferSource();
@@ -222,20 +222,40 @@ function playHover(c: AudioContext, out: GainNode): void {
 function playConfirm(c: AudioContext, out: GainNode): void {
 	const now = c.currentTime;
 
+	/* Low mechanical thump, like a heavy key landing. */
 	const osc = c.createOscillator();
-	osc.type = "square";
-	osc.frequency.setValueAtTime(220, now);
-	osc.frequency.exponentialRampToValueAtTime(440, now + 0.09);
+	osc.type = "triangle";
+	osc.frequency.setValueAtTime(160, now);
+	osc.frequency.exponentialRampToValueAtTime(70, now + 0.12);
 
 	const envelope = c.createGain();
-	envelope.gain.setValueAtTime(0.12, now);
-	envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+	envelope.gain.setValueAtTime(0.18, now);
+	envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
 
 	osc.connect(envelope);
 	envelope.connect(out);
 
 	osc.start(now);
-	osc.stop(now + 0.1);
+	osc.stop(now + 0.15);
+
+	/* Short noise transient on top for the click of the mechanism. */
+	const filter = c.createBiquadFilter();
+	filter.type = "bandpass";
+	filter.frequency.value = 900;
+	filter.Q.value = 1.5;
+
+	const clickEnvelope = c.createGain();
+	clickEnvelope.gain.setValueAtTime(0.1, now);
+	clickEnvelope.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+
+	const source = c.createBufferSource();
+	source.buffer = getNoiseBuffer(c);
+	source.connect(filter);
+	filter.connect(clickEnvelope);
+	clickEnvelope.connect(out);
+
+	source.start(now);
+	source.stop(now + 0.03);
 }
 
 export const audio = {

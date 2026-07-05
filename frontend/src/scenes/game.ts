@@ -262,8 +262,6 @@ export function createGameScene(cb: GameCallbacks): Scene<GameState> {
 					btn.addEventListener("click", () => {
 						cb.onChoice(btn.dataset.word!);
 					});
-					btn.addEventListener("pointerenter", () => audio.play("hover"));
-					btn.addEventListener("focus", () => audio.play("hover"));
 				});
 		}
 
