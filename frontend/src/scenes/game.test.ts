@@ -105,12 +105,27 @@ describe("renderGameHTML", () => {
 		);
 	});
 
-	test("omits progress bar outside campaign mode", () => {
+	test("omits campaign progress bar and score outside campaign mode", () => {
 		const html = renderGameHTML(state(), null, null);
 		expect(html).not.toContain("campaign-progress");
+		expect(html).not.toContain("campaign-hud-score");
 	});
 
-	test("renders progress bar and pips reflecting chapter progress", () => {
+	test("shows a simple progress bar in endless mode", () => {
+		const html = renderGameHTML(
+			state({
+				playerChoices: [{ tokenIndex: 1, picked: "science", correct: "science" }],
+			}),
+			null,
+			null,
+		);
+		expect(html).toContain('<div class="endless-progress"');
+		expect(html).toContain('style="width: 100%"');
+		expect(html).toContain("progress-fill is-pass");
+		expect(html).not.toContain("campaign-progress-pip");
+	});
+
+	test("renders progress bar, score, and pips reflecting chapter progress", () => {
 		const html = renderGameHTML(
 			state({
 				mode: "campaign",
@@ -125,10 +140,11 @@ describe("renderGameHTML", () => {
 			null,
 		);
 		expect(html).toContain('style="width: 33%"');
-		expect(html).toContain("campaign-progress-fill is-fail");
+		expect(html).toContain("progress-fill is-fail");
+		expect(html).toContain('<span class="campaign-hud-score">SCORE 33%</span>');
 		const pips = [...html.matchAll(/class="campaign-progress-pip( is-filled)?"/g)];
 		expect(pips).toHaveLength(3);
-		expect(pips.filter((m) => m[1]).length).toBe(1);
+		expect(pips.filter((m) => m[1]).length).toBe(2);
 	});
 
 	test("colors progress bar as passing when above target", () => {
@@ -145,7 +161,7 @@ describe("renderGameHTML", () => {
 			null,
 			null,
 		);
-		expect(html).toContain("campaign-progress-fill is-pass");
+		expect(html).toContain("progress-fill is-pass");
 	});
 
 	test("shows fallback log only when source is fallback", () => {

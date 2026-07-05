@@ -7,7 +7,7 @@ import {
 	renderWords,
 	shuffleOptions,
 } from "../dom.ts";
-import { chapterProgress } from "../game.ts";
+import { chapterProgress, getScore } from "../game.ts";
 import { prefersReducedMotion } from "../motion.ts";
 import type { Scene } from "../scene/types.ts";
 import { INFERENCE_RUN, getChapter } from "../story/inferenceRun.ts";
@@ -24,21 +24,21 @@ function sessionTag(id: string): string {
 	return slug.length < 4 ? slug.padStart(4, "0") : slug;
 }
 
-function renderProgressBar(state: GameState): string {
-	const progress = chapterProgress(state);
-	if (!progress || !state.campaign) return "";
-
+function renderProgressBar(
+	progress: NonNullable<ReturnType<typeof chapterProgress>>,
+	roundsPlayed: number,
+): string {
 	const fillClass = progress.passing
-		? "campaign-progress-fill is-pass"
-		: "campaign-progress-fill is-fail";
+		? "progress-fill is-pass"
+		: "progress-fill is-fail";
 	const pips = Array.from({ length: progress.chapter.rounds }, (_, i) => {
-		const filled = i < state.campaign!.roundInChapter ? " is-filled" : "";
+		const filled = i < roundsPlayed ? " is-filled" : "";
 		return `<span class="campaign-progress-pip${filled}"></span>`;
 	}).join("");
 
 	return `
     <div class="campaign-progress" aria-hidden="true">
-      <div class="campaign-progress-track">
+      <div class="progress-track">
         <div class="${fillClass}" style="width: ${progress.pct}%"></div>
       </div>
       <div class="campaign-progress-pips">${pips}</div>
@@ -50,18 +50,36 @@ function renderHUD(state: GameState): string {
 	if (state.mode !== "campaign" || !state.campaign) return "";
 	const chapter = getChapter(state.campaign.chapterIndex);
 	if (!chapter) return "";
-	const roundInChapter = state.campaign.roundInChapter + 1;
+	const progress = chapterProgress(state);
+	if (!progress) return "";
+	const roundsPlayed = state.campaign.roundInChapter + 1;
 	return `
     <div class="campaign-hud" role="status" aria-live="polite">
       <span class="campaign-hud-tag">INFERENCE_RUN</span>
       <span class="campaign-hud-sep">·</span>
       <span class="campaign-hud-chapter">CH ${chapter.index + 1}/${INFERENCE_RUN.length}</span>
       <span class="campaign-hud-sep">·</span>
-      <span class="campaign-hud-round">ROUND ${roundInChapter}/${chapter.rounds}</span>
+      <span class="campaign-hud-round">ROUND ${roundsPlayed}/${chapter.rounds}</span>
+      <span class="campaign-hud-sep">·</span>
+      <span class="campaign-hud-score">SCORE ${progress.pct}%</span>
       <span class="campaign-hud-sep">·</span>
       <span class="campaign-hud-target">TARGET ${chapter.requiredPercent}%</span>
     </div>
-    ${renderProgressBar(state)}
+    ${renderProgressBar(progress, roundsPlayed)}
+  `;
+}
+
+function renderEndlessProgress(state: GameState): string {
+	if (state.mode !== "endless") return "";
+	const { correct, total } = getScore(state);
+	const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+	const fillClass = total > 0 && correct / total > 0.5 ? "is-pass" : "is-fail";
+	return `
+    <div class="endless-progress" role="status" aria-live="polite">
+      <div class="progress-track">
+        <div class="progress-fill ${fillClass}" style="width: ${pct}%"></div>
+      </div>
+    </div>
   `;
 }
 
@@ -75,7 +93,7 @@ export function renderGameHTML(
 	const tag = sessionTag(state.round.id);
 	const isTyping = state.phase === "typing_prompt";
 
-	const hudHTML = renderHUD(state);
+	const hudHTML = renderHUD(state) + renderEndlessProgress(state);
 
 	const promptBody = isTyping
 		? `<span class="prompt-text"></span><span class="prompt-caret" aria-hidden="true"></span>`
