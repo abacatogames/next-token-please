@@ -105,6 +105,49 @@ describe("renderGameHTML", () => {
 		);
 	});
 
+	test("omits progress bar outside campaign mode", () => {
+		const html = renderGameHTML(state(), null, null);
+		expect(html).not.toContain("campaign-progress");
+	});
+
+	test("renders progress bar and pips reflecting chapter progress", () => {
+		const html = renderGameHTML(
+			state({
+				mode: "campaign",
+				campaign: {
+					chapterIndex: 0,
+					roundInChapter: 1,
+					chapterCorrect: 1,
+					chapterTotal: 3,
+				},
+			}),
+			null,
+			null,
+		);
+		expect(html).toContain('style="width: 33%"');
+		expect(html).toContain("campaign-progress-fill is-fail");
+		const pips = [...html.matchAll(/class="campaign-progress-pip( is-filled)?"/g)];
+		expect(pips).toHaveLength(3);
+		expect(pips.filter((m) => m[1]).length).toBe(1);
+	});
+
+	test("colors progress bar as passing when above target", () => {
+		const html = renderGameHTML(
+			state({
+				mode: "campaign",
+				campaign: {
+					chapterIndex: 0,
+					roundInChapter: 2,
+					chapterCorrect: 2,
+					chapterTotal: 2,
+				},
+			}),
+			null,
+			null,
+		);
+		expect(html).toContain("campaign-progress-fill is-pass");
+	});
+
 	test("shows fallback log only when source is fallback", () => {
 		expect(renderGameHTML(state(), null, "fallback")).toContain(
 			"FALLBACK: LOCAL_CACHE",
