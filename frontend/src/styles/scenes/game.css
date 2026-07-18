@@ -112,6 +112,28 @@
 	padding: 0.3rem 0.85rem;
 }
 
+@media (max-width: 640px) {
+	.game-screen {
+		gap: 0.9rem;
+	}
+
+	.campaign-progress {
+		flex-direction: row;
+		align-items: center;
+		gap: 0.5rem;
+		margin-top: -0.5rem;
+	}
+
+	.campaign-progress .progress-track {
+		flex: 1;
+	}
+
+	.endless-progress {
+		padding: 0.15rem 0.85rem;
+		margin-top: -0.5rem;
+	}
+}
+
 /* --- Prompt window --- */
 
 .prompt-body {
