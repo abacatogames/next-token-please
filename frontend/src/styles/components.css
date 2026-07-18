@@ -217,6 +217,20 @@
 	cursor: pointer;
 }
 
+@media (max-width: 640px) {
+	.audio-control {
+		top: 0.65rem;
+		right: 0.75rem;
+		bottom: auto;
+		left: auto;
+		opacity: 0.8;
+	}
+
+	.audio-volume {
+		display: none;
+	}
+}
+
 /* --- Words / cursor (shared across game + finished) --- */
 
 .word-group {
