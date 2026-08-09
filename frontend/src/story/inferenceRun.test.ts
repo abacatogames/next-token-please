@@ -19,10 +19,10 @@ describe("INFERENCE_RUN", () => {
 	test("matches the spec (rounds + required %)", () => {
 		const spec = [
 			{ rounds: 3, requiredPercent: 50 },
-			{ rounds: 5, requiredPercent: 60 },
-			{ rounds: 10, requiredPercent: 75 },
-			{ rounds: 5, requiredPercent: 90 },
-			{ rounds: 3, requiredPercent: 100 },
+			{ rounds: 3, requiredPercent: 60 },
+			{ rounds: 3, requiredPercent: 75 },
+			{ rounds: 2, requiredPercent: 90 },
+			{ rounds: 1, requiredPercent: 100 },
 		];
 		INFERENCE_RUN.forEach((c, i) => {
 			expect(c.rounds).toBe(spec[i]!.rounds);
