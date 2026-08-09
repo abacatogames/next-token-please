@@ -93,7 +93,7 @@ class RoundPool:
                     await asyncio.sleep(self._idle_sleep)
                     continue
                 try:
-                    item = await self._builder(difficulty)
+                    item = await self._builder(difficulty=difficulty)
                     await queue.put(item)
                 except asyncio.CancelledError:
                     raise

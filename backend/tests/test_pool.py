@@ -76,6 +76,32 @@ async def test_pool_fills_each_difficulty_with_matching_builder() -> None:
 
 
 @pytest.mark.asyncio
+async def test_pool_drives_keyword_only_builder_like_build_round() -> None:
+    counter = {"n": 0}
+    seen = []
+
+    async def builder(*, difficulty: float):
+        counter["n"] += 1
+        seen.append(difficulty)
+        return _item(counter["n"])
+
+    pool = RoundPool(
+        size=1,
+        builder=builder,
+        difficulties=[0.8],
+        idle_sleep=0.02,
+        error_sleep=0.02,
+    )
+    pool.start()
+    try:
+        assert await _wait_for(lambda: pool.ready, timeout=3.0)
+        assert pool.size == 1
+        assert seen == [0.8]
+    finally:
+        await pool.stop()
+
+
+@pytest.mark.asyncio
 async def test_try_get_returns_none_when_empty() -> None:
     async def builder(difficulty: float):
         await asyncio.sleep(10)
