@@ -95,6 +95,7 @@ async def lifespan(app: FastAPI):
         difficulties=sorted(set(settings.round_pool_difficulties) | {settings.default_difficulty}),
         idle_sleep=settings.round_pool_idle_sleep,
         error_sleep=settings.round_pool_error_sleep,
+        max_concurrent_builds=settings.round_pool_max_concurrent_builds,
     )
     if settings.round_pool_enabled and settings.round_pool_size > 0:
         pool.start()

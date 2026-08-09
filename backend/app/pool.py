@@ -21,6 +21,7 @@ class RoundPool:
         difficulties: list[float],
         idle_sleep: float = 0.5,
         error_sleep: float = 5.0,
+        max_concurrent_builds: int = 1,
     ) -> None:
         self._size = size
         self._builder = builder
@@ -29,6 +30,7 @@ class RoundPool:
         self._tasks: dict[float, asyncio.Task[None]] = {}
         self._idle_sleep = idle_sleep
         self._error_sleep = error_sleep
+        self._build_semaphore = asyncio.Semaphore(max_concurrent_builds)
 
     @property
     def difficulties(self) -> list[float]:
@@ -93,7 +95,8 @@ class RoundPool:
                     await asyncio.sleep(self._idle_sleep)
                     continue
                 try:
-                    item = await self._builder(difficulty=difficulty)
+                    async with self._build_semaphore:
+                        item = await self._builder(difficulty=difficulty)
                     await queue.put(item)
                 except asyncio.CancelledError:
                     raise

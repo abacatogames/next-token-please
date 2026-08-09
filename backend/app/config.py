@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     round_pool_difficulties: list[float] = [0.8, 0.9, 1.0]
     round_pool_idle_sleep: float = 0.5
     round_pool_error_sleep: float = 5.0
+    round_pool_max_concurrent_builds: int = 1
     embeddings_enabled: bool = True
     embeddings_model: str = "glove-wiki-gigaword-100"
     embeddings_pool_size: int = 5000
