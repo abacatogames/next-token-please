@@ -26,6 +26,7 @@ import { createGameScene } from "./scenes/game.ts";
 import { createIdleScene } from "./scenes/idle.ts";
 import { createLoadingScene } from "./scenes/loading.ts";
 import { mountAudioControl } from "./scenes/audioControl.ts";
+import { getChapter } from "./story/inferenceRun.ts";
 import {
 	clearSession,
 	loadSession,
@@ -200,7 +201,8 @@ async function handleEndlessStart() {
 async function handleCampaignRoundStart() {
 	manager.goto("loading", state);
 	try {
-		const result = await fetchRound();
+		const chapter = getChapter(state.campaign?.chapterIndex ?? -1);
+		const result = await fetchRound(chapter?.difficulty ?? 1.0);
 		lastSource = result.source;
 		character.setPersonality(result.round.personality ?? "neutral");
 		state = beginCampaignRound(state, result.round);
