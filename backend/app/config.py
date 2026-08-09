@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     round_pool_enabled: bool = True
     round_pool_size: int = 3
+    round_pool_difficulties: list[float] = [0.8, 0.9, 1.0]
     round_pool_idle_sleep: float = 0.5
     round_pool_error_sleep: float = 5.0
     embeddings_enabled: bool = True
