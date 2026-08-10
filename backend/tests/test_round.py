@@ -73,6 +73,7 @@ def test_distractors_capitalized_only_at_sentence_start() -> None:
 
 def test_opening_tokens_are_reveal() -> None:
     import asyncio
+
     r, _ = asyncio.run(build_round(prompt_id="sky-blue", seed=1))
     assert r.tokens[0].kind == "reveal"
     assert r.tokens[1].kind == "reveal"
@@ -219,18 +220,22 @@ def test_round_endpoint_uses_pool_when_available(caplog: pytest.LogCaptureFixtur
     from tests.conftest import make_pool_item
 
     cached = make_pool_item(
-        round_id="round-cached", prompt="cached", prompt_id="cached-prompt",
+        round_id="round-cached",
+        prompt="cached",
+        prompt_id="cached-prompt",
         tokens=[RevealToken(word="hello", leading_space=False)],
-        answer_latency_ms=42, answer_retries=1, answer_word_count=55,
+        answer_latency_ms=42,
+        answer_retries=1,
+        answer_word_count=55,
         choice_count=12,
         distractor_sources={"synonym": 5, "embedding": 0, "random": 19},
     )
 
-    async def never_build():
+    async def never_build(difficulty: float):
         raise AssertionError("pool hit should skip build_round")
 
-    pool = RoundPool(size=1, builder=never_build)
-    pool.put_nowait(cached)
+    pool = RoundPool(size=1, builder=never_build, difficulties=[1.0])
+    pool.put_nowait(cached, 1.0)
     app.state.round_pool = pool
 
     try:
@@ -250,6 +255,76 @@ def test_round_endpoint_uses_pool_when_available(caplog: pytest.LogCaptureFixtur
             delattr(app.state, "round_pool")
 
 
+def test_round_endpoint_uses_pool_for_configured_difficulty(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    from app.pool import RoundPool
+    from app.schemas import RevealToken
+    from app.telemetry import LOGGER_NAME
+    from tests.conftest import make_pool_item
+
+    cached = make_pool_item(
+        round_id="round-low",
+        prompt="cached",
+        prompt_id="cached-prompt",
+        difficulty=0.8,
+        tokens=[RevealToken(word="hello", leading_space=False)],
+        answer_latency_ms=42,
+        answer_retries=1,
+        answer_word_count=55,
+        choice_count=12,
+        distractor_sources={"synonym": 5, "embedding": 0, "random": 19},
+    )
+
+    async def never_build(difficulty: float):
+        raise AssertionError("pool hit should skip build_round")
+
+    pool = RoundPool(size=1, builder=never_build, difficulties=[0.8, 1.0])
+    pool.put_nowait(cached, 0.8)
+    app.state.round_pool = pool
+
+    try:
+        with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
+            r = client.get("/api/round?difficulty=0.8")
+        assert r.status_code == 200
+        assert r.json()["id"] == "round-low"
+        records = [
+            rec for rec in caplog.records if rec.name == LOGGER_NAME and rec.message == "round"
+        ]
+        assert len(records) == 1
+        assert records[0].event["pool_hit"] is True
+        assert records[0].event["difficulty"] == 0.8
+    finally:
+        if hasattr(app.state, "round_pool"):
+            delattr(app.state, "round_pool")
+
+
+def test_round_endpoint_bypasses_pool_for_unknown_difficulty(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    from app.pool import RoundPool
+    from app.telemetry import LOGGER_NAME
+
+    async def builder(difficulty: float):
+        raise AssertionError("builder should not be driven in this test")
+
+    pool = RoundPool(size=1, builder=builder, difficulties=[1.0])
+    app.state.round_pool = pool
+
+    try:
+        with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
+            r = client.get("/api/round?difficulty=0.7")
+        assert r.status_code == 200
+        records = [
+            rec for rec in caplog.records if rec.name == LOGGER_NAME and rec.message == "round"
+        ]
+        assert records[0].event["pool_hit"] is False
+        assert records[0].event["difficulty"] == 0.7
+    finally:
+        if hasattr(app.state, "round_pool"):
+            delattr(app.state, "round_pool")
+
+
 def test_round_endpoint_bypasses_pool_when_overrides_present(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
@@ -259,16 +334,19 @@ def test_round_endpoint_bypasses_pool_when_overrides_present(
     from tests.conftest import make_pool_item
 
     cached = make_pool_item(
-        round_id="round-cached", prompt="cached", prompt_id="cached-prompt",
+        round_id="round-cached",
+        prompt="cached",
+        prompt_id="cached-prompt",
         tokens=[RevealToken(word="hello", leading_space=False)],
-        answer_latency_ms=1, answer_word_count=5,
+        answer_latency_ms=1,
+        answer_word_count=5,
     )
 
-    async def builder():
+    async def builder(difficulty: float):
         return cached
 
-    pool = RoundPool(size=1, builder=builder)
-    pool.put_nowait(cached)
+    pool = RoundPool(size=1, builder=builder, difficulties=[1.0])
+    pool.put_nowait(cached, 1.0)
     app.state.round_pool = pool
 
     try:
@@ -294,10 +372,10 @@ def test_round_endpoint_falls_back_to_build_when_pool_empty(
     from app.pool import RoundPool
     from app.telemetry import LOGGER_NAME
 
-    async def builder():
+    async def builder(difficulty: float):
         raise AssertionError("builder should not be driven in this test")
 
-    pool = RoundPool(size=1, builder=builder)
+    pool = RoundPool(size=1, builder=builder, difficulties=[1.0])
     app.state.round_pool = pool
 
     try:

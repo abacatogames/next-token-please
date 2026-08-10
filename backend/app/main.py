@@ -49,12 +49,18 @@ def _build_batch_producer():
             max_words=settings.prompt_max_words,
         )
         latency_ms = int((time.perf_counter() - t0) * 1000)
-        log_prompt_gen(PromptGenEvent(
-            theme=cell.theme, tone=cell.tone, difficulty=cell.difficulty,
-            requested=result.requested, accepted=result.accepted,
-            rejected=result.rejected, retries=result.retries,
-            latency_ms=latency_ms,
-        ))
+        log_prompt_gen(
+            PromptGenEvent(
+                theme=cell.theme,
+                tone=cell.tone,
+                difficulty=cell.difficulty,
+                requested=result.requested,
+                accepted=result.accepted,
+                rejected=result.rejected,
+                retries=result.retries,
+                latency_ms=latency_ms,
+            )
+        )
         return result.prompts, {}
 
     return producer
@@ -86,8 +92,10 @@ async def lifespan(app: FastAPI):
     pool = RoundPool(
         size=settings.round_pool_size,
         builder=build_round,
+        difficulties=sorted(set(settings.round_pool_difficulties) | {settings.default_difficulty}),
         idle_sleep=settings.round_pool_idle_sleep,
         error_sleep=settings.round_pool_error_sleep,
+        max_concurrent_builds=settings.round_pool_max_concurrent_builds,
     )
     if settings.round_pool_enabled and settings.round_pool_size > 0:
         pool.start()
@@ -128,10 +136,12 @@ def _current_pool() -> RoundPool | None:
     return getattr(app.state, "round_pool", None)
 
 
-def _is_pool_request(difficulty: float | None, prompt_id: str | None, seed: int | None) -> bool:
-    if prompt_id is not None or seed is not None:
+def _is_pool_request(
+    pool: RoundPool | None, difficulty: float, prompt_id: str | None, seed: int | None
+) -> bool:
+    if pool is None or prompt_id is not None or seed is not None:
         return False
-    return difficulty is None or difficulty == settings.default_difficulty
+    return pool.supports(difficulty)
 
 
 @api.get("/health", response_model=Health)
@@ -163,11 +173,12 @@ async def get_round(
 ) -> Round:
     t0 = time.perf_counter()
     pool = _current_pool()
+    diff = difficulty if difficulty is not None else settings.default_difficulty
     pool_hit = False
     try:
         item = None
-        if pool is not None and _is_pool_request(difficulty, prompt_id, seed):
-            item = pool.try_get()
+        if _is_pool_request(pool, diff, prompt_id, seed):
+            item = pool.try_get(diff)
         if item is not None:
             round_obj, event = item
             pool_hit = True
@@ -191,11 +202,13 @@ async def get_round(
         )
         raise
 
-    log_round(replace(
-        event,
-        pool_hit=pool_hit,
-        total_latency_ms=int((time.perf_counter() - t0) * 1000),
-    ))
+    log_round(
+        replace(
+            event,
+            pool_hit=pool_hit,
+            total_latency_ms=int((time.perf_counter() - t0) * 1000),
+        )
+    )
     return round_obj
 
 

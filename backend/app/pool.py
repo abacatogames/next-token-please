@@ -7,7 +7,7 @@ from app.schemas import Round
 from app.telemetry import RoundEvent, log_warning_event
 
 PoolItem = tuple[Round, RoundEvent]
-Builder = Callable[[], Awaitable[PoolItem]]
+Builder = Callable[[float], Awaitable[PoolItem]]
 
 LOGGER = logging.getLogger("ntp.pool")
 
@@ -18,59 +18,86 @@ class RoundPool:
         *,
         size: int,
         builder: Builder,
+        difficulties: list[float],
         idle_sleep: float = 0.5,
         error_sleep: float = 5.0,
+        max_concurrent_builds: int = 1,
     ) -> None:
         self._size = size
         self._builder = builder
+        self._difficulties = list(difficulties)
+        self._queues = {d: asyncio.Queue(maxsize=size) for d in self._difficulties}
+        self._tasks: dict[float, asyncio.Task[None]] = {}
         self._idle_sleep = idle_sleep
         self._error_sleep = error_sleep
-        self._queue: asyncio.Queue[PoolItem] = asyncio.Queue(maxsize=size)
-        self._task: asyncio.Task[None] | None = None
+        self._build_semaphore = asyncio.Semaphore(max_concurrent_builds)
+
+    @property
+    def difficulties(self) -> list[float]:
+        return list(self._difficulties)
 
     @property
     def size(self) -> int:
-        return self._queue.qsize()
+        return sum(q.qsize() for q in self._queues.values())
 
     @property
     def ready(self) -> bool:
-        return self._queue.qsize() >= self._size
+        return all(q.qsize() >= self._size for q in self._queues.values())
 
     @property
     def running(self) -> bool:
-        return self._task is not None and not self._task.done()
+        return any(task is not None and not task.done() for task in self._tasks.values())
 
-    def try_get(self) -> PoolItem | None:
+    def supports(self, difficulty: float) -> bool:
+        return difficulty in self._queues
+
+    def try_get(self, difficulty: float) -> PoolItem | None:
+        queue = self._queues.get(difficulty)
+        if queue is None:
+            return None
         try:
-            return self._queue.get_nowait()
+            return queue.get_nowait()
         except asyncio.QueueEmpty:
             return None
 
-    def put_nowait(self, item: PoolItem) -> None:
-        self._queue.put_nowait(item)
+    def put_nowait(self, item: PoolItem, difficulty: float) -> None:
+        self._queues[difficulty].put_nowait(item)
 
     def start(self) -> None:
-        if self.running:
-            return
-        self._task = asyncio.create_task(self._refill_loop(), name="round-pool-refill")
+        for difficulty in self._difficulties:
+            if difficulty in self._tasks:
+                continue
+            self._tasks[difficulty] = asyncio.create_task(
+                self._refill_loop(difficulty),
+                name=f"round-pool-refill-{difficulty}",
+            )
 
     async def stop(self) -> None:
-        if self._task is None:
-            return
-        self._task.cancel()
-        with contextlib.suppress(asyncio.CancelledError):
-            await self._task
-        self._task = None
+        tasks = list(self._tasks.values())
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(
+            *(self._suppress_cancel(task) for task in tasks),
+            return_exceptions=True,
+        )
+        self._tasks.clear()
 
-    async def _refill_loop(self) -> None:
+    @staticmethod
+    async def _suppress_cancel(task: asyncio.Task[None]) -> None:
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+
+    async def _refill_loop(self, difficulty: float) -> None:
+        queue = self._queues[difficulty]
         try:
             while True:
-                if self._queue.qsize() >= self._size:
+                if queue.qsize() >= self._size:
                     await asyncio.sleep(self._idle_sleep)
                     continue
                 try:
-                    item = await self._builder()
-                    await self._queue.put(item)
+                    async with self._build_semaphore:
+                        item = await self._builder(difficulty=difficulty)
+                    await queue.put(item)
                 except asyncio.CancelledError:
                     raise
                 except Exception as exc:

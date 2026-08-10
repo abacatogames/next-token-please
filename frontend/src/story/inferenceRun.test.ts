@@ -16,17 +16,18 @@ describe("INFERENCE_RUN", () => {
 		});
 	});
 
-	test("matches the spec (rounds + required %)", () => {
+	test("matches the spec (rounds + required % + difficulty)", () => {
 		const spec = [
-			{ rounds: 3, requiredPercent: 50 },
-			{ rounds: 5, requiredPercent: 60 },
-			{ rounds: 10, requiredPercent: 75 },
-			{ rounds: 5, requiredPercent: 90 },
-			{ rounds: 3, requiredPercent: 100 },
+			{ rounds: 3, requiredPercent: 50, difficulty: 0.8 },
+			{ rounds: 3, requiredPercent: 60, difficulty: 0.9 },
+			{ rounds: 3, requiredPercent: 75, difficulty: 1.0 },
+			{ rounds: 2, requiredPercent: 90, difficulty: 1.0 },
+			{ rounds: 1, requiredPercent: 100, difficulty: 1.0 },
 		];
 		INFERENCE_RUN.forEach((c, i) => {
 			expect(c.rounds).toBe(spec[i]!.rounds);
 			expect(c.requiredPercent).toBe(spec[i]!.requiredPercent);
+			expect(c.difficulty).toBe(spec[i]!.difficulty);
 		});
 	});
 
